@@ -110,7 +110,7 @@ public class PhotoPanel extends JPanel {
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setColor(new Color(24, 33, 47));
+                    g2.setColor(ThemeConfig.BG_INPUT);
                     g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
                     g2.dispose();
                 }
@@ -124,10 +124,10 @@ public class PhotoPanel extends JPanel {
                     Image scaled = imgIcon.getImage().getScaledInstance(220, 160, Image.SCALE_SMOOTH);
                     thumbPanel.add(new JLabel(new ImageIcon(scaled)), BorderLayout.CENTER);
                 } catch (Exception ex) {
-                    thumbPanel.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.PHOTOS, 48, ThemeConfig.PRIMARY_BLUE)), BorderLayout.CENTER);
+                    thumbPanel.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.PHOTOS, 48, ThemeConfig.PRIMARY_ACCENT)), BorderLayout.CENTER);
                 }
             } else {
-                thumbPanel.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.PHOTOS, 48, ThemeConfig.PRIMARY_BLUE)), BorderLayout.CENTER);
+                thumbPanel.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.PHOTOS, 48, ThemeConfig.PRIMARY_ACCENT)), BorderLayout.CENTER);
             }
             card.add(thumbPanel, BorderLayout.NORTH);
 

@@ -126,11 +126,11 @@ public class WaterSleepPanel extends JPanel {
         center.setBorder(BorderFactory.createEmptyBorder(16, 0, 16, 0));
 
         lblWaterTotal.setFont(ThemeConfig.FONT_STAT_NUM);
-        lblWaterTotal.setForeground(ThemeConfig.PRIMARY_BLUE);
+        lblWaterTotal.setForeground(ThemeConfig.PRIMARY_ACCENT);
         center.add(lblWaterTotal);
         center.add(Box.createVerticalStrut(8));
 
-        barWater.setColors(ThemeConfig.PRIMARY_BLUE, ThemeConfig.ACCENT_CYAN);
+        barWater.setColors(ThemeConfig.PRIMARY_ACCENT, ThemeConfig.ACCENT_HOVER);
         barWater.setPreferredSize(new Dimension(0, 14));
         center.add(barWater);
         center.add(Box.createVerticalStrut(6));
@@ -212,7 +212,7 @@ public class WaterSleepPanel extends JPanel {
 
         // Latest summary card
         ModernCard innerSummary = new ModernCard(10, new Insets(14, 16, 14, 16));
-        innerSummary.setBackgroundColor(new Color(24, 33, 47));
+        innerSummary.setBackgroundColor(ThemeConfig.BG_INPUT);
 
         JPanel sumBox = new JPanel();
         sumBox.setLayout(new BoxLayout(sumBox, BoxLayout.Y_AXIS));
@@ -225,7 +225,7 @@ public class WaterSleepPanel extends JPanel {
         sumBox.add(Box.createVerticalStrut(4));
 
         lblSleepDuration.setFont(ThemeConfig.FONT_STAT_NUM);
-        lblSleepDuration.setForeground(ThemeConfig.PURPLE_ACCENT);
+        lblSleepDuration.setForeground(ThemeConfig.PRIMARY_ACCENT);
         sumBox.add(lblSleepDuration);
         sumBox.add(Box.createVerticalStrut(4));
 
@@ -368,7 +368,7 @@ public class WaterSleepPanel extends JPanel {
 
         CategoryPlot plot = chart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, ThemeConfig.PURPLE_ACCENT);
+        renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
         renderer.setMaximumBarWidth(0.12);
 
         ChartPanel chartPanel = new ChartPanel(chart);

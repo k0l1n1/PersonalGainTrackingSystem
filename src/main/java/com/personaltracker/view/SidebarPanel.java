@@ -61,7 +61,7 @@ public class SidebarPanel extends JPanel {
         brandPanel.setOpaque(false);
         brandPanel.setBorder(BorderFactory.createEmptyBorder(22, 20, 20, 20));
 
-        JLabel brandIcon = new JLabel(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 28, ThemeConfig.PRIMARY_BLUE));
+        JLabel brandIcon = new JLabel(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 28, ThemeConfig.PRIMARY_ACCENT));
         brandPanel.add(brandIcon, BorderLayout.WEST);
 
         JPanel brandTextPanel = new JPanel(new GridLayout(2, 1, 0, 2));
@@ -114,7 +114,7 @@ public class SidebarPanel extends JPanel {
         JPanel userRow = new JPanel(new BorderLayout(10, 0));
         userRow.setOpaque(false);
 
-        JLabel avatarLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.USER, 22, ThemeConfig.PRIMARY_BLUE));
+        JLabel avatarLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.USER, 22, ThemeConfig.PRIMARY_ACCENT));
         userRow.add(avatarLbl, BorderLayout.WEST);
 
         JPanel userInfoPanel = new JPanel(new GridLayout(2, 1, 0, 2));
@@ -134,9 +134,9 @@ public class SidebarPanel extends JPanel {
 
         bottomPanel.add(Box.createVerticalStrut(10));
 
-        JButton btnLogout = new JButton("Sign Out", IconFactory.createIcon(IconFactory.IconType.LOGOUT, 16, ThemeConfig.DANGER_ROSE));
+        JButton btnLogout = new JButton("Sign Out", IconFactory.createIcon(IconFactory.IconType.LOGOUT, 16, ThemeConfig.ERROR));
         btnLogout.setFont(ThemeConfig.FONT_SMALL);
-        btnLogout.setForeground(ThemeConfig.DANGER_ROSE);
+        btnLogout.setForeground(ThemeConfig.ERROR);
         btnLogout.setContentAreaFilled(false);
         btnLogout.setBorderPainted(false);
         btnLogout.setFocusPainted(false);
@@ -201,7 +201,7 @@ public class SidebarPanel extends JPanel {
             JLabel iconLbl = new JLabel(IconFactory.createIcon(item.getIconType(), 18, ThemeConfig.TEXT_SECONDARY)) {
                 @Override
                 public Icon getIcon() {
-                    Color c = isActive ? ThemeConfig.PRIMARY_BLUE : (isHovered ? ThemeConfig.TEXT_PRIMARY : ThemeConfig.TEXT_SECONDARY);
+                    Color c = isActive ? ThemeConfig.PRIMARY_ACCENT : (isHovered ? ThemeConfig.TEXT_PRIMARY : ThemeConfig.TEXT_SECONDARY);
                     return IconFactory.createIcon(item.getIconType(), 18, c);
                 }
             };
@@ -253,11 +253,11 @@ public class SidebarPanel extends JPanel {
             int h = getHeight();
 
             if (isActive) {
-                g2.setColor(new Color(59, 130, 246, 35));
+                g2.setColor(new Color(0xF0, 0x44, 0x44, 38));
                 g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, 8, 8));
 
                 // Left accent bar
-                g2.setColor(ThemeConfig.PRIMARY_BLUE);
+                g2.setColor(ThemeConfig.PRIMARY_ACCENT);
                 g2.fill(new RoundRectangle2D.Float(0, 8, 4, h - 16, 2, 2));
             } else if (isHovered) {
                 g2.setColor(new Color(255, 255, 255, 12));

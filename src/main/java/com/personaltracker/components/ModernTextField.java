@@ -72,7 +72,7 @@ public class ModernTextField extends JTextField {
             g2.setColor(ThemeConfig.BORDER_FOCUS);
             g2.setStroke(new BasicStroke(1.5f));
         } else {
-            g2.setColor(ThemeConfig.BORDER_COLOR);
+            g2.setColor(ThemeConfig.BORDER_INPUT);
             g2.setStroke(new BasicStroke(1.0f));
         }
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, cornerRadius, cornerRadius));

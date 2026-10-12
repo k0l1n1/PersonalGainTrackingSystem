@@ -239,7 +239,7 @@ public class MeasurementPanel extends JPanel {
 
         XYPlot plot = chart.getXYPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
-        renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_BLUE);
+        renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
         renderer.setSeriesStroke(0, new BasicStroke(2.4f));
         plot.setRenderer(renderer);
 

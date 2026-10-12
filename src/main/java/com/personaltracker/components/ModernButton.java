@@ -110,7 +110,7 @@ public class ModernButton extends JButton {
         }
 
         if (!isEnabled()) {
-            bg = new Color(51, 65, 85, 120);
+            bg = new Color(0x35, 0x35, 0x35, 140);
             fg = ThemeConfig.TEXT_MUTED;
         }
 
@@ -138,32 +138,32 @@ public class ModernButton extends JButton {
     private Color getBaseColor() {
         switch (style) {
             case SUCCESS:
-                return ThemeConfig.SUCCESS_EMERALD;
+                return ThemeConfig.SUCCESS;
             case DANGER:
-                return ThemeConfig.DANGER_ROSE;
+                return ThemeConfig.ERROR;
             case SECONDARY:
                 return ThemeConfig.BG_CARD;
             case GHOST:
                 return new Color(0, 0, 0, 0);
             case PRIMARY:
             default:
-                return ThemeConfig.PRIMARY_BLUE;
+                return ThemeConfig.PRIMARY_ACCENT;
         }
     }
 
     private Color getHoverColor() {
         switch (style) {
             case SUCCESS:
-                return new Color(20, 205, 145);
+                return new Color(0x38, 0x8E, 0x3C);
             case DANGER:
-                return new Color(248, 113, 113);
+                return ThemeConfig.ACCENT_HOVER;
             case SECONDARY:
                 return ThemeConfig.BG_CARD_HOVER;
             case GHOST:
                 return new Color(255, 255, 255, 30);
             case PRIMARY:
             default:
-                return ThemeConfig.PRIMARY_HOVER;
+                return ThemeConfig.ACCENT_HOVER;
         }
     }
 }

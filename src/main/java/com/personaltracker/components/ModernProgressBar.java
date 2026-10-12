@@ -11,8 +11,8 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class ModernProgressBar extends JProgressBar {
     private static final long serialVersionUID = 1L;
-    private Color progressColor = ThemeConfig.PRIMARY_BLUE;
-    private Color secondaryColor = ThemeConfig.ACCENT_CYAN;
+    private Color progressColor = ThemeConfig.PRIMARY_ACCENT;
+    private Color secondaryColor = ThemeConfig.ACCENT_HOVER;
     private int cornerRadius = 6;
 
     public ModernProgressBar(int min, int max) {
@@ -44,7 +44,7 @@ public class ModernProgressBar extends JProgressBar {
         int h = getHeight();
 
         // Track background
-        g2.setColor(new Color(24, 33, 47));
+        g2.setColor(ThemeConfig.BG_INPUT);
         g2.fill(new RoundRectangle2D.Float(0, 0, w, h, cornerRadius, cornerRadius));
 
         // Progress fill

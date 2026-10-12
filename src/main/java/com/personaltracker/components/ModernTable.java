@@ -20,15 +20,15 @@ public class ModernTable extends JTable {
         setRowHeight(38);
         setShowVerticalLines(false);
         setShowHorizontalLines(true);
-        setGridColor(new Color(51, 65, 85, 80));
-        setSelectionBackground(new Color(59, 130, 246, 70));
+        setGridColor(new Color(0x35, 0x35, 0x35, 120));
+        setSelectionBackground(new Color(0xF0, 0x44, 0x44, 75));
         setSelectionForeground(ThemeConfig.TEXT_PRIMARY);
         setBackground(ThemeConfig.BG_CARD);
         setForeground(ThemeConfig.TEXT_PRIMARY);
         setFont(ThemeConfig.FONT_BODY);
 
         JTableHeader header = getTableHeader();
-        header.setBackground(new Color(20, 30, 46));
+        header.setBackground(ThemeConfig.BG_SIDEBAR);
         header.setForeground(ThemeConfig.TEXT_SECONDARY);
         header.setFont(ThemeConfig.FONT_BODY_BOLD);
         header.setPreferredSize(new Dimension(header.getWidth(), 38));
@@ -42,7 +42,7 @@ public class ModernTable extends JTable {
                 setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
 
                 if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? ThemeConfig.BG_CARD : new Color(24, 34, 50));
+                    c.setBackground(row % 2 == 0 ? ThemeConfig.BG_CARD : new Color(0x1F, 0x1F, 0x1F));
                     c.setForeground(ThemeConfig.TEXT_PRIMARY);
                 }
                 return c;

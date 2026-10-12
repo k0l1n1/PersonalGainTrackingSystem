@@ -44,10 +44,10 @@ public class DashboardPanel extends JPanel {
     private final JLabel lblDate = new JLabel(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy")));
 
     // Top Stat Cards
-    private final StatCard cardWorkouts = new StatCard("TOTAL WORKOUTS", "0", "0 mins this week", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_BLUE);
-    private final StatCard cardWeight = new StatCard("CURRENT WEIGHT", "-- kg", "BMI: --", IconFactory.IconType.MEASUREMENT, ThemeConfig.SUCCESS_EMERALD);
-    private final StatCard cardCalories = new StatCard("TODAY'S CALORIES", "0 kcal", "Target: 2,000 kcal", IconFactory.IconType.NUTRITION, ThemeConfig.WARNING_AMBER);
-    private final StatCard cardStreak = new StatCard("WORKOUT STREAK", "0 Days", "Consistency is key", IconFactory.IconType.FIRE, ThemeConfig.PURPLE_ACCENT);
+    private final StatCard cardWorkouts = new StatCard("TOTAL WORKOUTS", "0", "0 mins this week", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_ACCENT);
+    private final StatCard cardWeight = new StatCard("CURRENT WEIGHT", "-- kg", "BMI: --", IconFactory.IconType.MEASUREMENT, ThemeConfig.SUCCESS);
+    private final StatCard cardCalories = new StatCard("TODAY'S CALORIES", "0 kcal", "Target: 2,000 kcal", IconFactory.IconType.NUTRITION, ThemeConfig.WARNING);
+    private final StatCard cardStreak = new StatCard("WORKOUT STREAK", "0 Days", "Consistency is key", IconFactory.IconType.FIRE, ThemeConfig.PRIMARY_ACCENT);
 
     // Dynamic Chart Panels
     private final JPanel pnlWorkoutChart = new JPanel(new BorderLayout());
@@ -508,7 +508,7 @@ public class DashboardPanel extends JPanel {
 
         CategoryPlot plot = chart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_BLUE);
+        renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
         renderer.setMaximumBarWidth(0.12);
 
         ChartPanel chartPanel = new ChartPanel(chart);
@@ -541,7 +541,7 @@ public class DashboardPanel extends JPanel {
 
         XYPlot plot = chart.getXYPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
-        renderer.setSeriesPaint(0, ThemeConfig.SUCCESS_EMERALD);
+        renderer.setSeriesPaint(0, ThemeConfig.SUCCESS);
         renderer.setSeriesStroke(0, new BasicStroke(2.2f));
         plot.setRenderer(renderer);
 
@@ -564,10 +564,10 @@ public class DashboardPanel extends JPanel {
 
         if (chart.getPlot() instanceof CategoryPlot) {
             CategoryPlot plot = chart.getCategoryPlot();
-            plot.setBackgroundPaint(new Color(24, 33, 47, 100));
+            plot.setBackgroundPaint(new Color(0x1C, 0x1C, 0x1C, 120));
             plot.setOutlinePaint(null);
-            plot.setRangeGridlinePaint(new Color(51, 65, 85, 90));
-            plot.setDomainGridlinePaint(new Color(51, 65, 85, 50));
+            plot.setRangeGridlinePaint(new Color(0x35, 0x35, 0x35, 120));
+            plot.setDomainGridlinePaint(new Color(0x35, 0x35, 0x35, 60));
 
             CategoryAxis domain = plot.getDomainAxis();
             domain.setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
@@ -578,10 +578,10 @@ public class DashboardPanel extends JPanel {
             range.setTickLabelFont(ThemeConfig.FONT_SMALL);
         } else if (chart.getPlot() instanceof XYPlot) {
             XYPlot plot = chart.getXYPlot();
-            plot.setBackgroundPaint(new Color(24, 33, 47, 100));
+            plot.setBackgroundPaint(new Color(0x1C, 0x1C, 0x1C, 120));
             plot.setOutlinePaint(null);
-            plot.setRangeGridlinePaint(new Color(51, 65, 85, 90));
-            plot.setDomainGridlinePaint(new Color(51, 65, 85, 50));
+            plot.setRangeGridlinePaint(new Color(0x35, 0x35, 0x35, 120));
+            plot.setDomainGridlinePaint(new Color(0x35, 0x35, 0x35, 60));
 
             plot.getDomainAxis().setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
             plot.getDomainAxis().setTickLabelFont(ThemeConfig.FONT_SMALL);

@@ -81,17 +81,17 @@ public class ToastNotification extends JPanel {
         Color border;
         switch (type) {
             case SUCCESS:
-                bg = new Color(16, 185, 129, 230);
-                border = ThemeConfig.SUCCESS_EMERALD;
+                bg = new Color(0x4C, 0xAF, 0x50, 230);
+                border = ThemeConfig.SUCCESS;
                 break;
             case ERROR:
-                bg = new Color(239, 68, 68, 230);
-                border = ThemeConfig.DANGER_ROSE;
+                bg = new Color(0xF0, 0x44, 0x44, 230);
+                border = ThemeConfig.ERROR;
                 break;
             case INFO:
             default:
-                bg = new Color(30, 41, 59, 240);
-                border = ThemeConfig.PRIMARY_BLUE;
+                bg = new Color(0x24, 0x24, 0x24, 240);
+                border = ThemeConfig.PRIMARY_ACCENT;
                 break;
         }
 

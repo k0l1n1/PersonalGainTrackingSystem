@@ -51,7 +51,7 @@ public class AuthDialog extends JDialog {
         // Header logo & title
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         headerPanel.setOpaque(false);
-        JLabel iconLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 32, ThemeConfig.PRIMARY_BLUE));
+        JLabel iconLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 32, ThemeConfig.PRIMARY_ACCENT));
         headerPanel.add(iconLbl);
         JLabel brandLbl = new JLabel("PERSONAL GAIN");
         brandLbl.setFont(ThemeConfig.FONT_TITLE);
@@ -71,13 +71,13 @@ public class AuthDialog extends JDialog {
 
         // Error / Status banner
         lblError.setFont(ThemeConfig.FONT_SMALL);
-        lblError.setForeground(ThemeConfig.DANGER_ROSE);
+        lblError.setForeground(ThemeConfig.ERROR);
         lblError.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblError.setVisible(false);
         mainPanel.add(lblError);
 
         lblStatus.setFont(ThemeConfig.FONT_SMALL);
-        lblStatus.setForeground(ThemeConfig.SUCCESS_EMERALD);
+        lblStatus.setForeground(ThemeConfig.SUCCESS);
         lblStatus.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblStatus.setVisible(false);
         mainPanel.add(lblStatus);

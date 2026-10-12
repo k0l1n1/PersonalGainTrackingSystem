@@ -152,18 +152,18 @@ public class GoalPanel extends JPanel {
         JLabel catTag = new JLabel(" " + goal.getCategory().toUpperCase() + " ");
         catTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
         catTag.setOpaque(true);
-        catTag.setBackground(new Color(59, 130, 246, 30));
-        catTag.setForeground(ThemeConfig.PRIMARY_BLUE);
+        catTag.setBackground(new Color(0xF0, 0x44, 0x44, 30));
+        catTag.setForeground(ThemeConfig.PRIMARY_ACCENT);
         top.add(catTag, BorderLayout.WEST);
 
         JLabel statusTag = new JLabel(goal.getStatus());
         statusTag.setFont(ThemeConfig.FONT_SMALL);
         if (goal.isCompleted()) {
-            statusTag.setForeground(ThemeConfig.SUCCESS_EMERALD);
+            statusTag.setForeground(ThemeConfig.SUCCESS);
         } else if (goal.isOverdue()) {
-            statusTag.setForeground(ThemeConfig.DANGER_ROSE);
+            statusTag.setForeground(ThemeConfig.ERROR);
         } else {
-            statusTag.setForeground(ThemeConfig.WARNING_AMBER);
+            statusTag.setForeground(ThemeConfig.WARNING);
         }
         top.add(statusTag, BorderLayout.EAST);
 
@@ -191,7 +191,7 @@ public class GoalPanel extends JPanel {
 
         JLabel pct = new JLabel(goal.getProgressPercentage() + "%");
         pct.setFont(ThemeConfig.FONT_BODY_BOLD);
-        pct.setForeground(goal.isCompleted() ? ThemeConfig.SUCCESS_EMERALD : ThemeConfig.PRIMARY_BLUE);
+        pct.setForeground(goal.isCompleted() ? ThemeConfig.SUCCESS : ThemeConfig.PRIMARY_ACCENT);
         valRow.add(pct, BorderLayout.EAST);
         center.add(valRow);
         center.add(Box.createVerticalStrut(6));
@@ -199,7 +199,7 @@ public class GoalPanel extends JPanel {
         ModernProgressBar bar = new ModernProgressBar(0, 100);
         bar.setValue(goal.getProgressPercentage());
         if (goal.isCompleted()) {
-            bar.setProgressColor(ThemeConfig.SUCCESS_EMERALD);
+            bar.setProgressColor(ThemeConfig.SUCCESS);
         }
         center.add(bar);
         center.add(Box.createVerticalStrut(8));

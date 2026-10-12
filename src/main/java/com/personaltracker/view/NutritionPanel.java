@@ -144,11 +144,11 @@ public class NutritionPanel extends JPanel {
         calCenter.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
 
         lblTotalCalories.setFont(ThemeConfig.FONT_STAT_NUM);
-        lblTotalCalories.setForeground(ThemeConfig.WARNING_AMBER);
+        lblTotalCalories.setForeground(ThemeConfig.PRIMARY_ACCENT);
         calCenter.add(lblTotalCalories);
         calCenter.add(Box.createVerticalStrut(8));
 
-        barCalories.setColors(ThemeConfig.WARNING_AMBER, new Color(251, 191, 36));
+        barCalories.setColors(ThemeConfig.PRIMARY_ACCENT, ThemeConfig.ACCENT_HOVER);
         calCenter.add(barCalories);
         calCenter.add(Box.createVerticalStrut(6));
 
@@ -387,7 +387,7 @@ public class NutritionPanel extends JPanel {
         JPanel row = new JPanel(new BorderLayout(8, 0));
         row.setOpaque(false);
         row.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(51, 65, 85, 60)),
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x35, 0x35, 0x35, 120)),
                 BorderFactory.createEmptyBorder(4, 0, 4, 0)
         ));
 
@@ -447,11 +447,11 @@ public class NutritionPanel extends JPanel {
         plot.setLabelGenerator(null);
 
         if (p > 0 || c > 0 || f > 0) {
-            plot.setSectionPaint("Protein", ThemeConfig.PRIMARY_BLUE);
-            plot.setSectionPaint("Carbs", ThemeConfig.WARNING_AMBER);
-            plot.setSectionPaint("Fat", ThemeConfig.DANGER_ROSE);
+            plot.setSectionPaint("Protein", ThemeConfig.PRIMARY_ACCENT);
+            plot.setSectionPaint("Carbs", ThemeConfig.WARNING);
+            plot.setSectionPaint("Fat", ThemeConfig.ACCENT_HOVER);
         } else {
-            plot.setSectionPaint("No Data", new Color(51, 65, 85, 100));
+            plot.setSectionPaint("No Data", new Color(0x35, 0x35, 0x35, 140));
         }
 
         ChartPanel chartPanel = new ChartPanel(chart);

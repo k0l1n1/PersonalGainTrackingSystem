@@ -28,12 +28,12 @@ public class WorkoutTimerPanel extends ModernCard {
         super(14, new Insets(16, 20, 16, 20));
 
         setLayout(new BorderLayout(16, 0));
-        setBackgroundColor(new Color(22, 33, 49));
+        setBackgroundColor(ThemeConfig.BG_CARD);
 
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         leftPanel.setOpaque(false);
 
-        JLabel iconLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.TIMER, 24, ThemeConfig.PRIMARY_BLUE));
+        JLabel iconLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.TIMER, 24, ThemeConfig.PRIMARY_ACCENT));
         leftPanel.add(iconLbl);
 
         JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 2));

@@ -131,7 +131,7 @@ public class ReminderBadgePanel extends JPanel {
             JPanel row = new JPanel(new BorderLayout(12, 0));
             row.setOpaque(false);
             row.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(51, 65, 85, 60)),
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x35, 0x35, 0x35, 120)),
                     BorderFactory.createEmptyBorder(8, 0, 8, 0)
             ));
 
@@ -185,19 +185,19 @@ public class ReminderBadgePanel extends JPanel {
             badgeCard.setHoverEffect(true);
 
             if (a.isUnlocked()) {
-                badgeCard.setBorderColor(new Color(245, 158, 11, 150));
+                badgeCard.setBorderColor(new Color(0xF0, 0x44, 0x44, 150));
             }
 
             JPanel top = new JPanel(new BorderLayout());
             top.setOpaque(false);
 
-            Color iconColor = a.isUnlocked() ? ThemeConfig.WARNING_AMBER : ThemeConfig.TEXT_MUTED;
+            Color iconColor = a.isUnlocked() ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.TEXT_MUTED;
             JLabel icon = new JLabel(IconFactory.createIcon(IconFactory.IconType.BADGES, 26, iconColor));
             top.add(icon, BorderLayout.WEST);
 
             JLabel status = new JLabel(a.isUnlocked() ? "UNLOCKED 🎉" : "LOCKED 🔒");
             status.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            status.setForeground(a.isUnlocked() ? ThemeConfig.WARNING_AMBER : ThemeConfig.TEXT_MUTED);
+            status.setForeground(a.isUnlocked() ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.TEXT_MUTED);
             top.add(status, BorderLayout.EAST);
             badgeCard.add(top, BorderLayout.NORTH);
 
