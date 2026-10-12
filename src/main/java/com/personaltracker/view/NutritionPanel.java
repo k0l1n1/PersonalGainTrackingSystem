@@ -1,10 +1,15 @@
 package com.personaltracker.view;
 
-import com.personaltracker.components.*;
+import com.personaltracker.components.ModernButton;
+import com.personaltracker.components.ModernCard;
+import com.personaltracker.components.ModernProgressBar;
+import com.personaltracker.components.ModernTextField;
+import com.personaltracker.components.ToastNotification;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.AchievementDAO;
 import com.personaltracker.dao.NutritionDAO;
 import com.personaltracker.model.NutritionEntry;
+import com.personaltracker.model.UserSession;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.IconFactory;
@@ -343,7 +348,7 @@ public class NutritionPanel extends JPanel {
 
         // Update Calorie budget
         int calTarget = 2000;
-        var sess = SupabaseClient.getInstance().getCurrentSession();
+        UserSession sess = SupabaseClient.getInstance().getCurrentSession();
         if (sess != null && sess.getProfile() != null && sess.getProfile().getDailyCalorieTarget() > 0) {
             calTarget = sess.getProfile().getDailyCalorieTarget();
         }

@@ -51,16 +51,17 @@ public class ToastNotification extends JPanel {
         }
 
         if (layeredPane != null) {
+            final JLayeredPane targetPane = layeredPane;
             Dimension size = toast.getPreferredSize();
-            int x = (layeredPane.getWidth() - size.width) / 2;
+            int x = (targetPane.getWidth() - size.width) / 2;
             int y = 24;
             toast.setBounds(x, y, size.width, size.height);
-            layeredPane.add(toast, JLayeredPane.POPUP_LAYER);
-            layeredPane.repaint();
+            targetPane.add(toast, JLayeredPane.POPUP_LAYER);
+            targetPane.repaint();
 
             toast.dismissTimer = new Timer(3500, e -> {
-                layeredPane.remove(toast);
-                layeredPane.repaint();
+                targetPane.remove(toast);
+                targetPane.repaint();
             });
             toast.dismissTimer.setRepeats(false);
             toast.dismissTimer.start();

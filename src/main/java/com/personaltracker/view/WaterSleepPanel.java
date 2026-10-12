@@ -1,11 +1,16 @@
 package com.personaltracker.view;
 
-import com.personaltracker.components.*;
+import com.personaltracker.components.ModernButton;
+import com.personaltracker.components.ModernCard;
+import com.personaltracker.components.ModernProgressBar;
+import com.personaltracker.components.ModernTextField;
+import com.personaltracker.components.ToastNotification;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.AchievementDAO;
 import com.personaltracker.dao.SleepDAO;
 import com.personaltracker.dao.WaterDAO;
 import com.personaltracker.model.SleepRecord;
+import com.personaltracker.model.UserSession;
 import com.personaltracker.model.WaterIntake;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.DateUtil;
@@ -307,7 +312,7 @@ public class WaterSleepPanel extends JPanel {
         }
 
         int target = 2500;
-        var sess = SupabaseClient.getInstance().getCurrentSession();
+        UserSession sess = SupabaseClient.getInstance().getCurrentSession();
         if (sess != null && sess.getProfile() != null && sess.getProfile().getDailyWaterTargetMl() > 0) {
             target = sess.getProfile().getDailyWaterTargetMl();
         }

@@ -1,6 +1,8 @@
 package com.personaltracker.view;
 
-import com.personaltracker.components.*;
+import com.personaltracker.components.ModernButton;
+import com.personaltracker.components.ModernCard;
+import com.personaltracker.components.StatCard;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.*;
 import com.personaltracker.model.*;

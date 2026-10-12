@@ -1,6 +1,8 @@
 package com.personaltracker.view;
 
-import com.personaltracker.components.*;
+import com.personaltracker.components.ModernButton;
+import com.personaltracker.components.ModernPasswordField;
+import com.personaltracker.components.ModernTextField;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.model.UserSession;
 import com.personaltracker.service.SupabaseAuthService;
