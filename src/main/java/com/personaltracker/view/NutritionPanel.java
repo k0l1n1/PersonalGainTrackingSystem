@@ -12,8 +12,6 @@ import com.personaltracker.model.NutritionEntry;
 import com.personaltracker.model.UserSession;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.DateUtil;
-import com.personaltracker.util.IconFactory;
-import com.personaltracker.util.ValidationUtil;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;

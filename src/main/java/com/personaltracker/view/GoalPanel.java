@@ -10,8 +10,6 @@ import com.personaltracker.dao.AchievementDAO;
 import com.personaltracker.dao.GoalDAO;
 import com.personaltracker.model.Goal;
 import com.personaltracker.util.DateUtil;
-import com.personaltracker.util.IconFactory;
-import com.personaltracker.util.ValidationUtil;
 
 import javax.swing.*;
 import java.awt.*;
