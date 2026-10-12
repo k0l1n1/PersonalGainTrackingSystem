@@ -12,6 +12,7 @@ import java.awt.geom.RoundRectangle2D;
  * Modern password input with rounded borders, focus highlight, and placeholder text.
  */
 public class ModernPasswordField extends JPasswordField {
+    private static final long serialVersionUID = 1L;
     private String placeholder = "";
     private boolean isFocused = false;
     private int cornerRadius = 8;

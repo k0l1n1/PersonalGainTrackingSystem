@@ -16,6 +16,7 @@ import java.awt.*;
  * Authentication Dialog supporting Login, Registration, and Password Reset.
  */
 public class AuthDialog extends JDialog {
+    private static final long serialVersionUID = 1L;
 
     private final SupabaseAuthService authService = SupabaseAuthService.getInstance();
     private boolean authenticated = false;

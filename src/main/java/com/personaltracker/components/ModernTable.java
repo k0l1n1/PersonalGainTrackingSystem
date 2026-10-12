@@ -13,6 +13,7 @@ import java.awt.*;
  * Modern JTable with dark styling, alternating rows, and comfortable padding.
  */
 public class ModernTable extends JTable {
+    private static final long serialVersionUID = 1L;
 
     public ModernTable(TableModel model) {
         super(model);

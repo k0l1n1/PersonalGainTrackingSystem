@@ -10,6 +10,7 @@ import java.awt.geom.RoundRectangle2D;
  * Modern card container with rounded corners, dark surface fill, and subtle border.
  */
 public class ModernCard extends JPanel {
+    private static final long serialVersionUID = 1L;
     private int cornerRadius = 14;
     private Color backgroundColor = ThemeConfig.BG_CARD;
     private Color borderColor = ThemeConfig.BORDER_COLOR;

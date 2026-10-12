@@ -13,6 +13,7 @@ import java.util.function.Consumer;
  * Interactive Workout Timer panel with start, pause, resume, reset, and log actions.
  */
 public class WorkoutTimerPanel extends ModernCard {
+    private static final long serialVersionUID = 1L;
     private final JLabel lblTime;
     private final ModernButton btnStartPause;
     private final ModernButton btnReset;

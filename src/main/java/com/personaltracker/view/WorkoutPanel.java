@@ -28,6 +28,7 @@ import java.util.List;
  * Workout Management view with search, filter, interactive timer, and exercise sets logging.
  */
 public class WorkoutPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final WorkoutDAO workoutDAO = new WorkoutDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
@@ -328,6 +329,7 @@ public class WorkoutPanel extends JPanel {
     // =========================================================================
 
     private class WorkoutDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
         private boolean saved = false;
         private final Workout editingWorkout;
 

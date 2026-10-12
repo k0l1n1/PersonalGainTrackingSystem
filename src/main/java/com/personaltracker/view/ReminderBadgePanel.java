@@ -24,6 +24,7 @@ import java.util.List;
  * Reminders management and Gamification Badges showcase.
  */
 public class ReminderBadgePanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final ReminderDAO reminderDAO = new ReminderDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
@@ -265,6 +266,7 @@ public class ReminderBadgePanel extends JPanel {
 
     // Modal Reminder Dialog
     private class ReminderDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
         private boolean saved = false;
 
         private final ModernTextField txtTitle = new ModernTextField("Evening Workout Session");

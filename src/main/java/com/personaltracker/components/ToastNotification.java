@@ -10,6 +10,7 @@ import java.awt.geom.RoundRectangle2D;
  * Toast notification banner for displaying non-blocking feedback messages.
  */
 public class ToastNotification extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     public enum ToastType {
         SUCCESS,

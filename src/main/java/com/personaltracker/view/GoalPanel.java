@@ -21,6 +21,7 @@ import java.util.List;
  * Fitness and Personal Goals management panel.
  */
 public class GoalPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final GoalDAO goalDAO = new GoalDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
@@ -312,6 +313,7 @@ public class GoalPanel extends JPanel {
 
     // Modal Goal Dialog
     private class GoalDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
         private boolean saved = false;
         private final Goal editing;
 

@@ -10,6 +10,7 @@ import java.awt.geom.RoundRectangle2D;
  * Modern progress bar with rounded corners and gradient fill.
  */
 public class ModernProgressBar extends JProgressBar {
+    private static final long serialVersionUID = 1L;
     private Color progressColor = ThemeConfig.PRIMARY_BLUE;
     private Color secondaryColor = ThemeConfig.ACCENT_CYAN;
     private int cornerRadius = 6;

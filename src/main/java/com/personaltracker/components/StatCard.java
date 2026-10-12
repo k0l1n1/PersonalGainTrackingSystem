@@ -10,6 +10,7 @@ import java.awt.*;
  * Metric summary card displaying title, big bold number, subtext, and an accent icon badge.
  */
 public class StatCard extends ModernCard {
+    private static final long serialVersionUID = 1L;
     private final JLabel lblTitle;
     private final JLabel lblValue;
     private final JLabel lblSubtitle;

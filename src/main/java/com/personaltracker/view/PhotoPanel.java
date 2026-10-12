@@ -25,6 +25,7 @@ import java.util.List;
  * Progress Photos management and gallery view.
  */
 public class PhotoPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final PhotoDAO photoDAO = new PhotoDAO();
     private final JPanel pnlGallery = new JPanel();
@@ -204,6 +205,7 @@ public class PhotoPanel extends JPanel {
 
     // Modal Upload Dialog
     private class UploadDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
         private boolean saved = false;
         private File selectedFile;
 

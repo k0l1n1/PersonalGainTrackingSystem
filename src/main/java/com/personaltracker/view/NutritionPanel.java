@@ -28,6 +28,7 @@ import java.util.List;
  * Nutrition and Calorie Tracking panel with macronutrient analysis.
  */
 public class NutritionPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final NutritionDAO nutritionDAO = new NutritionDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
@@ -365,7 +366,11 @@ public class NutritionPanel extends JPanel {
         updateMacroChart(totalProtein, totalCarbs, totalFat);
 
         if (entriesForDate.size() >= 3) {
-            achievementDAO.unlockAchievement("NUTRITION_TRACKER");
+            new Thread(() -> {
+                try {
+                    achievementDAO.unlockAchievement("NUTRITION_TRACKER");
+                } catch (Exception ignored) {}
+            }).start();
         }
     }
 
@@ -484,6 +489,7 @@ public class NutritionPanel extends JPanel {
 
     // Modal Add Food Dialog
     private class FoodDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
         private boolean saved = false;
 
         private final ModernTextField txtFood = new ModernTextField("Grilled Salmon Fillet");

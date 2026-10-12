@@ -24,6 +24,7 @@ import java.time.LocalDate;
  * User Profile and Supabase Connection Settings panel.
  */
 public class SettingsPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final ProfileDAO profileDAO = new ProfileDAO();
     private final SupabaseAuthService authService = SupabaseAuthService.getInstance();

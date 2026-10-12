@@ -16,6 +16,7 @@ import java.util.function.Consumer;
  * Modern fixed sidebar navigation panel.
  */
 public class SidebarPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     public enum NavItem {
         DASHBOARD("Dashboard", IconFactory.IconType.DASHBOARD),
@@ -183,6 +184,7 @@ public class SidebarPanel extends JPanel {
     }
 
     private class NavButton extends JPanel {
+        private static final long serialVersionUID = 1L;
         private final NavItem item;
         private boolean isActive = false;
         private boolean isHovered = false;

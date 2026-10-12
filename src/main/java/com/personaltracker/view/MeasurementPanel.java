@@ -34,6 +34,7 @@ import java.util.List;
  * Body Measurements and Weight progression tracking panel.
  */
 public class MeasurementPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final MeasurementDAO measurementDAO = new MeasurementDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
@@ -294,6 +295,7 @@ public class MeasurementPanel extends JPanel {
 
     // Modal Measurement Dialog
     private class MeasurementDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
         private boolean saved = false;
 
         private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString());

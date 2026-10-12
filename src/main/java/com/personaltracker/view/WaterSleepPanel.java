@@ -36,6 +36,7 @@ import java.util.List;
  * Water Hydration and Sleep Tracking panel.
  */
 public class WaterSleepPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final WaterDAO waterDAO = new WaterDAO();
     private final SleepDAO sleepDAO = new SleepDAO();
@@ -325,7 +326,11 @@ public class WaterSleepPanel extends JPanel {
         pnlWaterLogs.repaint();
 
         if (totalMl >= target) {
-            achievementDAO.unlockAchievement("HYDRATION_HERO");
+            new Thread(() -> {
+                try {
+                    achievementDAO.unlockAchievement("HYDRATION_HERO");
+                } catch (Exception ignored) {}
+            }).start();
         }
     }
 
@@ -431,6 +436,7 @@ public class WaterSleepPanel extends JPanel {
 
     // Modal Sleep Log Dialog
     private class SleepDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
         private boolean saved = false;
 
         private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString());

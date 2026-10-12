@@ -57,7 +57,7 @@ public class AchievementDAO {
         return result;
     }
 
-    public boolean unlockAchievement(String achievementId) throws Exception {
+    public boolean unlockAchievement(String achievementId) {
         String uid = client.getCurrentUserId();
         if (uid == null || achievementId == null) return false;
 

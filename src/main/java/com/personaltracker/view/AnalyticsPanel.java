@@ -27,6 +27,7 @@ import java.util.List;
  * Progress Analytics and CSV Reporting view with multiple JFreeChart visualizations.
  */
 public class AnalyticsPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final WorkoutDAO workoutDAO = new WorkoutDAO();
     private final MeasurementDAO measurementDAO = new MeasurementDAO();

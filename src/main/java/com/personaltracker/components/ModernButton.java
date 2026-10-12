@@ -12,6 +12,7 @@ import java.awt.geom.RoundRectangle2D;
  * Modern styled JButton with customizable styles, rounded corners, and hover states.
  */
 public class ModernButton extends JButton {
+    private static final long serialVersionUID = 1L;
 
     public enum ButtonStyle {
         PRIMARY,

@@ -11,6 +11,7 @@ import java.awt.*;
  * Root desktop frame with fixed sidebar and dynamic CardLayout view switcher.
  */
 public class MainFrame extends JFrame {
+    private static final long serialVersionUID = 1L;
 
     private final SidebarPanel sidebar;
     private final CardLayout cardLayout = new CardLayout();

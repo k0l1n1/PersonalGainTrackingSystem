@@ -38,6 +38,7 @@ import java.util.function.Consumer;
  * Main personalized Dashboard view with interactive metric cards, charts, and activity feeds.
  */
 public class DashboardPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final JLabel lblGreeting = new JLabel("Welcome back!");
     private final JLabel lblDate = new JLabel(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy")));
