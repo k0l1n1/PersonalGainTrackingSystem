@@ -115,19 +115,23 @@ public class ModernButton extends JButton {
         }
 
         // Draw background
-        if (style == ButtonStyle.GHOST) {
-            if (isHovered) {
-                g2.setColor(new Color(255, 255, 255, 20));
+        switch (style) {
+            case GHOST -> {
+                if (isHovered) {
+                    g2.setColor(new Color(255, 255, 255, 20));
+                    g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, cornerRadius, cornerRadius));
+                }
+            }
+            case SECONDARY -> {
+                g2.setColor(bg);
+                g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, cornerRadius, cornerRadius));
+                g2.setColor(ThemeConfig.BORDER_COLOR);
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, cornerRadius, cornerRadius));
+            }
+            default -> {
+                g2.setColor(bg);
                 g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, cornerRadius, cornerRadius));
             }
-        } else if (style == ButtonStyle.SECONDARY) {
-            g2.setColor(bg);
-            g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, cornerRadius, cornerRadius));
-            g2.setColor(ThemeConfig.BORDER_COLOR);
-            g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, cornerRadius, cornerRadius));
-        } else {
-            g2.setColor(bg);
-            g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, cornerRadius, cornerRadius));
         }
 
         setForeground(fg);
