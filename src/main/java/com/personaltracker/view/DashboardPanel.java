@@ -161,7 +161,7 @@ public class DashboardPanel extends JPanel {
         int hour = java.time.LocalTime.now().getHour();
         String timeGreeting = (hour < 12) ? "Good morning" : (hour < 17) ? "Good afternoon" : "Good evening";
         String rolePrefix = isTrainer ? "Coach " : "";
-        lblGreeting.setText(timeGreeting + ", " + rolePrefix + name + " 👋");
+        lblGreeting.setText(timeGreeting + ", " + rolePrefix + name);
 
         int quoteIndex = Math.abs(LocalDate.now().getDayOfYear()) % MOTIVATIONAL_FOCUS_LINES.length;
         lblFocusQuote.setText("“" + MOTIVATIONAL_FOCUS_LINES[quoteIndex] + "”");
@@ -205,7 +205,10 @@ public class DashboardPanel extends JPanel {
             if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.NUTRITION);
         });
 
-        ModernButton btnQuickWater = new ModernButton("💧 +250ml", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton btnQuickWater = new ModernButton("+250ml Water", ModernButton.ButtonStyle.SECONDARY);
+        btnQuickWater.setIcon(IconFactory.createIcon(IconFactory.IconType.WATER, 13, ThemeConfig.PRIMARY_BLUE));
+        btnQuickWater.setIconTextGap(6);
+        btnQuickWater.setHorizontalTextPosition(SwingConstants.RIGHT);
         btnQuickWater.addActionListener(e -> quickAddWater(250));
 
         ModernButton btnQuickGoal = new ModernButton("+ Goal", ModernButton.ButtonStyle.GHOST);
@@ -516,7 +519,7 @@ public class DashboardPanel extends JPanel {
         // 4. Streak
         int streak = HealthCalculator.calculateWorkoutStreak(workouts);
         cardStreak.setValue(streak + (streak == 1 ? " Day" : " Days"));
-        cardStreak.setSubtitle(streak >= 3 ? "🔥 You're on fire!" : "Log daily workouts to build a streak");
+        cardStreak.setSubtitle(streak >= 3 ? "Active daily workout streak!" : "Log daily workouts to build a streak");
 
         // 5. Weekly Workout Chart
         updateWorkoutChart(workouts);
@@ -785,7 +788,7 @@ public class DashboardPanel extends JPanel {
 
             @Override
             protected void done() {
-                ToastNotification.showToast(DashboardPanel.this, "💧 Logged +" + ml + "ml water intake", ToastNotification.ToastType.SUCCESS);
+                ToastNotification.showToast(DashboardPanel.this, "Logged +" + ml + "ml water intake", ToastNotification.ToastType.SUCCESS);
                 refreshDashboardData();
             }
         };

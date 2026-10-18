@@ -291,7 +291,7 @@ public class GoalPanel extends JPanel {
                     @Override
                     protected void done() {
                         if (goal.isCompleted()) {
-                            ToastNotification.showToast(GoalPanel.this, "🎯 Goal Completed! Incredible progress!", ToastNotification.ToastType.SUCCESS);
+                            ToastNotification.showToast(GoalPanel.this, "Goal Completed! Incredible progress!", ToastNotification.ToastType.SUCCESS);
                         } else {
                             ToastNotification.showToast(GoalPanel.this, "Goal progress updated!", ToastNotification.ToastType.SUCCESS);
                         }
@@ -380,10 +380,10 @@ public class GoalPanel extends JPanel {
 
                 JPanel presetRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
                 presetRow.setOpaque(false);
-                presetRow.add(createGoalPresetChip("⚖️ Weight Loss", "Reach Target Weight", "Weight", "kg", 70.0, 75.0, 60));
-                presetRow.add(createGoalPresetChip("🏋️ Bench 100kg", "Bench Press 100kg", "Strength", "kg", 100.0, 80.0, 90));
-                presetRow.add(createGoalPresetChip("🔥 20 Workouts", "Log 20 Workouts in a Month", "Workout Frequency", "workouts", 20.0, 0.0, 30));
-                presetRow.add(createGoalPresetChip("🏃 10K Run", "Run 10K Distance", "Endurance", "km", 10.0, 5.0, 60));
+                presetRow.add(createGoalPresetChip("Weight Loss", "Reach Target Weight", "Weight", "kg", 70.0, 75.0, 60));
+                presetRow.add(createGoalPresetChip("Bench 100kg", "Bench Press 100kg", "Strength", "kg", 100.0, 80.0, 90));
+                presetRow.add(createGoalPresetChip("20 Workouts", "Log 20 Workouts in a Month", "Workout Frequency", "workouts", 20.0, 0.0, 30));
+                presetRow.add(createGoalPresetChip("10K Run", "Run 10K Distance", "Endurance", "km", 10.0, 5.0, 60));
                 main.add(presetRow);
                 main.add(Box.createVerticalStrut(12));
             }

@@ -223,7 +223,10 @@ public class SettingsPanel extends JPanel {
         codeText.add(valUserCode);
         codeBanner.add(codeText, BorderLayout.CENTER);
 
-        JButton btnCopyCode = new JButton("📋 Copy Code");
+        JButton btnCopyCode = new JButton("Copy Code");
+        btnCopyCode.setIcon(IconFactory.createIcon(IconFactory.IconType.COPY, 13, Color.WHITE));
+        btnCopyCode.setIconTextGap(6);
+        btnCopyCode.setHorizontalTextPosition(SwingConstants.RIGHT);
         btnCopyCode.setFont(ThemeConfig.FONT_SMALL);
         btnCopyCode.setForeground(Color.WHITE);
         btnCopyCode.setBackground(ThemeConfig.BG_CARD);
@@ -237,14 +240,16 @@ public class SettingsPanel extends JPanel {
             String code = valUserCode.getText();
             java.awt.datatransfer.StringSelection selection = new java.awt.datatransfer.StringSelection(code);
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
-            ToastNotification.showToast(SettingsPanel.this, "Copied code: " + code + " to clipboard! 📋", ToastNotification.ToastType.SUCCESS);
+            ToastNotification.showToast(SettingsPanel.this, "Copied code: " + code + " to clipboard!", ToastNotification.ToastType.SUCCESS);
         });
         codeBanner.add(btnCopyCode, BorderLayout.EAST);
 
         card.add(codeBanner);
         card.add(Box.createVerticalStrut(10));
 
-        JLabel lblCodeHint = new JLabel("💡 Share this unique code with your trainer so they can monitor your progress in their roster.");
+        JLabel lblCodeHint = new JLabel("Share this unique code with your trainer so they can monitor your progress in their roster.");
+        lblCodeHint.setIcon(IconFactory.createIcon(IconFactory.IconType.INFO, 12, ThemeConfig.TEXT_MUTED));
+        lblCodeHint.setIconTextGap(6);
         lblCodeHint.setFont(ThemeConfig.FONT_SMALL);
         lblCodeHint.setForeground(ThemeConfig.TEXT_MUTED);
         card.add(lblCodeHint);
@@ -473,7 +478,7 @@ public class SettingsPanel extends JPanel {
                 valTargetWeight.setText("-- kg");
             }
 
-            String roleDisplay = profile.isTrainer() ? "🏋️ Personal Trainer" : "🏃 Member / Athlete";
+            String roleDisplay = profile.isTrainer() ? "Personal Trainer" : "Member / Athlete";
             valRole.setText(roleDisplay);
             valUserCode.setText(profile.getUserCode());
 
@@ -520,7 +525,7 @@ public class SettingsPanel extends JPanel {
                     double deltaRemaining = currentWeight - targetWeight;
 
                     if (Math.abs(deltaRemaining) < 0.2) {
-                        valGoalStatus.setText("🎯 Goal Achieved! Maintaining at " + String.format(Locale.US, "%.1f kg", currentWeight));
+                        valGoalStatus.setText("Goal Achieved! Maintaining at " + String.format(Locale.US, "%.1f kg", currentWeight));
                         barWeightProgress.setValue(100);
                         lblProgressPercent.setText("100% Completed");
                     } else if (totalDeltaToLose > 0.5) {
@@ -625,7 +630,7 @@ public class SettingsPanel extends JPanel {
         pnl.add(Box.createVerticalStrut(14));
 
         ModernTextField txtName = new ModernTextField(profile.getFullName());
-        JComboBox<String> cmbRole = new JComboBox<>(new String[]{"👤 Normal Member", "🏋️ Personal Trainer"});
+        JComboBox<String> cmbRole = new JComboBox<>(new String[]{"Normal Member", "Personal Trainer"});
         cmbRole.setSelectedIndex(profile.isTrainer() ? 1 : 0);
 
         JComboBox<String> cmbGen = new JComboBox<>(new String[]{"Male", "Female", "Non-Binary", "Other", "Prefer not to say"});
@@ -659,7 +664,7 @@ public class SettingsPanel extends JPanel {
         btnBar.add(btnCancel);
 
         final UserProfile targetProfile = profile;
-        ModernButton btnSave = new ModernButton("Save Profile 💾", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btnSave = new ModernButton("Save Profile", ModernButton.ButtonStyle.PRIMARY);
         btnSave.addActionListener(e -> {
             String nameVal = txtName.getText().trim();
             if (nameVal.isEmpty()) {

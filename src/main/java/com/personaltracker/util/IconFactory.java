@@ -33,7 +33,10 @@ public class IconFactory {
         TRASH,
         EDIT,
         REFRESH,
-        TIMER
+        TIMER,
+        COPY,
+        CLOSE,
+        INFO
     }
 
     public static Icon createIcon(IconType type, int size, Color color) {
@@ -256,6 +259,26 @@ public class IconFactory {
                     g2.drawLine((int)(s * 0.5f), (int)(s * 0.55f), (int)(s * 0.5f), (int)(s * 0.35f));
                     g2.drawLine((int)(s * 0.5f), (int)(s * 0.55f), (int)(s * 0.65f), (int)(s * 0.55f));
                     g2.drawLine((int)(s * 0.42f), (int)(s * 0.18f), (int)(s * 0.58f), (int)(s * 0.18f));
+                    break;
+
+                case COPY:
+                    // Back page outline
+                    g2.draw(new Line2D.Float(s * 0.36f, s * 0.16f, s * 0.82f, s * 0.16f));
+                    g2.draw(new Line2D.Float(s * 0.82f, s * 0.16f, s * 0.82f, s * 0.62f));
+                    // Front document
+                    g2.draw(new RoundRectangle2D.Float(s * 0.18f, s * 0.32f, s * 0.48f, s * 0.54f, 2, 2));
+                    break;
+
+                case CLOSE:
+                    float m = s * 0.25f;
+                    g2.draw(new Line2D.Float(m, m, s - m, s - m));
+                    g2.draw(new Line2D.Float(s - m, m, m, s - m));
+                    break;
+
+                case INFO:
+                    g2.draw(new Ellipse2D.Float(s * 0.15f, s * 0.15f, s * 0.7f, s * 0.7f));
+                    g2.fill(new Ellipse2D.Float(s * 0.45f, s * 0.28f, s * 0.1f, s * 0.1f));
+                    g2.drawLine((int)(s * 0.5f), (int)(s * 0.45f), (int)(s * 0.5f), (int)(s * 0.7f));
                     break;
             }
 

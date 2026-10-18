@@ -481,7 +481,7 @@ public class NutritionPanel extends JPanel {
         FoodDialog dialog = new FoodDialog(SwingUtilities.getWindowAncestor(this), editing, defaultMeal);
         dialog.setVisible(true);
         if (dialog.isSaved()) {
-            ToastNotification.showToast(this, editing == null ? "Meal logged successfully! 🥗" : "Meal updated.", ToastNotification.ToastType.SUCCESS);
+            ToastNotification.showToast(this, editing == null ? "Meal logged successfully!" : "Meal updated.", ToastNotification.ToastType.SUCCESS);
             loadNutrition();
         }
     }
@@ -539,10 +539,10 @@ public class NutritionPanel extends JPanel {
 
                 JPanel presetRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
                 presetRow.setOpaque(false);
-                presetRow.add(createFoodPresetChip("🍳 3 Eggs & Toast", "BREAKFAST", "3 eggs, 2 bread", 350, 24, 28, 16));
-                presetRow.add(createFoodPresetChip("🍗 Chicken & Rice", "LUNCH", "200g chicken, rice", 520, 45, 60, 10));
-                presetRow.add(createFoodPresetChip("🥤 Whey Shake", "SNACK", "1 scoop in water", 160, 30, 4, 2));
-                presetRow.add(createFoodPresetChip("🥩 Steak & Greens", "DINNER", "250g sirloin, salad", 480, 42, 6, 32));
+                presetRow.add(createFoodPresetChip("3 Eggs & Toast", "BREAKFAST", "3 eggs, 2 bread", 350, 24, 28, 16));
+                presetRow.add(createFoodPresetChip("Chicken & Rice", "LUNCH", "200g chicken, rice", 520, 45, 60, 10));
+                presetRow.add(createFoodPresetChip("Whey Shake", "SNACK", "1 scoop in water", 160, 30, 4, 2));
+                presetRow.add(createFoodPresetChip("Steak & Greens", "DINNER", "250g sirloin, salad", 480, 42, 6, 32));
                 main.add(presetRow);
                 main.add(Box.createVerticalStrut(12));
             }

@@ -247,7 +247,7 @@ public class WorkoutPanel extends JPanel {
         WorkoutDialog dialog = new WorkoutDialog(SwingUtilities.getWindowAncestor(this), null, initialMinutes);
         dialog.setVisible(true);
         if (dialog.isSaved()) {
-            ToastNotification.showToast(this, "Workout logged successfully! 💪", ToastNotification.ToastType.SUCCESS);
+            ToastNotification.showToast(this, "Workout logged successfully!", ToastNotification.ToastType.SUCCESS);
             loadWorkouts();
             checkWorkoutAchievements();
         }
@@ -376,11 +376,11 @@ public class WorkoutPanel extends JPanel {
 
                 JPanel tplRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
                 tplRow.setOpaque(false);
-                tplRow.add(createTemplateChip("🏋️ Push Day", "Push Day (Chest & Triceps)", "Strength", 50, new String[][]{{"Bench Press", "3", "10", "60.0"}, {"Incline Dumbbell Press", "3", "12", "20.0"}}));
-                tplRow.add(createTemplateChip("💪 Pull Day", "Pull Day (Back & Biceps)", "Strength", 50, new String[][]{{"Lat Pulldown", "3", "10", "55.0"}, {"Barbell Row", "3", "10", "50.0"}}));
-                tplRow.add(createTemplateChip("🦵 Leg Day", "Leg Day (Quads & Hamstrings)", "Strength", 50, new String[][]{{"Squats", "3", "8", "80.0"}, {"Leg Press", "3", "12", "120.0"}}));
-                tplRow.add(createTemplateChip("🏃 5K Run", "5K Outdoor Run", "Cardio", 30, null));
-                tplRow.add(createTemplateChip("🔥 HIIT", "Full Body HIIT", "HIIT", 25, null));
+                tplRow.add(createTemplateChip("Push Day", "Push Day (Chest & Triceps)", "Strength", 50, new String[][]{{"Bench Press", "3", "10", "60.0"}, {"Incline Dumbbell Press", "3", "12", "20.0"}}));
+                tplRow.add(createTemplateChip("Pull Day", "Pull Day (Back & Biceps)", "Strength", 50, new String[][]{{"Lat Pulldown", "3", "10", "55.0"}, {"Barbell Row", "3", "10", "50.0"}}));
+                tplRow.add(createTemplateChip("Leg Day", "Leg Day (Quads & Hamstrings)", "Strength", 50, new String[][]{{"Squats", "3", "8", "80.0"}, {"Leg Press", "3", "12", "120.0"}}));
+                tplRow.add(createTemplateChip("5K Run", "5K Outdoor Run", "Cardio", 30, null));
+                tplRow.add(createTemplateChip("HIIT Session", "Full Body HIIT", "HIIT", 25, null));
                 main.add(tplRow);
                 main.add(Box.createVerticalStrut(12));
             }

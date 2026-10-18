@@ -295,10 +295,10 @@ public class ReminderBadgePanel extends JPanel {
 
             JPanel presetRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
             presetRow.setOpaque(false);
-            presetRow.add(createReminderPresetChip("🏋️ Workout", "Workout Session", "Crush today's planned training", "18:00"));
-            presetRow.add(createReminderPresetChip("💧 Hydration", "Hydration Check", "Drink at least 500ml of water", "14:00"));
-            presetRow.add(createReminderPresetChip("🥗 Log Food", "Log Daily Nutrition", "Review daily calories and macros", "20:30"));
-            presetRow.add(createReminderPresetChip("😴 Sleep", "Bedtime Wind-down", "Screens off, prepare for sleep", "22:30"));
+            presetRow.add(createReminderPresetChip("Workout", "Workout Session", "Crush today's planned training", "18:00"));
+            presetRow.add(createReminderPresetChip("Hydration", "Hydration Check", "Drink at least 500ml of water", "14:00"));
+            presetRow.add(createReminderPresetChip("Log Food", "Log Daily Nutrition", "Review daily calories and macros", "20:30"));
+            presetRow.add(createReminderPresetChip("Sleep", "Bedtime Wind-down", "Screens off, prepare for sleep", "22:30"));
             main.add(presetRow);
             main.add(Box.createVerticalStrut(12));
 
@@ -350,10 +350,10 @@ public class ReminderBadgePanel extends JPanel {
 
             JPanel timeChips = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
             timeChips.setOpaque(false);
-            timeChips.add(createTimeChip("🌅 08:00", "08:00"));
-            timeChips.add(createTimeChip("☀️ 12:30", "12:30"));
-            timeChips.add(createTimeChip("🌆 18:00", "18:00"));
-            timeChips.add(createTimeChip("🌙 21:30", "21:30"));
+            timeChips.add(createTimeChip("Morning 08:00", "08:00"));
+            timeChips.add(createTimeChip("Noon 12:30", "12:30"));
+            timeChips.add(createTimeChip("Evening 18:00", "18:00"));
+            timeChips.add(createTimeChip("Night 21:30", "21:30"));
             txtTime.setPreferredSize(new Dimension(90, 30));
             timeChips.add(txtTime);
             timeSection.add(timeChips);

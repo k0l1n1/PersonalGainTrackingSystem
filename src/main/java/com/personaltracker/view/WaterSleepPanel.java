@@ -393,7 +393,7 @@ public class WaterSleepPanel extends JPanel {
 
             @Override
             protected void done() {
-                ToastNotification.showToast(WaterSleepPanel.this, "💧 Logged +" + ml + "ml water intake", ToastNotification.ToastType.SUCCESS);
+                ToastNotification.showToast(WaterSleepPanel.this, "Logged +" + ml + "ml water intake", ToastNotification.ToastType.SUCCESS);
                 loadData();
             }
         };
@@ -475,10 +475,10 @@ public class WaterSleepPanel extends JPanel {
 
             JPanel presetRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
             presetRow.setOpaque(false);
-            presetRow.add(createSleepScheduleChip("😴 23:00 - 07:00 (8h)", "23:00", "07:00", 5, "Felt deeply rested"));
-            presetRow.add(createSleepScheduleChip("🌙 23:30 - 07:30 (8h)", "23:30", "07:30", 4, "Good solid sleep"));
-            presetRow.add(createSleepScheduleChip("⚡ 00:00 - 07:00 (7h)", "00:00", "07:00", 4, "Normal night"));
-            presetRow.add(createSleepScheduleChip("🛌 22:30 - 06:30 (8h)", "22:30", "06:30", 5, "Early to bed, high energy"));
+            presetRow.add(createSleepScheduleChip("23:00 - 07:00 (8h)", "23:00", "07:00", 5, "Felt deeply rested"));
+            presetRow.add(createSleepScheduleChip("23:30 - 07:30 (8h)", "23:30", "07:30", 4, "Good solid sleep"));
+            presetRow.add(createSleepScheduleChip("00:00 - 07:00 (7h)", "00:00", "07:00", 4, "Normal night"));
+            presetRow.add(createSleepScheduleChip("22:30 - 06:30 (8h)", "22:30", "06:30", 5, "Early to bed, high energy"));
             main.add(presetRow);
             main.add(Box.createVerticalStrut(12));
 

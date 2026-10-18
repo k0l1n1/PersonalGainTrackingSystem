@@ -1,6 +1,7 @@
 package com.personaltracker.components;
 
 import com.personaltracker.config.ThemeConfig;
+import com.personaltracker.util.IconFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,30 +30,28 @@ public class ToastNotification extends JPanel {
         setLayout(new BorderLayout(10, 0));
         setBorder(BorderFactory.createEmptyBorder(9, 18, 9, 18));
 
-        String iconText;
+        Icon vectorIcon;
         Color accentColor;
         switch (type) {
             case SUCCESS -> {
-                iconText = "✓";
                 accentColor = ThemeConfig.SUCCESS;
+                vectorIcon = IconFactory.createIcon(IconFactory.IconType.CHECK, 13, accentColor);
             }
             case ERROR -> {
-                iconText = "✕";
                 accentColor = ThemeConfig.ERROR;
+                vectorIcon = IconFactory.createIcon(IconFactory.IconType.CLOSE, 11, accentColor);
             }
             case INFO -> {
-                iconText = "●";
                 accentColor = ThemeConfig.PRIMARY_ACCENT;
+                vectorIcon = IconFactory.createIcon(IconFactory.IconType.INFO, 13, accentColor);
             }
             default -> {
-                iconText = "●";
                 accentColor = ThemeConfig.PRIMARY_ACCENT;
+                vectorIcon = IconFactory.createIcon(IconFactory.IconType.INFO, 13, accentColor);
             }
         }
 
-        lblIcon = new JLabel(iconText);
-        lblIcon.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblIcon.setForeground(accentColor);
+        lblIcon = new JLabel(vectorIcon);
         add(lblIcon, BorderLayout.WEST);
 
         lblMessage = new JLabel(message);

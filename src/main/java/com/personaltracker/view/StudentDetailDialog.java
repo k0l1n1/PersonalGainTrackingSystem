@@ -48,10 +48,10 @@ public class StudentDetailDialog extends JDialog {
         tabbedPane.setBackground(ThemeConfig.BG_DARK);
         tabbedPane.setForeground(ThemeConfig.TEXT_PRIMARY);
 
-        tabbedPane.addTab("🏋️ Workouts (" + detail.getWorkouts().size() + ")", createWorkoutsTab());
-        tabbedPane.addTab("🎯 Fitness Goals (" + detail.getGoals().size() + ")", createGoalsTab());
-        tabbedPane.addTab("⚖️ Weight & Measurements (" + detail.getMeasurements().size() + ")", createMeasurementsTab());
-        tabbedPane.addTab("🥗 Nutrition Entries (" + detail.getNutritionEntries().size() + ")", createNutritionTab());
+        tabbedPane.addTab("Workouts (" + detail.getWorkouts().size() + ")", IconFactory.createIcon(IconFactory.IconType.WORKOUT, 14, ThemeConfig.PRIMARY_ACCENT), createWorkoutsTab());
+        tabbedPane.addTab("Fitness Goals (" + detail.getGoals().size() + ")", IconFactory.createIcon(IconFactory.IconType.GOAL, 14, ThemeConfig.PRIMARY_ACCENT), createGoalsTab());
+        tabbedPane.addTab("Weight & Measurements (" + detail.getMeasurements().size() + ")", IconFactory.createIcon(IconFactory.IconType.MEASUREMENT, 14, ThemeConfig.PRIMARY_ACCENT), createMeasurementsTab());
+        tabbedPane.addTab("Nutrition Entries (" + detail.getNutritionEntries().size() + ")", IconFactory.createIcon(IconFactory.IconType.NUTRITION, 14, ThemeConfig.PRIMARY_ACCENT), createNutritionTab());
 
         add(tabbedPane, BorderLayout.CENTER);
 

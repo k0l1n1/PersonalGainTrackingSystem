@@ -30,8 +30,8 @@ public class AuthDialog extends JDialog {
     private String selectedRole = com.personaltracker.model.UserProfile.ROLE_MEMBER;
     private final JLabel lblRoleTag = new JLabel("Account Type");
     private final JPanel pnlRoleSelector = new JPanel(new GridLayout(1, 2, 8, 0));
-    private final JButton btnRoleMember = new JButton("👤 Normal Member");
-    private final JButton btnRoleTrainer = new JButton("🏋️ Trainer / Coach");
+    private final JButton btnRoleMember = new JButton("Normal Member");
+    private final JButton btnRoleTrainer = new JButton("Trainer / Coach");
 
     private final JLabel lblError = new JLabel("");
     private final JLabel lblStatus = new JLabel("");
@@ -108,6 +108,7 @@ public class AuthDialog extends JDialog {
         btnRoleMember.setFont(ThemeConfig.FONT_SMALL);
         btnRoleMember.setFocusPainted(false);
         btnRoleMember.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRoleMember.setIconTextGap(8);
         btnRoleMember.addActionListener(e -> {
             selectedRole = com.personaltracker.model.UserProfile.ROLE_MEMBER;
             updateRoleButtonStyles();
@@ -116,6 +117,7 @@ public class AuthDialog extends JDialog {
         btnRoleTrainer.setFont(ThemeConfig.FONT_SMALL);
         btnRoleTrainer.setFocusPainted(false);
         btnRoleTrainer.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRoleTrainer.setIconTextGap(8);
         btnRoleTrainer.addActionListener(e -> {
             selectedRole = com.personaltracker.model.UserProfile.ROLE_TRAINER;
             updateRoleButtonStyles();
@@ -221,6 +223,7 @@ public class AuthDialog extends JDialog {
 
     private void updateRoleButtonStyles() {
         boolean isMember = com.personaltracker.model.UserProfile.ROLE_MEMBER.equalsIgnoreCase(selectedRole);
+        btnRoleMember.setIcon(IconFactory.createIcon(IconFactory.IconType.USER, 14, isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY));
         btnRoleMember.setBackground(isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
         btnRoleMember.setForeground(isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
         btnRoleMember.setBorder(BorderFactory.createCompoundBorder(
@@ -228,6 +231,7 @@ public class AuthDialog extends JDialog {
                 BorderFactory.createEmptyBorder(6, 8, 6, 8)
         ));
 
+        btnRoleTrainer.setIcon(IconFactory.createIcon(IconFactory.IconType.STUDENTS, 14, !isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY));
         btnRoleTrainer.setBackground(!isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
         btnRoleTrainer.setForeground(!isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
         btnRoleTrainer.setBorder(BorderFactory.createCompoundBorder(

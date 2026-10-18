@@ -111,7 +111,9 @@ public class TrainerPanel extends JPanel {
         btnRefresh.addActionListener(e -> loadData());
         btnBar.add(btnRefresh);
 
-        ModernButton btnEnroll = new ModernButton("➕ Enroll Student by Code", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btnEnroll = new ModernButton("Enroll Student by Code", ModernButton.ButtonStyle.PRIMARY);
+        btnEnroll.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 13, Color.WHITE));
+        btnEnroll.setIconTextGap(6);
         btnEnroll.setPreferredSize(new Dimension(210, 38));
         btnEnroll.addActionListener(e -> openEnrollStudentDialog());
         btnBar.add(btnEnroll);
@@ -218,14 +220,18 @@ public class TrainerPanel extends JPanel {
             emptyCard.add(desc);
             emptyCard.add(Box.createVerticalStrut(10));
 
-            JLabel hint = new JLabel("💡 Quick Demo: You can enroll pre-seeded students using code PG-SARAH7 or PG-MARCUS.");
+            JLabel hint = new JLabel("Quick Demo: You can enroll pre-seeded students using code PG-SARAH7 or PG-MARCUS.");
+            hint.setIcon(IconFactory.createIcon(IconFactory.IconType.INFO, 12, ThemeConfig.PRIMARY_ACCENT));
+            hint.setIconTextGap(6);
             hint.setFont(ThemeConfig.FONT_SMALL);
             hint.setForeground(ThemeConfig.PRIMARY_ACCENT);
             hint.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyCard.add(hint);
             emptyCard.add(Box.createVerticalStrut(16));
 
-            ModernButton btnAddNow = new ModernButton("➕ Enroll Student Now", ModernButton.ButtonStyle.PRIMARY);
+            ModernButton btnAddNow = new ModernButton("Enroll Student Now", ModernButton.ButtonStyle.PRIMARY);
+            btnAddNow.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 13, Color.WHITE));
+            btnAddNow.setIconTextGap(6);
             btnAddNow.setAlignmentX(Component.CENTER_ALIGNMENT);
             btnAddNow.setPreferredSize(new Dimension(180, 36));
             btnAddNow.addActionListener(e -> openEnrollStudentDialog());
@@ -421,7 +427,7 @@ public class TrainerPanel extends JPanel {
         btnCancel.addActionListener(e -> dlg.dispose());
         btnBar.add(btnCancel);
 
-        ModernButton btnAdd = new ModernButton("Enroll Student 🚀", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btnAdd = new ModernButton("Enroll Student", ModernButton.ButtonStyle.PRIMARY);
         btnAdd.addActionListener(e -> {
             String code = txtCode.getText().trim();
             if (code.isEmpty()) {
@@ -441,11 +447,11 @@ public class TrainerPanel extends JPanel {
                 @Override
                 protected void done() {
                     btnAdd.setEnabled(true);
-                    btnAdd.setText("Enroll Student 🚀");
+                    btnAdd.setText("Enroll Student");
                     try {
                         TrainerStudent ts = get();
                         dlg.dispose();
-                        ToastNotification.showToast(TrainerPanel.this, "Successfully enrolled " + (ts.getStudentProfile() != null ? ts.getStudentProfile().getDisplayName() : "student") + "! 🎉", ToastNotification.ToastType.SUCCESS);
+                        ToastNotification.showToast(TrainerPanel.this, "Successfully enrolled " + (ts.getStudentProfile() != null ? ts.getStudentProfile().getDisplayName() : "student") + "!", ToastNotification.ToastType.SUCCESS);
                         loadData();
                     } catch (Exception ex) {
                         String msg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();

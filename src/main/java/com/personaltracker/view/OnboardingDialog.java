@@ -55,10 +55,10 @@ public class OnboardingDialog extends JDialog {
     private final JPanel pnlRolePills = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
 
     // Live feedback indicators
-    private final JLabel lblLiveBmi = new JLabel("⚡ Initial BMI: --");
-    private final JLabel lblTargetGap = new JLabel("🎯 Goal Delta: --");
+    private final JLabel lblLiveBmi = new JLabel("Initial BMI: --");
+    private final JLabel lblTargetGap = new JLabel("Goal Delta: --");
     private final JLabel lblError = new JLabel("");
-    private final ModernButton btnComplete = new ModernButton("Complete Setup & Enter Dashboard 🚀", ModernButton.ButtonStyle.PRIMARY);
+    private final ModernButton btnComplete = new ModernButton("Complete Setup & Enter Dashboard", ModernButton.ButtonStyle.PRIMARY);
 
     /**
      * Checks if the given profile needs initial onboarding.
@@ -309,8 +309,8 @@ public class OnboardingDialog extends JDialog {
     private void refreshRolePills() {
         pnlRolePills.removeAll();
         String[][] roles = {
-            {com.personaltracker.model.UserProfile.ROLE_MEMBER, "👤 Normal Member (Workout & Health)"},
-            {com.personaltracker.model.UserProfile.ROLE_TRAINER, "🏋️ Personal Trainer (Manage Students)"}
+            {com.personaltracker.model.UserProfile.ROLE_MEMBER, "Normal Member (Workout & Health)"},
+            {com.personaltracker.model.UserProfile.ROLE_TRAINER, "Personal Trainer (Manage Students)"}
         };
         for (String[] r : roles) {
             String roleVal = r[0];
@@ -318,6 +318,12 @@ public class OnboardingDialog extends JDialog {
             boolean isSelected = roleVal.equalsIgnoreCase(selectedRole);
             JButton pill = new JButton(roleLabel);
             pill.setFont(ThemeConfig.FONT_SMALL);
+            if (roleVal.equalsIgnoreCase(UserProfile.ROLE_MEMBER)) {
+                pill.setIcon(IconFactory.createIcon(IconFactory.IconType.USER, 13, isSelected ? Color.WHITE : ThemeConfig.TEXT_SECONDARY));
+            } else {
+                pill.setIcon(IconFactory.createIcon(IconFactory.IconType.STUDENTS, 13, isSelected ? Color.WHITE : ThemeConfig.TEXT_SECONDARY));
+            }
+            pill.setIconTextGap(6);
             pill.setForeground(isSelected ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
             pill.setBackground(isSelected ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_DARK);
             pill.setBorder(BorderFactory.createCompoundBorder(
@@ -405,9 +411,9 @@ public class OnboardingDialog extends JDialog {
         // Quick goal presets (Cut -5kg, Maintain, Bulk +5kg)
         JPanel goalPresets = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         goalPresets.setOpaque(false);
-        goalPresets.add(createGoalPresetButton("🔥 -5kg Cut", -5.0));
-        goalPresets.add(createGoalPresetButton("⚖️ Maintain", 0.0));
-        goalPresets.add(createGoalPresetButton("💪 +5kg Bulk", +5.0));
+        goalPresets.add(createGoalPresetButton("-5kg Cut", -5.0));
+        goalPresets.add(createGoalPresetButton("Maintain", 0.0));
+        goalPresets.add(createGoalPresetButton("+5kg Bulk", +5.0));
         card.add(goalPresets);
         card.add(Box.createVerticalStrut(10));
 
@@ -464,9 +470,9 @@ public class OnboardingDialog extends JDialog {
 
         JPanel focusRow = new JPanel(new GridLayout(1, 3, 8, 0));
         focusRow.setOpaque(false);
-        focusRow.add(createFocusButton("🔥 Fat Loss", 1850, 3000));
-        focusRow.add(createFocusButton("⚖️ Maintain", 2200, 2500));
-        focusRow.add(createFocusButton("💪 Muscle Gain", 2700, 3200));
+        focusRow.add(createFocusButton("Fat Loss", 1850, 3000));
+        focusRow.add(createFocusButton("Maintain", 2200, 2500));
+        focusRow.add(createFocusButton("Muscle Gain", 2700, 3200));
         card.add(focusRow);
         card.add(Box.createVerticalStrut(12));
 
@@ -637,22 +643,22 @@ public class OnboardingDialog extends JDialog {
             if (h > 50 && w > 20) {
                 double bmi = HealthCalculator.calculateBmi(w, h);
                 String category = HealthCalculator.getBmiCategory(bmi);
-                lblLiveBmi.setText(String.format(Locale.US, "⚡ BMI: %.1f (%s)", bmi, category));
+                lblLiveBmi.setText(String.format(Locale.US, "BMI: %.1f (%s)", bmi, category));
             } else {
-                lblLiveBmi.setText("⚡ Initial BMI: --");
+                lblLiveBmi.setText("Initial BMI: --");
             }
 
             if (w > 20 && tw > 20) {
                 double diff = tw - w;
                 String direction = diff > 0.05 ? String.format(Locale.US, "+%.1f kg (Bulk)", diff) :
                                    diff < -0.05 ? String.format(Locale.US, "%.1f kg (Cut)", diff) : "Maintain";
-                lblTargetGap.setText("🎯 Goal: " + direction);
+                lblTargetGap.setText("Goal: " + direction);
             } else {
-                lblTargetGap.setText("🎯 Goal Delta: --");
+                lblTargetGap.setText("Goal Delta: --");
             }
         } catch (Exception e) {
-            lblLiveBmi.setText("⚡ Initial BMI: --");
-            lblTargetGap.setText("🎯 Goal Delta: --");
+            lblLiveBmi.setText("Initial BMI: --");
+            lblTargetGap.setText("Goal Delta: --");
         }
     }
 
@@ -773,7 +779,7 @@ public class OnboardingDialog extends JDialog {
             @Override
             protected void done() {
                 btnComplete.setEnabled(true);
-                btnComplete.setText("Complete Setup & Enter Dashboard 🚀");
+                btnComplete.setText("Complete Setup & Enter Dashboard");
                 try {
                     get();
                     // Successfully saved, update in session
