@@ -3,6 +3,7 @@ package com.personaltracker.view;
 import com.personaltracker.components.ModernButton;
 import com.personaltracker.components.ModernCard;
 import com.personaltracker.components.ModernPasswordField;
+import com.personaltracker.components.ModernProgressBar;
 import com.personaltracker.components.ModernTextField;
 import com.personaltracker.components.ToastNotification;
 import com.personaltracker.config.AppConfig;
@@ -19,8 +20,6 @@ import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.time.LocalDate;
@@ -29,9 +28,10 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Enhanced Profile & System Settings View.
- * Provides a rich athlete profile summary, real-time metabolic insights (BMR, TDEE, BMI),
- * customizable targets with macro blueprints, and cloud infrastructure management.
+ * Personal Profile & Tracking Dashboard.
+ * Non-editable tracking scene that displays personal health parameters,
+ * journey progress, clinical metabolic calculations, and provides an option
+ * to edit profile details in a clean dedicated dialog.
  */
 public class SettingsPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -41,49 +41,39 @@ public class SettingsPanel extends JPanel {
     private final SupabaseAuthService authService = SupabaseAuthService.getInstance();
     private final AppConfig config = AppConfig.getInstance();
 
-    // Profile Inputs
-    private final ModernTextField txtFullName = new ModernTextField();
-    private final ModernTextField txtBirthDate = new ModernTextField();
-    private final ModernTextField txtHeight = new ModernTextField();
-    private final ModernTextField txtTargetWeight = new ModernTextField();
-    private final ModernTextField txtCalorieTarget = new ModernTextField();
-    private final ModernTextField txtWaterTarget = new ModernTextField();
-
-    // Gender selection state
-    private String selectedGender = "Male";
-    private final JPanel pnlGenderPills = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-
     // Hero Banner Elements
     private final JLabel lblAvatarInitials = new JLabel("AH", SwingConstants.CENTER);
     private final JLabel lblHeroName = new JLabel("Alex Hunter");
     private final JLabel lblHeroEmail = new JLabel("athlete@demo.com");
-    private final JLabel lblHeroMeta = new JLabel("Athlete • Active Session");
-    private final JLabel lblHeroBmiChip = new JLabel("BMI: --");
-    private final JLabel lblHeroBmrChip = new JLabel("BMR: --");
-    private final JLabel lblHeroWeightChip = new JLabel("Goal: --");
-    private final JLabel lblHeroFuelChip = new JLabel("Fuel: --");
+    private final JLabel lblHeroMeta = new JLabel("Athlete • Active Profile");
+    private final JLabel lblStatusBadge = new JLabel("● Online", SwingConstants.CENTER);
 
-    // Dynamic Metabolic & Health Insight Labels
-    private final JLabel lblAgeInsight = new JLabel("Age: --");
-    private final JLabel lblBmiInsight = new JLabel("BMI: --");
-    private final JLabel lblBmrInsight = new JLabel("BMR: -- kcal / day");
-    private final JLabel lblTdeeInsight = new JLabel("TDEE: -- kcal / day");
-    private final JLabel lblHealthyRange = new JLabel("Ideal Weight: --");
+    // Personal Info Display Labels (Clean, non-editable)
+    private final JLabel valFullName = new JLabel("--");
+    private final JLabel valEmail = new JLabel("--");
+    private final JLabel valGender = new JLabel("--");
+    private final JLabel valBirthDate = new JLabel("--");
+    private final JLabel valAge = new JLabel("--");
+    private final JLabel valHeight = new JLabel("--");
 
-    // Dynamic Macro Blueprint Labels
-    private final JLabel lblMacroProtein = new JLabel("Protein: -- g (30%)");
-    private final JLabel lblMacroCarbs = new JLabel("Carbs: -- g (40%)");
-    private final JLabel lblMacroFat = new JLabel("Fat: -- g (30%)");
-    private final JProgressBar barMacroProtein = new JProgressBar(0, 100);
-    private final JProgressBar barMacroCarbs = new JProgressBar(0, 100);
-    private final JProgressBar barMacroFat = new JProgressBar(0, 100);
+    // Weight Journey Tracking Labels
+    private final JLabel valStartingWeight = new JLabel("-- kg");
+    private final JLabel valCurrentWeight = new JLabel("-- kg");
+    private final JLabel valTargetWeight = new JLabel("-- kg");
+    private final JLabel valGoalStatus = new JLabel("Goal: --");
+    private final ModernProgressBar barWeightProgress = new ModernProgressBar(0, 100);
+    private final JLabel lblProgressPercent = new JLabel("0% Completed");
 
-    // Supabase Cloud Form
-    private final JLabel lblConnectionStatus = new JLabel();
-    private final ModernTextField txtSupabaseUrl = new ModernTextField();
-    private final ModernPasswordField txtAnonKey = new ModernPasswordField("••••••••");
+    // Metabolic & Clinical Health Labels
+    private final JLabel valBmi = new JLabel("--");
+    private final JLabel valBmr = new JLabel("-- kcal / day");
+    private final JLabel valTdee = new JLabel("-- kcal / day");
+    private final JLabel valIdealRange = new JLabel("-- kg");
 
-    private double latestLoggedWeight = 75.0;
+    // Cloud Connection Info
+    private final JLabel lblConnectionStatus = new JLabel("● Checking status...");
+    private final JLabel lblProjectUrl = new JLabel("https://xyz.supabase.co");
+
     private Runnable onProfileUpdatedCallback;
 
     public SettingsPanel() {
@@ -93,39 +83,35 @@ public class SettingsPanel extends JPanel {
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
-        content.setBorder(BorderFactory.createEmptyBorder(20, 26, 26, 26));
+        content.setBorder(BorderFactory.createEmptyBorder(20, 28, 28, 28));
 
-        // 1. Hero Athlete Profile Header
-        content.add(createHeroProfileBanner());
+        // 1. Hero Athlete Header Card with Edit Button
+        content.add(createHeroBanner());
         content.add(Box.createVerticalStrut(20));
 
-        // 2. Main Two-Column Grid
+        // 2. Main Two-Column Tracking Grid
         JPanel grid = new JPanel(new GridLayout(1, 2, 20, 0));
         grid.setOpaque(false);
 
-        // Left Column: Personal Identity & Metabolic Insights
+        // Left Column: Personal Identity & Weight Journey Tracker
         JPanel leftCol = new JPanel();
         leftCol.setLayout(new BoxLayout(leftCol, BoxLayout.Y_AXIS));
         leftCol.setOpaque(false);
-        leftCol.add(createIdentityCard());
+        leftCol.add(createPersonalInfoCard());
         leftCol.add(Box.createVerticalStrut(16));
-        leftCol.add(createMetabolicInsightsCard());
+        leftCol.add(createWeightJourneyCard());
         grid.add(leftCol);
 
-        // Right Column: Nutritional Blueprint & Cloud Infrastructure
+        // Right Column: Clinical Metabolic Health & Cloud Backend
         JPanel rightCol = new JPanel();
         rightCol.setLayout(new BoxLayout(rightCol, BoxLayout.Y_AXIS));
         rightCol.setOpaque(false);
-        rightCol.add(createTargetsAndMacrosCard());
+        rightCol.add(createMetabolicHealthCard());
         rightCol.add(Box.createVerticalStrut(16));
-        rightCol.add(createCloudBackendCard());
+        rightCol.add(createCloudInfrastructureCard());
         grid.add(rightCol);
 
         content.add(grid);
-        content.add(Box.createVerticalStrut(20));
-
-        // 3. Bottom Action Bar
-        content.add(createBottomActionBar());
 
         JScrollPane scrollPane = new JScrollPane(content);
         scrollPane.setBorder(null);
@@ -133,9 +119,6 @@ public class SettingsPanel extends JPanel {
         scrollPane.getViewport().setOpaque(false);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
-
-        // Wire calculation listeners
-        attachCalculationListeners();
     }
 
     public void setOnProfileUpdatedCallback(Runnable callback) {
@@ -143,44 +126,42 @@ public class SettingsPanel extends JPanel {
     }
 
     // =========================================================================
-    // UI BUILDERS
+    // UI BUILDERS (NON-EDITABLE TRACKING SCENE)
     // =========================================================================
 
-    private JPanel createHeroProfileBanner() {
-        ModernCard heroCard = new ModernCard(16, new Insets(18, 22, 18, 22));
+    private JPanel createHeroBanner() {
+        ModernCard heroCard = new ModernCard(16, new Insets(18, 24, 18, 24));
 
         JPanel banner = new JPanel(new BorderLayout(18, 0));
         banner.setOpaque(false);
 
-        // Avatar circle
+        // Avatar ring with initials
         JPanel avatarPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Background circle
                 g2.setColor(new Color(36, 36, 36));
-                g2.fill(new Ellipse2D.Float(0, 0, 64, 64));
-                // Accent border ring
+                g2.fill(new Ellipse2D.Float(0, 0, 68, 68));
                 g2.setColor(ThemeConfig.PRIMARY_ACCENT);
-                g2.setStroke(new BasicStroke(2.5f));
-                g2.draw(new Ellipse2D.Float(1.5f, 1.5f, 61, 61));
+                g2.setStroke(new BasicStroke(2.8f));
+                g2.draw(new Ellipse2D.Float(2, 2, 64, 64));
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-        avatarPanel.setPreferredSize(new Dimension(64, 64));
+        avatarPanel.setPreferredSize(new Dimension(68, 68));
         avatarPanel.setOpaque(false);
         avatarPanel.setLayout(new BorderLayout());
 
-        lblAvatarInitials.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblAvatarInitials.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblAvatarInitials.setForeground(Color.WHITE);
         avatarPanel.add(lblAvatarInitials, BorderLayout.CENTER);
         banner.add(avatarPanel, BorderLayout.WEST);
 
-        // User Identity Details
-        JPanel idPanel = new JPanel(new GridLayout(3, 1, 0, 3));
-        idPanel.setOpaque(false);
+        // Center: Name & Metadata
+        JPanel namePanel = new JPanel(new GridLayout(3, 1, 0, 2));
+        namePanel.setOpaque(false);
 
         lblHeroName.setFont(ThemeConfig.FONT_TITLE_LARGE);
         lblHeroName.setForeground(ThemeConfig.TEXT_PRIMARY);
@@ -191,493 +172,358 @@ public class SettingsPanel extends JPanel {
         lblHeroMeta.setFont(ThemeConfig.FONT_SMALL);
         lblHeroMeta.setForeground(ThemeConfig.PRIMARY_ACCENT);
 
-        idPanel.add(lblHeroName);
-        idPanel.add(lblHeroEmail);
-        idPanel.add(lblHeroMeta);
-        banner.add(idPanel, BorderLayout.CENTER);
+        namePanel.add(lblHeroName);
+        namePanel.add(lblHeroEmail);
+        namePanel.add(lblHeroMeta);
+        banner.add(namePanel, BorderLayout.CENTER);
 
-        // Quick Snapshot Badges (Right)
-        JPanel statsBadgeGrid = new JPanel(new GridLayout(2, 2, 8, 8));
-        statsBadgeGrid.setOpaque(false);
+        // Right: Edit Profile Action Button
+        JPanel actionBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 14));
+        actionBox.setOpaque(false);
 
-        statsBadgeGrid.add(createMiniStatChip("BMI Status", lblHeroBmiChip, ThemeConfig.PRIMARY_ACCENT));
-        statsBadgeGrid.add(createMiniStatChip("Resting BMR", lblHeroBmrChip, ThemeConfig.PRIMARY_BLUE));
-        statsBadgeGrid.add(createMiniStatChip("Target Weight", lblHeroWeightChip, ThemeConfig.SUCCESS_EMERALD));
-        statsBadgeGrid.add(createMiniStatChip("Daily Target", lblHeroFuelChip, ThemeConfig.WARNING_AMBER));
+        ModernButton btnEditProfile = new ModernButton("✏️ Edit Profile Info", ModernButton.ButtonStyle.PRIMARY);
+        btnEditProfile.setPreferredSize(new Dimension(180, 40));
+        btnEditProfile.addActionListener(e -> openEditProfileDialog());
+        actionBox.add(btnEditProfile);
 
-        banner.add(statsBadgeGrid, BorderLayout.EAST);
+        banner.add(actionBox, BorderLayout.EAST);
         heroCard.add(banner, BorderLayout.CENTER);
         return heroCard;
     }
 
-    private JPanel createMiniStatChip(String title, JLabel valueLbl, Color accentColor) {
-        JPanel chip = new JPanel(new GridLayout(2, 1, 0, 2));
-        chip.setBackground(ThemeConfig.BG_DARK);
-        chip.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                BorderFactory.createEmptyBorder(6, 12, 6, 12)
-        ));
-
-        JLabel tLbl = new JLabel(title.toUpperCase());
-        tLbl.setFont(new Font("Segoe UI", Font.BOLD, 9));
-        tLbl.setForeground(ThemeConfig.TEXT_MUTED);
-
-        valueLbl.setFont(ThemeConfig.FONT_BODY_BOLD);
-        valueLbl.setForeground(accentColor);
-
-        chip.add(tLbl);
-        chip.add(valueLbl);
-        return chip;
-    }
-
-    private JPanel createIdentityCard() {
+    private JPanel createPersonalInfoCard() {
         ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        JLabel title = new JLabel("1. Personal & Physical Parameters");
+        JLabel title = new JLabel("Personal Information");
         title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         card.add(title);
         card.add(Box.createVerticalStrut(14));
 
-        // Full Name
-        card.add(createFieldHeader("Full Name"));
-        card.add(Box.createVerticalStrut(4));
-        card.add(txtFullName);
-        card.add(Box.createVerticalStrut(12));
+        JPanel grid = new JPanel(new GridLayout(3, 2, 14, 14));
+        grid.setOpaque(false);
 
-        // Gender Pills
-        card.add(createFieldHeader("Gender"));
-        card.add(Box.createVerticalStrut(4));
-        pnlGenderPills.setOpaque(false);
-        refreshGenderPills();
-        card.add(pnlGenderPills);
-        card.add(Box.createVerticalStrut(12));
+        grid.add(createInfoTile("FULL NAME", valFullName, ThemeConfig.TEXT_PRIMARY));
+        grid.add(createInfoTile("EMAIL ADDRESS", valEmail, ThemeConfig.PRIMARY_BLUE));
+        grid.add(createInfoTile("GENDER", valGender, ThemeConfig.TEXT_PRIMARY));
+        grid.add(createInfoTile("DATE OF BIRTH", valBirthDate, ThemeConfig.TEXT_SECONDARY));
+        grid.add(createInfoTile("CURRENT AGE", valAge, ThemeConfig.PRIMARY_ACCENT));
+        grid.add(createInfoTile("RECORDED HEIGHT", valHeight, ThemeConfig.SUCCESS_EMERALD));
 
-        // Date of Birth & Live Age Pill
-        JPanel dobHeader = new JPanel(new BorderLayout());
-        dobHeader.setOpaque(false);
-        dobHeader.add(createFieldHeader("Date of Birth (YYYY-MM-DD)"), BorderLayout.WEST);
-        lblAgeInsight.setFont(ThemeConfig.FONT_SMALL);
-        lblAgeInsight.setForeground(ThemeConfig.PRIMARY_BLUE);
-        dobHeader.add(lblAgeInsight, BorderLayout.EAST);
-        card.add(dobHeader);
-        card.add(Box.createVerticalStrut(4));
-        card.add(txtBirthDate);
-        card.add(Box.createVerticalStrut(12));
-
-        // Height & Target Weight Row
-        JPanel hwGrid = new JPanel(new GridLayout(1, 2, 12, 0));
-        hwGrid.setOpaque(false);
-
-        // Height with steppers
-        JPanel pnlH = new JPanel();
-        pnlH.setLayout(new BoxLayout(pnlH, BoxLayout.Y_AXIS));
-        pnlH.setOpaque(false);
-
-        JPanel hHead = new JPanel(new BorderLayout());
-        hHead.setOpaque(false);
-        hHead.add(createFieldHeader("Height (cm)"), BorderLayout.WEST);
-        JPanel hSteps = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
-        hSteps.setOpaque(false);
-        hSteps.add(createStepper("-5", () -> adjustDoubleField(txtHeight, -5.0)));
-        hSteps.add(createStepper("+5", () -> adjustDoubleField(txtHeight, +5.0)));
-        hHead.add(hSteps, BorderLayout.EAST);
-
-        pnlH.add(hHead);
-        pnlH.add(Box.createVerticalStrut(4));
-        pnlH.add(txtHeight);
-        hwGrid.add(pnlH);
-
-        // Target Weight with steppers
-        JPanel pnlW = new JPanel();
-        pnlW.setLayout(new BoxLayout(pnlW, BoxLayout.Y_AXIS));
-        pnlW.setOpaque(false);
-
-        JPanel wHead = new JPanel(new BorderLayout());
-        wHead.setOpaque(false);
-        wHead.add(createFieldHeader("Target Weight (kg)"), BorderLayout.WEST);
-        JPanel wSteps = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
-        wSteps.setOpaque(false);
-        wSteps.add(createStepper("-1", () -> adjustDoubleField(txtTargetWeight, -1.0)));
-        wSteps.add(createStepper("+1", () -> adjustDoubleField(txtTargetWeight, +1.0)));
-        wHead.add(wSteps, BorderLayout.EAST);
-
-        pnlW.add(wHead);
-        pnlW.add(Box.createVerticalStrut(4));
-        pnlW.add(txtTargetWeight);
-        hwGrid.add(pnlW);
-
-        card.add(hwGrid);
+        card.add(grid);
         return card;
     }
 
-    private JPanel createMetabolicInsightsCard() {
+    private JPanel createWeightJourneyCard() {
         ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        JLabel title = new JLabel("2. Smart Metabolic Insights (Mifflin-St Jeor)");
+        JLabel title = new JLabel("Weight Journey & Goal Progress");
+        title.setFont(ThemeConfig.FONT_TITLE);
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        card.add(title);
+        card.add(Box.createVerticalStrut(14));
+
+        // 3 Milestone Cards: Starting -> Current -> Target
+        JPanel milestoneGrid = new JPanel(new GridLayout(1, 3, 10, 0));
+        milestoneGrid.setOpaque(false);
+
+        milestoneGrid.add(createMetricBox("STARTING WEIGHT", valStartingWeight, ThemeConfig.TEXT_SECONDARY));
+        milestoneGrid.add(createMetricBox("CURRENT WEIGHT", valCurrentWeight, ThemeConfig.PRIMARY_ACCENT));
+        milestoneGrid.add(createMetricBox("TARGET GOAL", valTargetWeight, ThemeConfig.SUCCESS_EMERALD));
+        card.add(milestoneGrid);
+        card.add(Box.createVerticalStrut(16));
+
+        // Goal Status text
+        JPanel statusRow = new JPanel(new BorderLayout());
+        statusRow.setOpaque(false);
+        valGoalStatus.setFont(ThemeConfig.FONT_BODY_BOLD);
+        valGoalStatus.setForeground(ThemeConfig.TEXT_PRIMARY);
+        statusRow.add(valGoalStatus, BorderLayout.WEST);
+
+        lblProgressPercent.setFont(ThemeConfig.FONT_BODY_BOLD);
+        lblProgressPercent.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        statusRow.add(lblProgressPercent, BorderLayout.EAST);
+        card.add(statusRow);
+        card.add(Box.createVerticalStrut(8));
+
+        // Modern Progress Bar
+        barWeightProgress.setPreferredSize(new Dimension(Integer.MAX_VALUE, 12));
+        card.add(barWeightProgress);
+
+        return card;
+    }
+
+    private JPanel createMetabolicHealthCard() {
+        ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel("Metabolic Profile & Clinical Benchmarks");
         title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         card.add(title);
         card.add(Box.createVerticalStrut(6));
 
-        JLabel subtitle = new JLabel("Calculated in real-time using clinical metabolic expenditure formulas.");
-        subtitle.setFont(ThemeConfig.FONT_SMALL);
-        subtitle.setForeground(ThemeConfig.TEXT_MUTED);
-        card.add(subtitle);
+        JLabel sub = new JLabel("Automated calculations based on clinical Mifflin-St Jeor & WHO standards.");
+        sub.setFont(ThemeConfig.FONT_SMALL);
+        sub.setForeground(ThemeConfig.TEXT_MUTED);
+        card.add(sub);
         card.add(Box.createVerticalStrut(14));
 
-        // Metric Badges Grid
-        JPanel metricBox = new JPanel(new GridLayout(2, 2, 10, 10));
-        metricBox.setOpaque(false);
+        JPanel grid = new JPanel(new GridLayout(2, 2, 12, 12));
+        grid.setOpaque(false);
 
-        metricBox.add(createInsightBox("BODY MASS INDEX", lblBmiInsight, ThemeConfig.PRIMARY_ACCENT, "World Health Organization standard"));
-        metricBox.add(createInsightBox("BASAL METABOLIC RATE", lblBmrInsight, ThemeConfig.PRIMARY_BLUE, "Resting daily caloric burn"));
-        metricBox.add(createInsightBox("ESTIMATED TDEE", lblTdeeInsight, ThemeConfig.SUCCESS_EMERALD, "Active maintenance expenditure"));
-        metricBox.add(createInsightBox("HEALTHY WEIGHT RANGE", lblHealthyRange, ThemeConfig.WARNING_AMBER, "Normal BMI (18.5 - 24.9)"));
+        grid.add(createMetricBox("BODY MASS INDEX", valBmi, ThemeConfig.PRIMARY_ACCENT));
+        grid.add(createMetricBox("BASAL METABOLIC RATE", valBmr, ThemeConfig.PRIMARY_BLUE));
+        grid.add(createMetricBox("ESTIMATED TDEE", valTdee, ThemeConfig.SUCCESS_EMERALD));
+        grid.add(createMetricBox("HEALTHY WEIGHT RANGE", valIdealRange, ThemeConfig.WARNING_AMBER));
 
-        card.add(metricBox);
+        card.add(grid);
         return card;
     }
 
-    private JPanel createInsightBox(String header, JLabel valueLbl, Color accent, String footer) {
-        JPanel box = new JPanel(new BorderLayout(0, 4));
-        box.setBackground(ThemeConfig.BG_DARK);
-        box.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                BorderFactory.createEmptyBorder(8, 12, 8, 12)
-        ));
-
-        JLabel hLbl = new JLabel(header);
-        hLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        hLbl.setForeground(ThemeConfig.TEXT_MUTED);
-
-        valueLbl.setFont(ThemeConfig.FONT_BODY_BOLD);
-        valueLbl.setForeground(accent);
-
-        JLabel fLbl = new JLabel(footer);
-        fLbl.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        fLbl.setForeground(ThemeConfig.TEXT_MUTED);
-
-        box.add(hLbl, BorderLayout.NORTH);
-        box.add(valueLbl, BorderLayout.CENTER);
-        box.add(fLbl, BorderLayout.SOUTH);
-        return box;
-    }
-
-    private JPanel createTargetsAndMacrosCard() {
+    private JPanel createCloudInfrastructureCard() {
         ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        JLabel title = new JLabel("3. Daily Targets & Macro Blueprint");
+        JLabel title = new JLabel("Cloud Backend & Account Security");
         title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         card.add(title);
-        card.add(Box.createVerticalStrut(14));
-
-        // Calories & Water inputs
-        JPanel cwGrid = new JPanel(new GridLayout(1, 2, 12, 0));
-        cwGrid.setOpaque(false);
-
-        // Daily Calories
-        JPanel pnlCal = new JPanel();
-        pnlCal.setLayout(new BoxLayout(pnlCal, BoxLayout.Y_AXIS));
-        pnlCal.setOpaque(false);
-        pnlCal.add(createFieldHeader("Daily Calories (kcal)"));
-        pnlCal.add(Box.createVerticalStrut(4));
-        pnlCal.add(txtCalorieTarget);
-
-        JPanel calChips = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
-        calChips.setOpaque(false);
-        calChips.add(createPresetChip("1800", () -> txtCalorieTarget.setText("1800")));
-        calChips.add(createPresetChip("2200", () -> txtCalorieTarget.setText("2200")));
-        calChips.add(createPresetChip("2600", () -> txtCalorieTarget.setText("2600")));
-        pnlCal.add(calChips);
-        cwGrid.add(pnlCal);
-
-        // Daily Water
-        JPanel pnlWat = new JPanel();
-        pnlWat.setLayout(new BoxLayout(pnlWat, BoxLayout.Y_AXIS));
-        pnlWat.setOpaque(false);
-        pnlWat.add(createFieldHeader("Daily Water (ml)"));
-        pnlWat.add(Box.createVerticalStrut(4));
-        pnlWat.add(txtWaterTarget);
-
-        JPanel watChips = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
-        watChips.setOpaque(false);
-        watChips.add(createPresetChip("2000ml", () -> txtWaterTarget.setText("2000")));
-        watChips.add(createPresetChip("2500ml", () -> txtWaterTarget.setText("2500")));
-        watChips.add(createPresetChip("3000ml", () -> txtWaterTarget.setText("3000")));
-        pnlWat.add(watChips);
-        cwGrid.add(pnlWat);
-
-        card.add(cwGrid);
-        card.add(Box.createVerticalStrut(14));
-
-        // Suggested Macro Blueprint Breakdown
-        JLabel lblMacroTitle = createFieldHeader("Calculated Macro Split (30% Protein / 40% Carbs / 30% Fat):");
-        card.add(lblMacroTitle);
-        card.add(Box.createVerticalStrut(8));
-
-        JPanel macroPanel = new JPanel(new GridLayout(3, 1, 0, 6));
-        macroPanel.setBackground(ThemeConfig.BG_DARK);
-        macroPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)
-        ));
-
-        lblMacroProtein.setFont(ThemeConfig.FONT_SMALL);
-        lblMacroProtein.setForeground(ThemeConfig.PRIMARY_ACCENT);
-        macroPanel.add(lblMacroProtein);
-
-        lblMacroCarbs.setFont(ThemeConfig.FONT_SMALL);
-        lblMacroCarbs.setForeground(ThemeConfig.PRIMARY_BLUE);
-        macroPanel.add(lblMacroCarbs);
-
-        lblMacroFat.setFont(ThemeConfig.FONT_SMALL);
-        lblMacroFat.setForeground(ThemeConfig.WARNING_AMBER);
-        macroPanel.add(lblMacroFat);
-
-        card.add(macroPanel);
-        return card;
-    }
-
-    private JPanel createCloudBackendCard() {
-        ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-
-        JLabel title = new JLabel("4. Supabase Cloud & Account Security");
-        title.setFont(ThemeConfig.FONT_TITLE);
-        title.setForeground(ThemeConfig.TEXT_PRIMARY);
-        card.add(title);
-        card.add(Box.createVerticalStrut(10));
-
-        // Connection status pill
-        lblConnectionStatus.setFont(ThemeConfig.FONT_BODY_BOLD);
-        card.add(lblConnectionStatus);
-        card.add(Box.createVerticalStrut(10));
-
-        card.add(createFieldHeader("Supabase Project URL"));
-        card.add(Box.createVerticalStrut(4));
-        card.add(txtSupabaseUrl);
-        card.add(Box.createVerticalStrut(10));
-
-        card.add(createFieldHeader("Supabase Anon / Public API Key"));
-        card.add(Box.createVerticalStrut(4));
-        card.add(txtAnonKey);
         card.add(Box.createVerticalStrut(12));
 
-        // Action Buttons Row
+        // Connection status
+        lblConnectionStatus.setFont(ThemeConfig.FONT_BODY_BOLD);
+        card.add(lblConnectionStatus);
+        card.add(Box.createVerticalStrut(8));
+
+        JPanel urlRow = new JPanel(new BorderLayout());
+        urlRow.setOpaque(false);
+        JLabel lblUrlTag = new JLabel("Project URL: ");
+        lblUrlTag.setFont(ThemeConfig.FONT_SMALL);
+        lblUrlTag.setForeground(ThemeConfig.TEXT_MUTED);
+        urlRow.add(lblUrlTag, BorderLayout.WEST);
+
+        lblProjectUrl.setFont(ThemeConfig.FONT_SMALL);
+        lblProjectUrl.setForeground(ThemeConfig.TEXT_SECONDARY);
+        urlRow.add(lblProjectUrl, BorderLayout.CENTER);
+        card.add(urlRow);
+        card.add(Box.createVerticalStrut(16));
+
+        // Actions
         JPanel btnRow = new JPanel(new GridLayout(1, 3, 8, 0));
         btnRow.setOpaque(false);
 
-        ModernButton btnSaveConn = new ModernButton("Save Connection", ModernButton.ButtonStyle.PRIMARY);
-        btnSaveConn.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnSaveConn.addActionListener(e -> saveCredentials());
-        btnRow.add(btnSaveConn);
+        ModernButton btnConfig = new ModernButton("⚙️ Cloud Config", ModernButton.ButtonStyle.SECONDARY);
+        btnConfig.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnConfig.addActionListener(e -> openCredentialsDialog());
+        btnRow.add(btnConfig);
 
-        ModernButton btnResetPwd = new ModernButton("Reset Password", ModernButton.ButtonStyle.SECONDARY);
-        btnResetPwd.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnResetPwd.addActionListener(e -> sendPasswordReset());
-        btnRow.add(btnResetPwd);
+        ModernButton btnReset = new ModernButton("🔑 Reset Password", ModernButton.ButtonStyle.SECONDARY);
+        btnReset.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnReset.addActionListener(e -> sendPasswordReset());
+        btnRow.add(btnReset);
 
-        ModernButton btnLaunchWizard = new ModernButton("✨ Setup Wizard", ModernButton.ButtonStyle.SECONDARY);
-        btnLaunchWizard.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnLaunchWizard.addActionListener(e -> launchOnboardingWizard());
-        btnRow.add(btnLaunchWizard);
+        ModernButton btnWizard = new ModernButton("✨ Setup Wizard", ModernButton.ButtonStyle.SECONDARY);
+        btnWizard.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnWizard.addActionListener(e -> launchOnboardingWizard());
+        btnRow.add(btnWizard);
 
         card.add(btnRow);
         return card;
     }
 
-    private JPanel createBottomActionBar() {
-        JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
-        bar.setOpaque(false);
+    private JPanel createInfoTile(String header, JLabel valueLbl, Color valueColor) {
+        JPanel tile = new JPanel();
+        tile.setLayout(new BoxLayout(tile, BoxLayout.Y_AXIS));
+        tile.setBackground(ThemeConfig.BG_DARK);
+        tile.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
 
-        ModernButton btnReset = new ModernButton("Revert to Saved", ModernButton.ButtonStyle.SECONDARY);
-        btnReset.setPreferredSize(new Dimension(150, 40));
-        btnReset.addActionListener(e -> loadSettings());
-        bar.add(btnReset);
+        JLabel hLbl = new JLabel(header);
+        hLbl.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        hLbl.setForeground(ThemeConfig.TEXT_MUTED);
+        tile.add(hLbl);
+        tile.add(Box.createVerticalStrut(4));
 
-        ModernButton btnSave = new ModernButton("Save All Changes 💾", ModernButton.ButtonStyle.PRIMARY);
-        btnSave.setPreferredSize(new Dimension(200, 40));
-        btnSave.addActionListener(e -> saveProfileDetails());
-        bar.add(btnSave);
+        valueLbl.setFont(ThemeConfig.FONT_BODY_BOLD);
+        valueLbl.setForeground(valueColor);
+        tile.add(valueLbl);
+        return tile;
+    }
 
-        return bar;
+    private JPanel createMetricBox(String header, JLabel valueLbl, Color accent) {
+        JPanel box = new JPanel(new BorderLayout(0, 4));
+        box.setBackground(ThemeConfig.BG_DARK);
+        box.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(10, 12, 10, 12)
+        ));
+
+        JLabel hLbl = new JLabel(header);
+        hLbl.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        hLbl.setForeground(ThemeConfig.TEXT_MUTED);
+
+        valueLbl.setFont(ThemeConfig.FONT_BODY_BOLD);
+        valueLbl.setForeground(accent);
+
+        box.add(hLbl, BorderLayout.NORTH);
+        box.add(valueLbl, BorderLayout.CENTER);
+        return box;
     }
 
     // =========================================================================
-    // HELPERS & DYNAMIC CALCULATIONS
+    // DATA LOADING & REFRESH
     // =========================================================================
 
-    private JLabel createFieldHeader(String text) {
-        JLabel l = new JLabel(text);
-        l.setFont(ThemeConfig.FONT_SMALL);
-        l.setForeground(ThemeConfig.TEXT_SECONDARY);
-        return l;
-    }
+    public void loadSettings() {
+        UserSession session = SupabaseClient.getInstance().getCurrentSession();
+        if (session == null) return;
 
-    private JButton createStepper(String text, Runnable action) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        b.setForeground(ThemeConfig.TEXT_PRIMARY);
-        b.setBackground(ThemeConfig.BG_DARK);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                BorderFactory.createEmptyBorder(2, 6, 2, 6)
-        ));
-        b.setFocusPainted(false);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.addActionListener(e -> action.run());
-        return b;
-    }
-
-    private JButton createPresetChip(String text, Runnable action) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        b.setForeground(ThemeConfig.TEXT_SECONDARY);
-        b.setBackground(ThemeConfig.BG_DARK);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                BorderFactory.createEmptyBorder(2, 6, 2, 6)
-        ));
-        b.setFocusPainted(false);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.addActionListener(e -> {
-            action.run();
-            updateCalculations();
-        });
-        return b;
-    }
-
-    private void adjustDoubleField(ModernTextField field, double delta) {
-        try {
-            double current = Double.parseDouble(field.getText().trim());
-            double updated = Math.max(10.0, current + delta);
-            field.setText(String.format(Locale.US, "%.1f", updated));
-            updateCalculations();
-        } catch (Exception ignored) {}
-    }
-
-    private void refreshGenderPills() {
-        pnlGenderPills.removeAll();
-        String[] options = {"Male", "Female", "Non-Binary", "Other"};
-        for (String opt : options) {
-            boolean isSelected = opt.equalsIgnoreCase(selectedGender);
-            JButton pill = new JButton(opt);
-            pill.setFont(ThemeConfig.FONT_SMALL);
-            pill.setForeground(isSelected ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
-            pill.setBackground(isSelected ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_DARK);
-            pill.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(isSelected ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
-                    BorderFactory.createEmptyBorder(4, 10, 4, 10)
-            ));
-            pill.setFocusPainted(false);
-            pill.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            pill.addActionListener(e -> {
-                selectedGender = opt;
-                refreshGenderPills();
-                pnlGenderPills.revalidate();
-                pnlGenderPills.repaint();
-                updateCalculations();
-            });
-            pnlGenderPills.add(pill);
+        UserProfile profile = session.getProfile();
+        if (profile == null) {
+            try {
+                profile = profileDAO.getProfile(session.getUserId());
+            } catch (Exception ignored) {}
         }
-    }
 
-    private void attachCalculationListeners() {
-        DocumentListener listener = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) { updateCalculations(); }
-            @Override
-            public void removeUpdate(DocumentEvent e) { updateCalculations(); }
-            @Override
-            public void changedUpdate(DocumentEvent e) { updateCalculations(); }
-        };
-        txtBirthDate.getDocument().addDocumentListener(listener);
-        txtHeight.getDocument().addDocumentListener(listener);
-        txtTargetWeight.getDocument().addDocumentListener(listener);
-        txtCalorieTarget.getDocument().addDocumentListener(listener);
-        txtFullName.getDocument().addDocumentListener(listener);
-    }
-
-    private void updateCalculations() {
-        // Full name banner
-        String name = txtFullName.getText().trim();
-        if (!name.isEmpty()) {
+        if (profile != null) {
+            String name = profile.getDisplayName();
             lblHeroName.setText(name);
-            String initials = getInitials(name);
-            lblAvatarInitials.setText(initials);
+            valFullName.setText(profile.getFullName() != null && !profile.getFullName().isBlank() ? profile.getFullName() : name);
+            lblAvatarInitials.setText(getInitials(name));
+
+            String email = session.getEmail() != null ? session.getEmail() : profile.getEmail();
+            lblHeroEmail.setText(email != null ? email : "athlete@personaltracker.com");
+            valEmail.setText(email != null ? email : "--");
+
+            valGender.setText(profile.getGender() != null && !profile.getGender().isBlank() ? profile.getGender() : "Not specified");
+
+            if (profile.getDateOfBirth() != null) {
+                LocalDate dob = profile.getDateOfBirth();
+                valBirthDate.setText(DateUtil.formatDate(dob));
+                int age = Period.between(dob, LocalDate.now()).getYears();
+                valAge.setText(age + " years old");
+            } else {
+                valBirthDate.setText("Not specified");
+                valAge.setText("--");
+            }
+
+            if (profile.getHeightCm() != null && profile.getHeightCm() > 0) {
+                valHeight.setText(String.format(Locale.US, "%.1f cm", profile.getHeightCm()));
+            } else {
+                valHeight.setText("-- cm");
+            }
+
+            if (profile.getTargetWeightKg() != null && profile.getTargetWeightKg() > 0) {
+                valTargetWeight.setText(String.format(Locale.US, "%.1f kg", profile.getTargetWeightKg()));
+            } else {
+                valTargetWeight.setText("-- kg");
+            }
+
+            if (profile.getCreatedAt() != null) {
+                lblHeroMeta.setText("Athlete • Member since " + profile.getCreatedAt().getYear());
+            }
         }
 
-        double h = parseDouble(txtHeight.getText().trim(), 175.0);
-        double targetW = parseDouble(txtTargetWeight.getText().trim(), 70.0);
-        double activeWeight = latestLoggedWeight > 20.0 ? latestLoggedWeight : targetW;
+        // Fetch body measurement history to calculate current vs starting weight journey
+        final UserProfile userProf = profile;
+        SwingWorker<List<BodyMeasurement>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<BodyMeasurement> doInBackground() throws Exception {
+                return measurementDAO.getAllMeasurements();
+            }
 
-        // 1. Age Calculation
-        LocalDate dob = DateUtil.parseDateOrNull(txtBirthDate.getText().trim());
-        int age = 26; // Default fallback age
-        if (dob != null) {
-            age = Period.between(dob, LocalDate.now()).getYears();
-            lblAgeInsight.setText(String.format("Age: %d yrs (Born %d)", age, dob.getYear()));
+            @Override
+            protected void done() {
+                try {
+                    List<BodyMeasurement> measurements = get();
+                    double currentWeight = 75.0;
+                    double startingWeight = 75.0;
+                    double targetWeight = (userProf != null && userProf.getTargetWeightKg() != null) ? userProf.getTargetWeightKg() : 70.0;
+                    double height = (userProf != null && userProf.getHeightCm() != null) ? userProf.getHeightCm() : 175.0;
+                    String gender = (userProf != null && userProf.getGender() != null) ? userProf.getGender() : "Male";
+                    int age = (userProf != null && userProf.getDateOfBirth() != null) ? Period.between(userProf.getDateOfBirth(), LocalDate.now()).getYears() : 25;
+
+                    if (!measurements.isEmpty()) {
+                        currentWeight = measurements.get(0).getWeightKg();
+                        startingWeight = measurements.get(measurements.size() - 1).getWeightKg();
+                    } else if (userProf != null && userProf.getTargetWeightKg() != null) {
+                        currentWeight = userProf.getTargetWeightKg();
+                        startingWeight = currentWeight;
+                    }
+
+                    valStartingWeight.setText(String.format(Locale.US, "%.1f kg", startingWeight));
+                    valCurrentWeight.setText(String.format(Locale.US, "%.1f kg", currentWeight));
+                    valTargetWeight.setText(String.format(Locale.US, "%.1f kg", targetWeight));
+
+                    // Calculate weight journey progress
+                    double totalDeltaToLose = startingWeight - targetWeight;
+                    double deltaRemaining = currentWeight - targetWeight;
+
+                    if (Math.abs(deltaRemaining) < 0.2) {
+                        valGoalStatus.setText("🎯 Goal Achieved! Maintaining at " + String.format(Locale.US, "%.1f kg", currentWeight));
+                        barWeightProgress.setValue(100);
+                        lblProgressPercent.setText("100% Completed");
+                    } else if (totalDeltaToLose > 0.5) {
+                        // Weight loss goal
+                        double lost = startingWeight - currentWeight;
+                        int percent = (int) Math.min(100, Math.max(0, (lost / totalDeltaToLose) * 100));
+                        valGoalStatus.setText(String.format(Locale.US, "%.1f kg remaining to reach target", Math.max(0, deltaRemaining)));
+                        barWeightProgress.setValue(percent);
+                        lblProgressPercent.setText(percent + "% Completed");
+                    } else if (totalDeltaToLose < -0.5) {
+                        // Muscle gain goal
+                        double gained = currentWeight - startingWeight;
+                        double totalToGain = targetWeight - startingWeight;
+                        int percent = (int) Math.min(100, Math.max(0, (gained / totalToGain) * 100));
+                        valGoalStatus.setText(String.format(Locale.US, "%.1f kg remaining to reach target", Math.max(0, -deltaRemaining)));
+                        barWeightProgress.setValue(percent);
+                        lblProgressPercent.setText(percent + "% Completed");
+                    } else {
+                        valGoalStatus.setText("Weight maintenance in progress");
+                        barWeightProgress.setValue(100);
+                        lblProgressPercent.setText("Maintained");
+                    }
+
+                    // Clinical calculations
+                    if (height > 50 && currentWeight > 20) {
+                        double bmi = HealthCalculator.calculateBmi(currentWeight, height);
+                        String category = HealthCalculator.getBmiCategory(bmi);
+                        valBmi.setText(String.format(Locale.US, "%.1f • %s", bmi, category));
+
+                        // BMR Mifflin-St Jeor
+                        double baseBmr = (10.0 * currentWeight) + (6.25 * height) - (5.0 * age);
+                        double bmr = "Female".equalsIgnoreCase(gender) ? (baseBmr - 161.0) : (baseBmr + 5.0);
+                        int bmrInt = (int) Math.round(bmr);
+                        valBmr.setText(String.format(Locale.US, "%,d kcal / day", bmrInt));
+
+                        int tdeeInt = (int) Math.round(bmr * 1.375);
+                        valTdee.setText(String.format(Locale.US, "%,d kcal / day", tdeeInt));
+
+                        double hm = height / 100.0;
+                        double minW = 18.5 * (hm * hm);
+                        double maxW = 24.9 * (hm * hm);
+                        valIdealRange.setText(String.format(Locale.US, "%.1f kg - %.1f kg", minW, maxW));
+                    }
+                } catch (Exception ignored) {}
+            }
+        };
+        worker.execute();
+
+        // Cloud status
+        if (config.isMockMode()) {
+            lblConnectionStatus.setText("● Local In-Memory Demo Mode (Offline)");
+            lblConnectionStatus.setForeground(ThemeConfig.WARNING_AMBER);
+            lblProjectUrl.setText("Built-in Offline Data Store");
         } else {
-            lblAgeInsight.setText("Age: --");
+            lblConnectionStatus.setText("● Connected to Supabase Cloud PostgreSQL & Auth");
+            lblConnectionStatus.setForeground(ThemeConfig.SUCCESS_EMERALD);
+            lblProjectUrl.setText(config.getSupabaseUrl());
         }
-
-        // 2. BMI Calculation
-        if (h > 50 && activeWeight > 20) {
-            double bmi = HealthCalculator.calculateBmi(activeWeight, h);
-            String category = HealthCalculator.getBmiCategory(bmi);
-            lblBmiInsight.setText(String.format(Locale.US, "%.1f • %s", bmi, category));
-            lblHeroBmiChip.setText(String.format(Locale.US, "%.1f (%s)", bmi, category));
-        } else {
-            lblBmiInsight.setText("BMI: --");
-            lblHeroBmiChip.setText("BMI: --");
-        }
-
-        // 3. Basal Metabolic Rate (BMR) - Mifflin-St Jeor
-        if (h > 50 && activeWeight > 20 && age > 10) {
-            double baseBmr = (10.0 * activeWeight) + (6.25 * h) - (5.0 * age);
-            double bmr = "Female".equalsIgnoreCase(selectedGender) ? (baseBmr - 161.0) : (baseBmr + 5.0);
-            int bmrInt = (int) Math.round(bmr);
-            lblBmrInsight.setText(String.format(Locale.US, "%s kcal / day", NumberFormatUtil(bmrInt)));
-            lblHeroBmrChip.setText(String.format(Locale.US, "%d kcal", bmrInt));
-
-            // 4. Estimated TDEE (Sedentary / Light Active 1.375)
-            int tdeeInt = (int) Math.round(bmr * 1.375);
-            lblTdeeInsight.setText(String.format(Locale.US, "%s kcal / day (Light-Mod)", NumberFormatUtil(tdeeInt)));
-        } else {
-            lblBmrInsight.setText("BMR: --");
-            lblHeroBmrChip.setText("BMR: --");
-            lblTdeeInsight.setText("TDEE: --");
-        }
-
-        // 5. Healthy Weight Range for Height (BMI 18.5 - 24.9)
-        if (h > 50) {
-            double hm = h / 100.0;
-            double minWeight = 18.5 * (hm * hm);
-            double maxWeight = 24.9 * (hm * hm);
-            lblHealthyRange.setText(String.format(Locale.US, "%.1f kg - %.1f kg", minWeight, maxWeight));
-        } else {
-            lblHealthyRange.setText("Ideal Weight: --");
-        }
-
-        // 6. Target Weight Chip
-        lblHeroWeightChip.setText(String.format(Locale.US, "%.1f kg", targetW));
-
-        // 7. Macro Blueprint Split based on Calorie Target
-        int calories = parseInt(txtCalorieTarget.getText().trim(), 2000);
-        lblHeroFuelChip.setText(String.format(Locale.US, "%d kcal", calories));
-
-        double proteinG = (calories * 0.30) / 4.0;
-        double carbsG = (calories * 0.40) / 4.0;
-        double fatG = (calories * 0.30) / 9.0;
-
-        lblMacroProtein.setText(String.format(Locale.US, "🥩 Protein (30%%): %.0f g  (~%.0f kcal)", proteinG, proteinG * 4));
-        lblMacroCarbs.setText(String.format(Locale.US, "🍚 Carbohydrates (40%%): %.0f g  (~%.0f kcal)", carbsG, carbsG * 4));
-        lblMacroFat.setText(String.format(Locale.US, "🥑 Healthy Fats (30%%): %.0f g  (~%.0f kcal)", fatG, fatG * 9));
     }
 
     private String getInitials(String name) {
@@ -689,138 +535,179 @@ public class SettingsPanel extends JPanel {
         return name.substring(0, Math.min(2, name.length())).toUpperCase();
     }
 
-    private String NumberFormatUtil(int number) {
-        return String.format(Locale.US, "%,d", number);
-    }
-
-    private double parseDouble(String str, double def) {
-        try {
-            return Double.parseDouble(str);
-        } catch (Exception e) {
-            return def;
-        }
-    }
-
-    private int parseInt(String str, int def) {
-        try {
-            return Integer.parseInt(str);
-        } catch (Exception e) {
-            return def;
-        }
-    }
-
     // =========================================================================
-    // DATA LOADING & PERSISTENCE
+    // DIALOGS & ACTIONS
     // =========================================================================
 
-    public void loadSettings() {
-        UserSession session = SupabaseClient.getInstance().getCurrentSession();
-        if (session != null) {
-            lblHeroEmail.setText(session.getEmail() != null ? session.getEmail() : "athlete@personaltracker.com");
-
-            UserProfile p = session.getProfile();
-            if (p != null) {
-                txtFullName.setText(p.getFullName());
-                if (p.getGender() != null && !p.getGender().isBlank()) {
-                    selectedGender = p.getGender();
-                    refreshGenderPills();
-                }
-                txtBirthDate.setText(p.getDateOfBirth() != null ? p.getDateOfBirth().toString() : "");
-                txtHeight.setText(p.getHeightCm() != null ? String.format(Locale.US, "%.1f", p.getHeightCm()) : "");
-                txtTargetWeight.setText(p.getTargetWeightKg() != null ? String.format(Locale.US, "%.1f", p.getTargetWeightKg()) : "");
-                txtCalorieTarget.setText(String.valueOf(p.getDailyCalorieTarget()));
-                txtWaterTarget.setText(String.valueOf(p.getDailyWaterTargetMl()));
-
-                if (p.getCreatedAt() != null) {
-                    lblHeroMeta.setText("Athlete • Member since " + p.getCreatedAt().getYear());
-                }
-            }
-        }
-
-        // Fetch latest measurement weight asynchronously
-        SwingWorker<Double, Void> weightWorker = new SwingWorker<>() {
-            @Override
-            protected Double doInBackground() throws Exception {
-                List<BodyMeasurement> list = measurementDAO.getAllMeasurements();
-                if (list != null && !list.isEmpty()) {
-                    return list.get(0).getWeightKg();
-                }
-                return 75.0;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    latestLoggedWeight = get();
-                    updateCalculations();
-                } catch (Exception ignored) {}
-            }
-        };
-        weightWorker.execute();
-
-        // Supabase Connection status
-        txtSupabaseUrl.setText(config.getSupabaseUrl());
-        txtAnonKey.setText(config.getSupabaseAnonKey());
-
-        if (config.isMockMode()) {
-            lblConnectionStatus.setText("● Local In-Memory Demo Mode (Offline)");
-            lblConnectionStatus.setForeground(ThemeConfig.WARNING_AMBER);
-        } else {
-            lblConnectionStatus.setText("● Connected to Supabase Cloud PostgreSQL & Auth");
-            lblConnectionStatus.setForeground(ThemeConfig.SUCCESS_EMERALD);
-        }
-
-        updateCalculations();
-    }
-
-    private void saveProfileDetails() {
+    /**
+     * Opens the dedicated, elegant Edit Profile modal dialog.
+     */
+    private void openEditProfileDialog() {
         UserSession session = SupabaseClient.getInstance().getCurrentSession();
         if (session == null) return;
 
-        UserProfile p = session.getProfile();
-        if (p == null) p = new UserProfile(session.getUserId(), session.getEmail(), "");
-
-        p.setFullName(txtFullName.getText().trim());
-        p.setGender(selectedGender);
-
-        LocalDate dob = DateUtil.parseDateOrNull(txtBirthDate.getText().trim());
-        if (dob != null) p.setDateOfBirth(dob);
-
-        try {
-            if (!txtHeight.getText().trim().isEmpty()) p.setHeightCm(Double.parseDouble(txtHeight.getText().trim()));
-            if (!txtTargetWeight.getText().trim().isEmpty()) p.setTargetWeightKg(Double.parseDouble(txtTargetWeight.getText().trim()));
-            if (!txtCalorieTarget.getText().trim().isEmpty()) p.setDailyCalorieTarget(Integer.parseInt(txtCalorieTarget.getText().trim()));
-            if (!txtWaterTarget.getText().trim().isEmpty()) p.setDailyWaterTargetMl(Integer.parseInt(txtWaterTarget.getText().trim()));
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please verify numeric values for height, weight, and targets.");
-            return;
+        UserProfile profile = session.getProfile();
+        if (profile == null) {
+            profile = new UserProfile(session.getUserId(), session.getEmail(), "Athlete");
+            session.setProfile(profile);
         }
 
-        final UserProfile target = p;
-        SwingWorker<Void, Void> worker = new SwingWorker<>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                profileDAO.updateProfile(target);
-                return null;
+        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Personal Profile", Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setSize(480, 520);
+        dlg.setLocationRelativeTo(this);
+        dlg.setResizable(false);
+        dlg.getContentPane().setBackground(ThemeConfig.BG_DARK);
+
+        JPanel pnl = new JPanel();
+        pnl.setLayout(new BoxLayout(pnl, BoxLayout.Y_AXIS));
+        pnl.setOpaque(false);
+        pnl.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+
+        JLabel title = new JLabel("Edit Personal Profile Info");
+        title.setFont(ThemeConfig.FONT_TITLE);
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        pnl.add(title);
+        pnl.add(Box.createVerticalStrut(14));
+
+        ModernTextField txtName = new ModernTextField(profile.getFullName());
+        JComboBox<String> cmbGen = new JComboBox<>(new String[]{"Male", "Female", "Non-Binary", "Other", "Prefer not to say"});
+        if (profile.getGender() != null) cmbGen.setSelectedItem(profile.getGender());
+
+        ModernTextField txtDob = new ModernTextField(profile.getDateOfBirth() != null ? profile.getDateOfBirth().toString() : "2000-01-01");
+        ModernTextField txtH = new ModernTextField(profile.getHeightCm() != null ? String.format(Locale.US, "%.1f", profile.getHeightCm()) : "175.0");
+        ModernTextField txtW = new ModernTextField(profile.getTargetWeightKg() != null ? String.format(Locale.US, "%.1f", profile.getTargetWeightKg()) : "70.0");
+
+        pnl.add(createFieldRow("Full Name", txtName));
+        pnl.add(Box.createVerticalStrut(10));
+        pnl.add(createFieldRow("Gender", cmbGen));
+        pnl.add(Box.createVerticalStrut(10));
+        pnl.add(createFieldRow("Date of Birth (YYYY-MM-DD)", txtDob));
+        pnl.add(Box.createVerticalStrut(10));
+
+        JPanel hw = new JPanel(new GridLayout(1, 2, 10, 0));
+        hw.setOpaque(false);
+        hw.add(createFieldRow("Height (cm)", txtH));
+        hw.add(createFieldRow("Target Weight (kg)", txtW));
+        pnl.add(hw);
+        pnl.add(Box.createVerticalStrut(20));
+
+        JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        btnBar.setOpaque(false);
+
+        ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.SECONDARY);
+        btnCancel.addActionListener(e -> dlg.dispose());
+        btnBar.add(btnCancel);
+
+        final UserProfile targetProfile = profile;
+        ModernButton btnSave = new ModernButton("Save Profile 💾", ModernButton.ButtonStyle.PRIMARY);
+        btnSave.addActionListener(e -> {
+            String nameVal = txtName.getText().trim();
+            if (nameVal.isEmpty()) {
+                JOptionPane.showMessageDialog(dlg, "Please enter a valid name.");
+                return;
             }
 
-            @Override
-            protected void done() {
-                ToastNotification.showToast(SettingsPanel.this, "Profile updated successfully! 🚀", ToastNotification.ToastType.SUCCESS);
-                if (onProfileUpdatedCallback != null) onProfileUpdatedCallback.run();
-                loadSettings();
+            try {
+                double heightVal = Double.parseDouble(txtH.getText().trim());
+                double targetWeightVal = Double.parseDouble(txtW.getText().trim());
+                LocalDate dobVal = DateUtil.parseDateOrNull(txtDob.getText().trim());
+
+                targetProfile.setFullName(nameVal);
+                targetProfile.setGender((String) cmbGen.getSelectedItem());
+                if (dobVal != null) targetProfile.setDateOfBirth(dobVal);
+                targetProfile.setHeightCm(heightVal);
+                targetProfile.setTargetWeightKg(targetWeightVal);
+
+                btnSave.setEnabled(false);
+                btnSave.setText("Saving...");
+
+                SwingWorker<Void, Void> saveWorker = new SwingWorker<>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        profileDAO.updateProfile(targetProfile);
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        btnSave.setEnabled(true);
+                        dlg.dispose();
+                        ToastNotification.showToast(SettingsPanel.this, "Profile updated successfully! ✨", ToastNotification.ToastType.SUCCESS);
+                        loadSettings();
+                        if (onProfileUpdatedCallback != null) onProfileUpdatedCallback.run();
+                    }
+                };
+                saveWorker.execute();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dlg, "Please check numeric values for height and weight.");
             }
-        };
-        worker.execute();
+        });
+        btnBar.add(btnSave);
+
+        pnl.add(btnBar);
+        dlg.setContentPane(pnl);
+        dlg.setVisible(true);
     }
 
-    private void saveCredentials() {
-        String url = txtSupabaseUrl.getText().trim();
-        String anon = new String(txtAnonKey.getPassword()).trim();
+    private void openCredentialsDialog() {
+        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Configure Cloud Connection", Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setSize(460, 320);
+        dlg.setLocationRelativeTo(this);
+        dlg.setResizable(false);
+        dlg.getContentPane().setBackground(ThemeConfig.BG_DARK);
 
-        config.saveRuntimeCredentials(url, anon);
-        loadSettings();
-        ToastNotification.showToast(this, "Supabase connection updated! ⚡", ToastNotification.ToastType.INFO);
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setOpaque(false);
+        p.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+
+        JLabel title = new JLabel("Supabase Cloud Credentials");
+        title.setFont(ThemeConfig.FONT_TITLE);
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        p.add(title);
+        p.add(Box.createVerticalStrut(14));
+
+        ModernTextField txtUrl = new ModernTextField(config.getSupabaseUrl());
+        ModernPasswordField txtKey = new ModernPasswordField(config.getSupabaseAnonKey());
+
+        p.add(createFieldRow("Project URL (https://xyz.supabase.co)", txtUrl));
+        p.add(Box.createVerticalStrut(10));
+        p.add(createFieldRow("Anon / Public API Key", txtKey));
+        p.add(Box.createVerticalStrut(20));
+
+        JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        btnBar.setOpaque(false);
+
+        ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.SECONDARY);
+        btnCancel.addActionListener(e -> dlg.dispose());
+        btnBar.add(btnCancel);
+
+        ModernButton btnApply = new ModernButton("Apply Credentials", ModernButton.ButtonStyle.PRIMARY);
+        btnApply.addActionListener(e -> {
+            config.saveRuntimeCredentials(txtUrl.getText().trim(), new String(txtKey.getPassword()).trim());
+            dlg.dispose();
+            loadSettings();
+            ToastNotification.showToast(SettingsPanel.this, "Supabase connection updated! ⚡", ToastNotification.ToastType.INFO);
+        });
+        btnBar.add(btnApply);
+
+        p.add(btnBar);
+        dlg.setContentPane(p);
+        dlg.setVisible(true);
+    }
+
+    private JPanel createFieldRow(String label, JComponent comp) {
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setOpaque(false);
+        JLabel l = new JLabel(label);
+        l.setFont(ThemeConfig.FONT_SMALL);
+        l.setForeground(ThemeConfig.TEXT_SECONDARY);
+        p.add(l);
+        p.add(Box.createVerticalStrut(4));
+        p.add(comp);
+        return p;
     }
 
     private void sendPasswordReset() {
