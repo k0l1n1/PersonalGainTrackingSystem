@@ -18,11 +18,16 @@ public class ModernPasswordField extends JPasswordField {
     private int cornerRadius = 8;
 
     public ModernPasswordField() {
-        this("");
+        this("", "");
     }
 
     public ModernPasswordField(String placeholder) {
-        this.placeholder = placeholder;
+        this("", placeholder);
+    }
+
+    public ModernPasswordField(String text, String placeholder) {
+        super(text);
+        this.placeholder = placeholder != null ? placeholder : "";
 
         setFont(ThemeConfig.FONT_BODY);
         setForeground(ThemeConfig.TEXT_PRIMARY);

@@ -66,6 +66,9 @@ public class SupabaseClient {
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         initMockDemoData();
+        if (!config.isMockMode()) {
+            this.currentSession = null;
+        }
     }
 
     public static synchronized SupabaseClient getInstance() {
@@ -73,6 +76,22 @@ public class SupabaseClient {
             instance = new SupabaseClient();
         }
         return instance;
+    }
+
+    public void enableDemoMode() {
+        config.setMockMode(true);
+        initMockDemoData();
+    }
+
+    public boolean isValidJwt(String token) {
+        if (token == null || token.isBlank()) return false;
+        return token.split("\\.").length == 3;
+    }
+
+    private void applyAuthHeader(HttpRequest.Builder builder) {
+        if (currentSession != null && isValidJwt(currentSession.getAccessToken())) {
+            builder.header("Authorization", "Bearer " + currentSession.getAccessToken());
+        }
     }
 
     public UserSession getCurrentSession() {
@@ -100,7 +119,7 @@ public class SupabaseClient {
     // =========================================================================
 
     public <T> List<T> executeGetList(String table, String queryParams, Class<T> clazz) throws Exception {
-        if (config.isMockMode()) {
+        if (config.isMockMode() || (!"achievements".equals(table) && (currentSession == null || !isValidJwt(currentSession.getAccessToken())))) {
             return getMockList(table, clazz);
         }
 
@@ -116,9 +135,7 @@ public class SupabaseClient {
                 .header("Accept", "application/json")
                 .GET();
 
-        if (currentSession != null && currentSession.getAccessToken() != null) {
-            builder.header("Authorization", "Bearer " + currentSession.getAccessToken());
-        }
+        applyAuthHeader(builder);
 
         HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
@@ -130,7 +147,7 @@ public class SupabaseClient {
     }
 
     public <T> T executePost(String table, Object body, Class<T> clazz) throws Exception {
-        if (config.isMockMode()) {
+        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken())) {
             return saveMock(table, body, clazz);
         }
 
@@ -145,9 +162,7 @@ public class SupabaseClient {
                 .header("Prefer", "return=representation")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
 
-        if (currentSession != null && currentSession.getAccessToken() != null) {
-            builder.header("Authorization", "Bearer " + currentSession.getAccessToken());
-        }
+        applyAuthHeader(builder);
 
         HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
@@ -160,7 +175,7 @@ public class SupabaseClient {
     }
 
     public void executePatch(String table, String filterQuery, Object body) throws Exception {
-        if (config.isMockMode()) {
+        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken())) {
             updateMock(table, body);
             return;
         }
@@ -176,9 +191,7 @@ public class SupabaseClient {
                 .header("Prefer", "return=representation")
                 .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
 
-        if (currentSession != null && currentSession.getAccessToken() != null) {
-            builder.header("Authorization", "Bearer " + currentSession.getAccessToken());
-        }
+        applyAuthHeader(builder);
 
         HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
@@ -187,7 +200,7 @@ public class SupabaseClient {
     }
 
     public void executeDelete(String table, String filterQuery) throws Exception {
-        if (config.isMockMode()) {
+        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken())) {
             deleteMock(table, filterQuery);
             return;
         }
@@ -200,9 +213,7 @@ public class SupabaseClient {
                 .header("apikey", config.getSupabaseAnonKey())
                 .DELETE();
 
-        if (currentSession != null && currentSession.getAccessToken() != null) {
-            builder.header("Authorization", "Bearer " + currentSession.getAccessToken());
-        }
+        applyAuthHeader(builder);
 
         HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
@@ -377,6 +388,34 @@ public class SupabaseClient {
                 return (List<T>) new ArrayList<>(mockReminders.computeIfAbsent(uid, k -> new ArrayList<>()));
             case "progress_photos":
                 return (List<T>) new ArrayList<>(mockPhotos.computeIfAbsent(uid, k -> new ArrayList<>()));
+            case "profiles":
+                UserProfile p = mockProfiles.get(uid);
+                return p != null ? (List<T>) Collections.singletonList(p) : new ArrayList<>();
+            case "user_achievements":
+                Set<String> unlocked = mockUserAchievements.get(uid);
+                List<UserAchievement> uasList = new ArrayList<>();
+                if (unlocked != null) {
+                    for (String achId : unlocked) {
+                        UserAchievement ua = new UserAchievement(uid, achId);
+                        ua.setId(UUID.randomUUID().toString());
+                        uasList.add(ua);
+                    }
+                }
+                return (List<T>) uasList;
+            case "workout_exercises":
+                List<Workout> userWks = mockWorkouts.get(uid);
+                List<WorkoutExercise> exList = new ArrayList<>();
+                if (userWks != null) {
+                    for (Workout w : userWks) {
+                        if (w.getExercises() != null) {
+                            for (WorkoutExercise ex : w.getExercises()) {
+                                if (ex.getWorkoutId() == null) ex.setWorkoutId(w.getId());
+                                exList.add(ex);
+                            }
+                        }
+                    }
+                }
+                return (List<T>) exList;
             default:
                 return new ArrayList<>();
         }
@@ -435,6 +474,15 @@ public class SupabaseClient {
             p.setUserId(uid);
             mockPhotos.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, p);
             return (T) p;
+        } else if (body instanceof UserAchievement) {
+            UserAchievement ua = (UserAchievement) body;
+            if (ua.getId() == null || ua.getId().isEmpty()) ua.setId(newId);
+            unlockMockAchievement(ua.getUserId() != null ? ua.getUserId() : uid, ua.getAchievementId());
+            return (T) ua;
+        } else if (body instanceof UserProfile) {
+            UserProfile prof = (UserProfile) body;
+            mockProfiles.put(prof.getId() != null ? prof.getId() : uid, prof);
+            return (T) prof;
         }
         return (T) body;
     }
@@ -495,6 +543,13 @@ public class SupabaseClient {
                         return;
                     }
                 }
+            }
+        } else if (body instanceof UserProfile) {
+            UserProfile prof = (UserProfile) body;
+            if (prof.getId() != null) {
+                mockProfiles.put(prof.getId(), prof);
+            } else {
+                mockProfiles.put(uid, prof);
             }
         }
     }

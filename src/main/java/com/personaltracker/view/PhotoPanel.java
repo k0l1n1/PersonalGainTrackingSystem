@@ -215,7 +215,7 @@ public class PhotoPanel extends JPanel {
 
         public UploadDialog(Window owner) {
             super(owner, "Upload Progress Photo", ModalityType.APPLICATION_MODAL);
-            setSize(420, 360);
+            setSize(490, 520);
             setLocationRelativeTo(owner);
             setResizable(false);
             getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -223,9 +223,10 @@ public class PhotoPanel extends JPanel {
             JPanel main = new JPanel();
             main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
             main.setOpaque(false);
-            main.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+            main.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
-            JLabel lblChoose = new JLabel("Select Image File*");
+            // Section 1: Choose File
+            JLabel lblChoose = new JLabel("Image File * (PNG, JPG)");
             lblChoose.setFont(ThemeConfig.FONT_SMALL);
             lblChoose.setForeground(ThemeConfig.TEXT_SECONDARY);
             main.add(lblChoose);
@@ -233,32 +234,122 @@ public class PhotoPanel extends JPanel {
 
             JPanel fileRow = new JPanel(new BorderLayout(8, 0));
             fileRow.setOpaque(false);
-            lblFile.setFont(ThemeConfig.FONT_SMALL);
-            lblFile.setForeground(ThemeConfig.TEXT_MUTED);
+            lblFile.setFont(ThemeConfig.FONT_BODY);
+            lblFile.setForeground(ThemeConfig.TEXT_PRIMARY);
             fileRow.add(lblFile, BorderLayout.CENTER);
 
-            ModernButton btnBrowse = new ModernButton("Browse...", ModernButton.ButtonStyle.SECONDARY);
+            ModernButton btnBrowse = new ModernButton("Browse Image...", ModernButton.ButtonStyle.SECONDARY);
             btnBrowse.addActionListener(e -> chooseFile());
             fileRow.add(btnBrowse, BorderLayout.EAST);
             main.add(fileRow);
-            main.add(Box.createVerticalStrut(12));
+            main.add(Box.createVerticalStrut(14));
 
-            main.add(createFieldRow("Photo Date (YYYY-MM-DD)", txtDate));
-            main.add(Box.createVerticalStrut(10));
-            main.add(createFieldRow("Notes / Physique description", txtNotes));
-            main.add(Box.createVerticalStrut(20));
+            // Section 2: Date with Quick Pills
+            JPanel dateRow = new JPanel(new BorderLayout(8, 0));
+            dateRow.setOpaque(false);
+            JLabel lblDateTag = new JLabel("Photo Date");
+            lblDateTag.setFont(ThemeConfig.FONT_SMALL);
+            lblDateTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            dateRow.add(lblDateTag, BorderLayout.NORTH);
 
-            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            JPanel dateControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            dateControls.setOpaque(false);
+            JButton btnToday = createQuickPill("Today", true);
+            JButton btnYesterday = createQuickPill("Yesterday", false);
+            btnToday.addActionListener(e -> {
+                txtDate.setText(LocalDate.now().toString());
+                btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btnYesterday.setBackground(ThemeConfig.BG_CARD);
+            });
+            btnYesterday.addActionListener(e -> {
+                txtDate.setText(LocalDate.now().minusDays(1).toString());
+                btnYesterday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btnToday.setBackground(ThemeConfig.BG_CARD);
+            });
+            txtDate.setPreferredSize(new Dimension(130, 32));
+            dateControls.add(btnToday);
+            dateControls.add(btnYesterday);
+            dateControls.add(txtDate);
+            dateRow.add(dateControls, BorderLayout.CENTER);
+            main.add(dateRow);
+            main.add(Box.createVerticalStrut(14));
+
+            // Section 3: Pose Quick Chips & Notes
+            JPanel notesSection = new JPanel();
+            notesSection.setLayout(new BoxLayout(notesSection, BoxLayout.Y_AXIS));
+            notesSection.setOpaque(false);
+
+            JLabel lblPoseTag = new JLabel("Quick Pose Tags / Notes");
+            lblPoseTag.setFont(ThemeConfig.FONT_SMALL);
+            lblPoseTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            notesSection.add(lblPoseTag);
+            notesSection.add(Box.createVerticalStrut(4));
+
+            JPanel poseChips = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            poseChips.setOpaque(false);
+            poseChips.add(createPoseChip("📸 Front Relaxed"));
+            poseChips.add(createPoseChip("💪 Front Double Bicep"));
+            poseChips.add(createPoseChip("🔙 Back Lat Spread"));
+            poseChips.add(createPoseChip("✨ Side Profile"));
+            notesSection.add(poseChips);
+            notesSection.add(Box.createVerticalStrut(6));
+            notesSection.add(txtNotes);
+            main.add(notesSection);
+
+            main.add(Box.createVerticalGlue());
+            main.add(Box.createVerticalStrut(16));
+
+            // Section 4: Action Buttons
+            JPanel actions = new JPanel(new BorderLayout());
             actions.setOpaque(false);
+            JLabel lblHint = new JLabel("Tip: Press Enter to upload");
+            lblHint.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            lblHint.setForeground(ThemeConfig.TEXT_MUTED);
+            actions.add(lblHint, BorderLayout.WEST);
+
+            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            btnRow.setOpaque(false);
             ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.GHOST);
             btnCancel.addActionListener(e -> dispose());
             ModernButton btnSave = new ModernButton("Upload Photo", ModernButton.ButtonStyle.PRIMARY);
             btnSave.addActionListener(e -> savePhoto());
-            actions.add(btnCancel);
-            actions.add(btnSave);
+            btnRow.add(btnCancel);
+            btnRow.add(btnSave);
+            actions.add(btnRow, BorderLayout.EAST);
             main.add(actions);
 
             setContentPane(main);
+
+            // Shortcuts
+            txtDate.addActionListener(e -> savePhoto());
+            txtNotes.addActionListener(e -> savePhoto());
+
+            getRootPane().registerKeyboardAction(e -> dispose(),
+                    KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),
+                    JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }
+
+        private JButton createPoseChip(String text) {
+            JButton btn = new JButton(text);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+            btn.addActionListener(e -> txtNotes.setText(text));
+            return btn;
+        }
+
+        private JButton createQuickPill(String text, boolean active) {
+            JButton btn = new JButton(text);
+            btn.setFont(ThemeConfig.FONT_SMALL);
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+            return btn;
         }
 
         private JPanel createFieldRow(String label, JComponent comp) {
@@ -299,9 +390,9 @@ public class PhotoPanel extends JPanel {
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    byte[] bytes = new byte[(int) selectedFile.length()];
+                    byte[] bytes;
                     try (FileInputStream fis = new FileInputStream(selectedFile)) {
-                        fis.read(bytes);
+                        bytes = fis.readAllBytes();
                     }
 
                     ProgressPhoto photo = new ProgressPhoto(selectedFile.getName(), "progress_photos/" + selectedFile.getName(), date, txtNotes.getText().trim());
@@ -312,9 +403,14 @@ public class PhotoPanel extends JPanel {
 
                 @Override
                 protected void done() {
-                    saved = true;
-                    ToastNotification.showToast(PhotoPanel.this, "Photo uploaded successfully!", ToastNotification.ToastType.SUCCESS);
-                    dispose();
+                    try {
+                        get();
+                        saved = true;
+                        ToastNotification.showToast(PhotoPanel.this, "Photo uploaded successfully!", ToastNotification.ToastType.SUCCESS);
+                        dispose();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(UploadDialog.this, "Upload failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             };
             worker.execute();

@@ -19,6 +19,8 @@ import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -413,6 +415,17 @@ public class NutritionPanel extends JPanel {
         cal.setForeground(ThemeConfig.WARNING_AMBER);
         right.add(cal);
 
+        JButton btnEdit = new JButton("✎");
+        btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        btnEdit.setForeground(ThemeConfig.TEXT_SECONDARY);
+        btnEdit.setContentAreaFilled(false);
+        btnEdit.setBorderPainted(false);
+        btnEdit.setFocusPainted(false);
+        btnEdit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnEdit.setToolTipText("Edit meal");
+        btnEdit.addActionListener(e -> openFoodDialog(entry, entry.getMealType()));
+        right.add(btnEdit);
+
         JButton btnDel = new JButton("×");
         btnDel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnDel.setForeground(ThemeConfig.TEXT_MUTED);
@@ -491,6 +504,7 @@ public class NutritionPanel extends JPanel {
     private class FoodDialog extends JDialog {
         private static final long serialVersionUID = 1L;
         private boolean saved = false;
+        private final NutritionEntry editing;
 
         private final ModernTextField txtFood = new ModernTextField("Grilled Salmon Fillet");
         private final JComboBox<String> cmbMeal = new JComboBox<>(new String[]{"BREAKFAST", "LUNCH", "DINNER", "SNACK"});
@@ -502,7 +516,8 @@ public class NutritionPanel extends JPanel {
 
         public FoodDialog(Window owner, NutritionEntry entry, String defaultMeal) {
             super(owner, entry == null ? "Log Food / Meal Item" : "Edit Meal", ModalityType.APPLICATION_MODAL);
-            setSize(440, 480);
+            this.editing = entry;
+            setSize(490, 620);
             setLocationRelativeTo(owner);
             setResizable(false);
             getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -510,11 +525,31 @@ public class NutritionPanel extends JPanel {
             JPanel main = new JPanel();
             main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
             main.setOpaque(false);
-            main.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+            main.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
-            main.add(createFieldRow("Food Name*", txtFood));
+            // Section 1: Quick Common Food Preset Chips
+            if (entry == null) {
+                JLabel lblQuick = new JLabel("Quick Meal Presets");
+                lblQuick.setFont(ThemeConfig.FONT_SMALL);
+                lblQuick.setForeground(ThemeConfig.TEXT_SECONDARY);
+                main.add(lblQuick);
+                main.add(Box.createVerticalStrut(4));
+
+                JPanel presetRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+                presetRow.setOpaque(false);
+                presetRow.add(createFoodPresetChip("🍳 3 Eggs & Toast", "BREAKFAST", "3 eggs, 2 bread", 350, 24, 28, 16));
+                presetRow.add(createFoodPresetChip("🍗 Chicken & Rice", "LUNCH", "200g chicken, rice", 520, 45, 60, 10));
+                presetRow.add(createFoodPresetChip("🥤 Whey Shake", "SNACK", "1 scoop in water", 160, 30, 4, 2));
+                presetRow.add(createFoodPresetChip("🥩 Steak & Greens", "DINNER", "250g sirloin, salad", 480, 42, 6, 32));
+                main.add(presetRow);
+                main.add(Box.createVerticalStrut(12));
+            }
+
+            // Food Name
+            main.add(createFieldRow("Food Name *", txtFood));
             main.add(Box.createVerticalStrut(10));
 
+            // Meal Category & Serving
             JPanel r2 = new JPanel(new GridLayout(1, 2, 10, 0));
             r2.setOpaque(false);
             r2.add(createFieldRow("Meal Category", cmbMeal));
@@ -522,34 +557,137 @@ public class NutritionPanel extends JPanel {
             main.add(r2);
             main.add(Box.createVerticalStrut(10));
 
+            // Calories & Protein
             JPanel r3 = new JPanel(new GridLayout(1, 2, 10, 0));
             r3.setOpaque(false);
-            r3.add(createFieldRow("Calories (kcal)*", txtCalories));
+            r3.add(createFieldRow("Calories (kcal) *", txtCalories));
             r3.add(createFieldRow("Protein (g)", txtProtein));
             main.add(r3);
             main.add(Box.createVerticalStrut(10));
 
+            // Carbs & Fat
             JPanel r4 = new JPanel(new GridLayout(1, 2, 10, 0));
             r4.setOpaque(false);
             r4.add(createFieldRow("Carbohydrates (g)", txtCarbs));
             r4.add(createFieldRow("Fat (g)", txtFat));
             main.add(r4);
-            main.add(Box.createVerticalStrut(20));
+            main.add(Box.createVerticalStrut(12));
 
-            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            // Live Macro Summary Card
+            JPanel macroBox = new JPanel(new BorderLayout(8, 4));
+            macroBox.setBackground(ThemeConfig.BG_CARD);
+            macroBox.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                    BorderFactory.createEmptyBorder(8, 12, 8, 12)
+            ));
+            JLabel macroTag = new JLabel("LIVE MACRO CALCULATION");
+            macroTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            macroTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            lblMacroLive.setFont(ThemeConfig.FONT_SMALL);
+            lblMacroLive.setForeground(ThemeConfig.PRIMARY_BLUE);
+            macroBox.add(macroTag, BorderLayout.NORTH);
+            macroBox.add(lblMacroLive, BorderLayout.CENTER);
+            main.add(macroBox);
+
+            main.add(Box.createVerticalGlue());
+            main.add(Box.createVerticalStrut(16));
+
+            // Action Buttons
+            JPanel actions = new JPanel(new BorderLayout());
             actions.setOpaque(false);
+            JLabel lblHint = new JLabel("Tip: Press Enter to save");
+            lblHint.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            lblHint.setForeground(ThemeConfig.TEXT_MUTED);
+            actions.add(lblHint, BorderLayout.WEST);
+
+            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            btnRow.setOpaque(false);
             ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.GHOST);
             btnCancel.addActionListener(e -> dispose());
-            ModernButton btnSave = new ModernButton("Save Food Entry", ModernButton.ButtonStyle.PRIMARY);
+            ModernButton btnSave = new ModernButton(entry == null ? "Save Food Entry" : "Update Food Entry", ModernButton.ButtonStyle.PRIMARY);
             btnSave.addActionListener(e -> saveFoodData());
-            actions.add(btnCancel);
-            actions.add(btnSave);
+            btnRow.add(btnCancel);
+            btnRow.add(btnSave);
+            actions.add(btnRow, BorderLayout.EAST);
             main.add(actions);
 
             setContentPane(main);
 
-            if (defaultMeal != null) {
+            // Document listeners for live macro analysis
+            DocumentListener macroListener = new DocumentListener() {
+                @Override public void insertUpdate(DocumentEvent e) { updateLiveMacroSummary(); }
+                @Override public void removeUpdate(DocumentEvent e) { updateLiveMacroSummary(); }
+                @Override public void changedUpdate(DocumentEvent e) { updateLiveMacroSummary(); }
+            };
+            txtProtein.getDocument().addDocumentListener(macroListener);
+            txtCarbs.getDocument().addDocumentListener(macroListener);
+            txtFat.getDocument().addDocumentListener(macroListener);
+            txtCalories.getDocument().addDocumentListener(macroListener);
+            updateLiveMacroSummary();
+
+            // Shortcuts
+            txtFood.addActionListener(e -> saveFoodData());
+            txtServing.addActionListener(e -> saveFoodData());
+            txtCalories.addActionListener(e -> saveFoodData());
+            txtProtein.addActionListener(e -> saveFoodData());
+            txtCarbs.addActionListener(e -> saveFoodData());
+            txtFat.addActionListener(e -> saveFoodData());
+
+            getRootPane().registerKeyboardAction(e -> dispose(),
+                    KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),
+                    JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+            if (entry != null) {
+                txtFood.setText(entry.getFoodName());
+                cmbMeal.setSelectedItem(entry.getMealType());
+                txtServing.setText(entry.getServingSize() != null ? entry.getServingSize() : "");
+                txtCalories.setText(String.valueOf(entry.getCalories()));
+                txtProtein.setText(String.valueOf(entry.getProteinG()));
+                txtCarbs.setText(String.valueOf(entry.getCarbsG()));
+                txtFat.setText(String.valueOf(entry.getFatG()));
+                updateLiveMacroSummary();
+            } else if (defaultMeal != null) {
                 cmbMeal.setSelectedItem(defaultMeal);
+            }
+
+            SwingUtilities.invokeLater(() -> {
+                txtFood.requestFocusInWindow();
+                txtFood.selectAll();
+            });
+        }
+
+        private final JLabel lblMacroLive = new JLabel("P: 0g | C: 0g | F: 0g");
+
+        private JButton createFoodPresetChip(String label, String meal, String serving, int cal, double p, double c, double f) {
+            JButton btn = new JButton(label);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(5, 9, 5, 9));
+            btn.addActionListener(e -> {
+                txtFood.setText(label.replaceAll("^[^a-zA-Z0-9]+", "").trim());
+                cmbMeal.setSelectedItem(meal);
+                txtServing.setText(serving);
+                txtCalories.setText(String.valueOf(cal));
+                txtProtein.setText(String.valueOf(p));
+                txtCarbs.setText(String.valueOf(c));
+                txtFat.setText(String.valueOf(f));
+                updateLiveMacroSummary();
+            });
+            return btn;
+        }
+
+        private void updateLiveMacroSummary() {
+            try {
+                double p = txtProtein.getText().trim().isEmpty() ? 0 : Double.parseDouble(txtProtein.getText().trim());
+                double c = txtCarbs.getText().trim().isEmpty() ? 0 : Double.parseDouble(txtCarbs.getText().trim());
+                double f = txtFat.getText().trim().isEmpty() ? 0 : Double.parseDouble(txtFat.getText().trim());
+                double calcCal = (p * 4) + (c * 4) + (f * 9);
+                lblMacroLive.setText(String.format("Calculated from macros: %.0f kcal  (P: %.0fg | C: %.0fg | F: %.0fg)", calcCal, p, c, f));
+            } catch (Exception ignored) {
+                lblMacroLive.setText("Enter macros to view summary");
             }
         }
 
@@ -573,35 +711,55 @@ public class NutritionPanel extends JPanel {
                 return;
             }
 
-            int cal;
-            double p = 0;
-            double c = 0;
-            double f = 0;
+            int parsedCal;
+            double parsedP = 0;
+            double parsedC = 0;
+            double parsedF = 0;
             try {
-                cal = Integer.parseInt(txtCalories.getText().trim());
-                if (!txtProtein.getText().trim().isEmpty()) p = Double.parseDouble(txtProtein.getText().trim());
-                if (!txtCarbs.getText().trim().isEmpty()) c = Double.parseDouble(txtCarbs.getText().trim());
-                if (!txtFat.getText().trim().isEmpty()) f = Double.parseDouble(txtFat.getText().trim());
-                if (cal < 0 || p < 0 || c < 0 || f < 0) throw new NumberFormatException();
+                parsedCal = Integer.parseInt(txtCalories.getText().trim());
+                if (!txtProtein.getText().trim().isEmpty()) parsedP = Double.parseDouble(txtProtein.getText().trim());
+                if (!txtCarbs.getText().trim().isEmpty()) parsedC = Double.parseDouble(txtCarbs.getText().trim());
+                if (!txtFat.getText().trim().isEmpty()) parsedF = Double.parseDouble(txtFat.getText().trim());
+                if (parsedCal < 0 || parsedP < 0 || parsedC < 0 || parsedF < 0) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Please enter valid non-negative numbers for calories and macros.");
                 return;
             }
 
-            NutritionEntry entry = new NutritionEntry(name, (String) cmbMeal.getSelectedItem(), cal, p, c, f, selectedDate);
-            entry.setServingSize(txtServing.getText().trim());
+            final int cal = parsedCal;
+            final double p = parsedP;
+            final double c = parsedC;
+            final double f = parsedF;
 
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    nutritionDAO.saveEntry(entry);
+                    if (editing != null) {
+                        editing.setFoodName(name);
+                        editing.setMealType((String) cmbMeal.getSelectedItem());
+                        editing.setServingSize(txtServing.getText().trim());
+                        editing.setCalories(cal);
+                        editing.setProteinG(p);
+                        editing.setCarbsG(c);
+                        editing.setFatG(f);
+                        nutritionDAO.updateEntry(editing);
+                    } else {
+                        NutritionEntry newEntry = new NutritionEntry(name, (String) cmbMeal.getSelectedItem(), cal, p, c, f, selectedDate);
+                        newEntry.setServingSize(txtServing.getText().trim());
+                        nutritionDAO.saveEntry(newEntry);
+                    }
                     return null;
                 }
                 @Override
                 protected void done() {
-                    saved = true;
-                    ToastNotification.showToast(NutritionPanel.this, "Food logged!", ToastNotification.ToastType.SUCCESS);
-                    dispose();
+                    try {
+                        get();
+                        saved = true;
+                        ToastNotification.showToast(NutritionPanel.this, editing != null ? "Food updated!" : "Food logged!", ToastNotification.ToastType.SUCCESS);
+                        dispose();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(FoodDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             };
             worker.execute();

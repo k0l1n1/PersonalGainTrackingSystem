@@ -24,11 +24,15 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import com.personaltracker.model.UserProfile;
+import com.personaltracker.service.SupabaseClient;
 
 /**
  * Body Measurements and Weight progression tracking panel.
@@ -257,7 +261,8 @@ public class MeasurementPanel extends JPanel {
     }
 
     private void openMeasurementDialog() {
-        MeasurementDialog dialog = new MeasurementDialog(SwingUtilities.getWindowAncestor(this));
+        BodyMeasurement latest = !currentMeasurements.isEmpty() ? currentMeasurements.get(0) : null;
+        MeasurementDialog dialog = new MeasurementDialog(SwingUtilities.getWindowAncestor(this), latest);
         dialog.setVisible(true);
         if (dialog.isSaved()) {
             loadMeasurements();
@@ -286,70 +291,319 @@ public class MeasurementPanel extends JPanel {
                 }
                 @Override
                 protected void done() {
-                    loadMeasurements();
+                    try {
+                        get();
+                        loadMeasurements();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(MeasurementPanel.this, "Failed to delete measurement: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             };
             worker.execute();
         }
     }
 
-    // Modal Measurement Dialog
+    // Modern User-Friendly Measurement Dialog
     private class MeasurementDialog extends JDialog {
         private static final long serialVersionUID = 1L;
         private boolean saved = false;
 
-        private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString());
-        private final ModernTextField txtWeight = new ModernTextField("75.0");
-        private final ModernTextField txtHeight = new ModernTextField("178.0");
-        private final ModernTextField txtWaist = new ModernTextField("82.0");
-        private final ModernTextField txtChest = new ModernTextField("100.0");
-        private final ModernTextField txtArm = new ModernTextField("36.0");
-        private final ModernTextField txtNotes = new ModernTextField("Morning check-in");
+        private final ModernTextField txtDate;
+        private final ModernTextField txtWeight;
+        private final ModernTextField txtHeight;
+        private final ModernTextField txtWaist;
+        private final ModernTextField txtChest;
+        private final ModernTextField txtArm;
+        private final ModernTextField txtNotes;
+        private final JLabel lblLiveBmi = new JLabel("BMI: --");
 
-        public MeasurementDialog(Window owner) {
+        public MeasurementDialog(Window owner, BodyMeasurement lastCheckIn) {
             super(owner, "Log Body Measurement Check-In", ModalityType.APPLICATION_MODAL);
-            setSize(460, 490);
+            setSize(490, 620);
             setLocationRelativeTo(owner);
             setResizable(false);
             getContentPane().setBackground(ThemeConfig.BG_DARK);
 
+            // 1. Determine smart defaults from previous check-in or profile
+            UserProfile profile = null;
+            try {
+                if (SupabaseClient.getInstance().getCurrentSession() != null) {
+                    profile = SupabaseClient.getInstance().getCurrentSession().getProfile();
+                }
+            } catch (Exception ignored) {}
+
+            double initialWeight = 75.0;
+            if (lastCheckIn != null && lastCheckIn.getWeightKg() > 0) {
+                initialWeight = lastCheckIn.getWeightKg();
+            } else if (profile != null && profile.getTargetWeightKg() != null && profile.getTargetWeightKg() > 0) {
+                initialWeight = profile.getTargetWeightKg();
+            }
+
+            double initialHeight = 178.0;
+            if (lastCheckIn != null && lastCheckIn.getHeightCm() != null && lastCheckIn.getHeightCm() > 0) {
+                initialHeight = lastCheckIn.getHeightCm();
+            } else if (profile != null && profile.getHeightCm() != null && profile.getHeightCm() > 0) {
+                initialHeight = profile.getHeightCm();
+            }
+
+            String initialWaist = (lastCheckIn != null && lastCheckIn.getWaistCm() != null) ? String.format(java.util.Locale.US, "%.1f", lastCheckIn.getWaistCm()) : "";
+            String initialChest = (lastCheckIn != null && lastCheckIn.getChestCm() != null) ? String.format(java.util.Locale.US, "%.1f", lastCheckIn.getChestCm()) : "";
+            String initialArm = (lastCheckIn != null && lastCheckIn.getArmCm() != null) ? String.format(java.util.Locale.US, "%.1f", lastCheckIn.getArmCm()) : "";
+
+            txtDate = new ModernTextField(LocalDate.now().toString());
+            txtWeight = new ModernTextField(String.format(java.util.Locale.US, "%.1f", initialWeight));
+            txtHeight = new ModernTextField(String.format(java.util.Locale.US, "%.1f", initialHeight));
+            txtWaist = new ModernTextField(initialWaist);
+            txtChest = new ModernTextField(initialChest);
+            txtArm = new ModernTextField(initialArm);
+            txtNotes = new ModernTextField("Morning check-in");
+
+            // Make weight field prominent
+            txtWeight.setFont(new Font("Segoe UI", Font.BOLD, 17));
+
             JPanel main = new JPanel();
             main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
             main.setOpaque(false);
-            main.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+            main.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
-            main.add(createFieldRow("Date (YYYY-MM-DD)", txtDate));
-            main.add(Box.createVerticalStrut(10));
+            // Section 1: Quick Date Selection (Today / Yesterday / Custom)
+            JPanel dateRow = new JPanel(new BorderLayout(8, 0));
+            dateRow.setOpaque(false);
+            JLabel lblDateTag = new JLabel("Check-In Date");
+            lblDateTag.setFont(ThemeConfig.FONT_SMALL);
+            lblDateTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            dateRow.add(lblDateTag, BorderLayout.NORTH);
 
+            JPanel dateControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            dateControls.setOpaque(false);
+            JButton btnToday = createQuickPill("Today", true);
+            JButton btnYesterday = createQuickPill("Yesterday", false);
+
+            btnToday.addActionListener(e -> {
+                txtDate.setText(LocalDate.now().toString());
+                btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btnYesterday.setBackground(ThemeConfig.BG_CARD);
+            });
+            btnYesterday.addActionListener(e -> {
+                txtDate.setText(LocalDate.now().minusDays(1).toString());
+                btnYesterday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btnToday.setBackground(ThemeConfig.BG_CARD);
+            });
+
+            txtDate.setPreferredSize(new Dimension(130, 32));
+            dateControls.add(btnToday);
+            dateControls.add(btnYesterday);
+            dateControls.add(txtDate);
+            dateRow.add(dateControls, BorderLayout.CENTER);
+            main.add(dateRow);
+            main.add(Box.createVerticalStrut(14));
+
+            // Section 2: Weight with Quick Stepper Buttons
+            JPanel weightSection = new JPanel();
+            weightSection.setLayout(new BoxLayout(weightSection, BoxLayout.Y_AXIS));
+            weightSection.setOpaque(false);
+
+            String autoFillHint = (lastCheckIn != null) ? " (auto-filled from last check-in)" : "";
+            JLabel lblWeightTag = new JLabel("Weight (kg) *" + autoFillHint);
+            lblWeightTag.setFont(ThemeConfig.FONT_SMALL);
+            lblWeightTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            weightSection.add(lblWeightTag);
+            weightSection.add(Box.createVerticalStrut(4));
+            weightSection.add(txtWeight);
+            weightSection.add(Box.createVerticalStrut(6));
+
+            // Quick stepper micro-adjust buttons
+            JPanel stepperRow = new JPanel(new GridLayout(1, 6, 6, 0));
+            stepperRow.setOpaque(false);
+            stepperRow.add(createStepperButton("-1.0", -1.0));
+            stepperRow.add(createStepperButton("-0.5", -0.5));
+            stepperRow.add(createStepperButton("-0.1", -0.1));
+            stepperRow.add(createStepperButton("+0.1", +0.1));
+            stepperRow.add(createStepperButton("+0.5", +0.5));
+            stepperRow.add(createStepperButton("+1.0", +1.0));
+            weightSection.add(stepperRow);
+            main.add(weightSection);
+            main.add(Box.createVerticalStrut(14));
+
+            // Section 3: Height & Live BMI Card
             JPanel r2 = new JPanel(new GridLayout(1, 2, 12, 0));
             r2.setOpaque(false);
-            r2.add(createFieldRow("Weight (kg)*", txtWeight));
-            r2.add(createFieldRow("Height (cm)*", txtHeight));
+            r2.add(createFieldRow("Height (cm) *", txtHeight));
+
+            JPanel bmiBox = new JPanel(new BorderLayout());
+            bmiBox.setBackground(ThemeConfig.BG_CARD);
+            bmiBox.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                    BorderFactory.createEmptyBorder(6, 12, 6, 12)
+            ));
+            JLabel bmiTitle = new JLabel("LIVE BMI CALCULATION");
+            bmiTitle.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            bmiTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
+            lblLiveBmi.setFont(ThemeConfig.FONT_BODY_BOLD);
+            bmiBox.add(bmiTitle, BorderLayout.NORTH);
+            bmiBox.add(lblLiveBmi, BorderLayout.CENTER);
+            r2.add(bmiBox);
             main.add(r2);
-            main.add(Box.createVerticalStrut(10));
+            main.add(Box.createVerticalStrut(14));
+
+            // Section 4: Circumferences (Optional, pre-filled if previously measured)
+            JLabel lblCircTag = new JLabel("Circumferences (cm, Optional)");
+            lblCircTag.setFont(ThemeConfig.FONT_SMALL);
+            lblCircTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            main.add(lblCircTag);
+            main.add(Box.createVerticalStrut(4));
 
             JPanel r3 = new JPanel(new GridLayout(1, 3, 10, 0));
             r3.setOpaque(false);
-            r3.add(createFieldRow("Waist (cm)", txtWaist));
-            r3.add(createFieldRow("Chest (cm)", txtChest));
-            r3.add(createFieldRow("Arm (cm)", txtArm));
+            r3.add(createFieldRow("Waist", txtWaist));
+            r3.add(createFieldRow("Chest", txtChest));
+            r3.add(createFieldRow("Arm", txtArm));
             main.add(r3);
-            main.add(Box.createVerticalStrut(10));
+            main.add(Box.createVerticalStrut(14));
 
-            main.add(createFieldRow("Notes / Comments", txtNotes));
-            main.add(Box.createVerticalStrut(20));
+            // Section 5: Notes & 1-Click Quick Chips
+            JPanel notesPanel = new JPanel();
+            notesPanel.setLayout(new BoxLayout(notesPanel, BoxLayout.Y_AXIS));
+            notesPanel.setOpaque(false);
 
-            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            JLabel lblNotesTag = new JLabel("Notes / Quick Tags");
+            lblNotesTag.setFont(ThemeConfig.FONT_SMALL);
+            lblNotesTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            notesPanel.add(lblNotesTag);
+            notesPanel.add(Box.createVerticalStrut(4));
+
+            JPanel chipsRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            chipsRow.setOpaque(false);
+            chipsRow.add(createNoteChip("Morning Fasted"));
+            chipsRow.add(createNoteChip("Post-Workout"));
+            chipsRow.add(createNoteChip("Evening"));
+            chipsRow.add(createNoteChip("Weekly Weigh-in"));
+            notesPanel.add(chipsRow);
+            notesPanel.add(Box.createVerticalStrut(6));
+            notesPanel.add(txtNotes);
+            main.add(notesPanel);
+
+            main.add(Box.createVerticalGlue());
+            main.add(Box.createVerticalStrut(16));
+
+            // Section 6: Action Buttons
+            JPanel actions = new JPanel(new BorderLayout());
             actions.setOpaque(false);
+
+            JLabel lblHint = new JLabel("Tip: Press Enter to save");
+            lblHint.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            lblHint.setForeground(ThemeConfig.TEXT_MUTED);
+            actions.add(lblHint, BorderLayout.WEST);
+
+            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            btnRow.setOpaque(false);
             ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.GHOST);
             btnCancel.addActionListener(e -> dispose());
             ModernButton btnSave = new ModernButton("Save Check-In", ModernButton.ButtonStyle.PRIMARY);
             btnSave.addActionListener(e -> saveMeasurementData());
-            actions.add(btnCancel);
-            actions.add(btnSave);
+            btnRow.add(btnCancel);
+            btnRow.add(btnSave);
+            actions.add(btnRow, BorderLayout.EAST);
             main.add(actions);
 
             setContentPane(main);
+
+            // Document listener for dynamic live BMI recalculation
+            DocumentListener bmiListener = new DocumentListener() {
+                @Override public void insertUpdate(DocumentEvent e) { updateLiveBmi(); }
+                @Override public void removeUpdate(DocumentEvent e) { updateLiveBmi(); }
+                @Override public void changedUpdate(DocumentEvent e) { updateLiveBmi(); }
+            };
+            txtWeight.getDocument().addDocumentListener(bmiListener);
+            txtHeight.getDocument().addDocumentListener(bmiListener);
+            updateLiveBmi();
+
+            // Press Enter in any field to save immediately
+            txtWeight.addActionListener(e -> saveMeasurementData());
+            txtHeight.addActionListener(e -> saveMeasurementData());
+            txtWaist.addActionListener(e -> saveMeasurementData());
+            txtChest.addActionListener(e -> saveMeasurementData());
+            txtArm.addActionListener(e -> saveMeasurementData());
+            txtNotes.addActionListener(e -> saveMeasurementData());
+
+            // Press Escape to dismiss
+            getRootPane().registerKeyboardAction(e -> dispose(),
+                    KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),
+                    JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+            // Automatically focus Weight input with text selected for instant typing
+            SwingUtilities.invokeLater(() -> {
+                txtWeight.requestFocusInWindow();
+                txtWeight.selectAll();
+            });
+        }
+
+        private JButton createStepperButton(String text, double delta) {
+            JButton btn = new JButton(text);
+            btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true));
+            btn.setPreferredSize(new Dimension(54, 28));
+            btn.addActionListener(e -> adjustWeight(delta));
+            return btn;
+        }
+
+        private void adjustWeight(double delta) {
+            try {
+                double current = Double.parseDouble(txtWeight.getText().trim());
+                double updated = Math.max(20.0, Math.min(400.0, current + delta));
+                txtWeight.setText(String.format(java.util.Locale.US, "%.1f", updated));
+                txtWeight.selectAll();
+                updateLiveBmi();
+            } catch (Exception ignored) {}
+        }
+
+        private JButton createQuickPill(String text, boolean active) {
+            JButton btn = new JButton(text);
+            btn.setFont(ThemeConfig.FONT_SMALL);
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+            return btn;
+        }
+
+        private JButton createNoteChip(String noteText) {
+            JButton btn = new JButton(noteText);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            btn.setForeground(ThemeConfig.TEXT_SECONDARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+            btn.addActionListener(e -> txtNotes.setText(noteText));
+            return btn;
+        }
+
+        private void updateLiveBmi() {
+            try {
+                double w = Double.parseDouble(txtWeight.getText().trim());
+                double h = Double.parseDouble(txtHeight.getText().trim());
+                if (w > 0 && h > 0) {
+                    double bmi = HealthCalculator.calculateBmi(w, h);
+                    String cat = HealthCalculator.getBmiCategory(bmi);
+                    lblLiveBmi.setText(String.format(java.util.Locale.US, "%.1f • %s", bmi, cat));
+                    if ("Normal weight".equalsIgnoreCase(cat)) {
+                        lblLiveBmi.setForeground(ThemeConfig.SUCCESS);
+                    } else if (cat.contains("Obesity")) {
+                        lblLiveBmi.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                    } else {
+                        lblLiveBmi.setForeground(ThemeConfig.WARNING);
+                    }
+                    return;
+                }
+            } catch (Exception ignored) {}
+            lblLiveBmi.setText("BMI: --");
+            lblLiveBmi.setForeground(ThemeConfig.TEXT_SECONDARY);
         }
 
         private JPanel createFieldRow(String label, JComponent comp) {
@@ -368,7 +622,7 @@ public class MeasurementPanel extends JPanel {
         private void saveMeasurementData() {
             LocalDate date = DateUtil.parseDateOrNull(txtDate.getText().trim());
             if (date == null) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid date.");
+                JOptionPane.showMessageDialog(this, "Please enter a valid date (YYYY-MM-DD).");
                 return;
             }
 
@@ -401,9 +655,14 @@ public class MeasurementPanel extends JPanel {
                 }
                 @Override
                 protected void done() {
-                    saved = true;
-                    ToastNotification.showToast(MeasurementPanel.this, "Check-in logged successfully!", ToastNotification.ToastType.SUCCESS);
-                    dispose();
+                    try {
+                        get();
+                        saved = true;
+                        ToastNotification.showToast(MeasurementPanel.this, "Check-in logged successfully!", ToastNotification.ToastType.SUCCESS);
+                        dispose();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(MeasurementDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             };
             worker.execute();

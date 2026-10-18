@@ -42,3 +42,5 @@ Desktop.ini
 
 ### Log files ###
 *.log
+dependency-reduced-pom.xml
+personal_tracker.properties

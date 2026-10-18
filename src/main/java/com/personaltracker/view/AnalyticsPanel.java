@@ -371,18 +371,48 @@ public class AnalyticsPanel extends JPanel {
     }
 
     private void exportDataToCsv() {
+        String[] reportOptions = {"Workouts Report", "Body Measurements Report", "Nutrition Entries Report"};
+        String selectedReport = (String) JOptionPane.showInputDialog(
+                this,
+                "Select data report to export as CSV:",
+                "Export Analytics Data",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                reportOptions,
+                reportOptions[0]
+        );
+        if (selectedReport == null) return;
+
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Export Workouts Report to CSV");
-        fileChooser.setSelectedFile(new File("PersonalTracker_Workouts_" + LocalDate.now() + ".csv"));
+        String defaultFileName;
+        if ("Body Measurements Report".equals(selectedReport)) {
+            defaultFileName = "PersonalTracker_Measurements_" + LocalDate.now() + ".csv";
+        } else if ("Nutrition Entries Report".equals(selectedReport)) {
+            defaultFileName = "PersonalTracker_Nutrition_" + LocalDate.now() + ".csv";
+        } else {
+            defaultFileName = "PersonalTracker_Workouts_" + LocalDate.now() + ".csv";
+        }
+        fileChooser.setDialogTitle("Export " + selectedReport + " to CSV");
+        fileChooser.setSelectedFile(new File(defaultFileName));
 
         int userSelection = fileChooser.showSaveDialog(this);
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File fileToSave = fileChooser.getSelectedFile();
             try {
-                if (allWorkouts != null) {
-                    CsvExporter.exportWorkouts(allWorkouts, fileToSave);
-                    JOptionPane.showMessageDialog(this, "Workouts report exported successfully to:\n" + fileToSave.getAbsolutePath(), "Export Complete", JOptionPane.INFORMATION_MESSAGE);
+                if ("Body Measurements Report".equals(selectedReport)) {
+                    if (allMeasurements != null) {
+                        CsvExporter.exportMeasurements(allMeasurements, fileToSave);
+                    }
+                } else if ("Nutrition Entries Report".equals(selectedReport)) {
+                    if (allNutrition != null) {
+                        CsvExporter.exportNutrition(allNutrition, fileToSave);
+                    }
+                } else {
+                    if (allWorkouts != null) {
+                        CsvExporter.exportWorkouts(allWorkouts, fileToSave);
+                    }
                 }
+                JOptionPane.showMessageDialog(this, selectedReport + " exported successfully to:\n" + fileToSave.getAbsolutePath(), "Export Complete", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Failed to export CSV: " + ex.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
             }

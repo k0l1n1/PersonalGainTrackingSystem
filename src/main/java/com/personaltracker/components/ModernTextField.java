@@ -21,13 +21,13 @@ public class ModernTextField extends JTextField {
         this("", "");
     }
 
-    public ModernTextField(String placeholder) {
-        this("", placeholder);
+    public ModernTextField(String text) {
+        this(text, "");
     }
 
     public ModernTextField(String text, String placeholder) {
         super(text);
-        this.placeholder = placeholder;
+        this.placeholder = placeholder != null ? placeholder : "";
 
         setFont(ThemeConfig.FONT_BODY);
         setForeground(ThemeConfig.TEXT_PRIMARY);

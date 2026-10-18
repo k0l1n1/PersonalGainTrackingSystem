@@ -40,6 +40,13 @@ public class WorkoutDAO {
     public void updateWorkout(Workout workout) throws Exception {
         if (workout.getId() == null) return;
         client.executePatch("workouts", "id=eq." + workout.getId(), workout);
+        if (workout.getExercises() != null && !com.personaltracker.config.AppConfig.getInstance().isMockMode()) {
+            client.executeDelete("workout_exercises", "workout_id=eq." + workout.getId());
+            for (WorkoutExercise ex : workout.getExercises()) {
+                ex.setWorkoutId(workout.getId());
+                client.executePost("workout_exercises", ex, WorkoutExercise.class);
+            }
+        }
     }
 
     public void deleteWorkout(String workoutId) throws Exception {

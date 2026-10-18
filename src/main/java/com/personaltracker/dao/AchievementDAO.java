@@ -31,7 +31,7 @@ public class AchievementDAO {
 
         Set<String> unlockedIds = new HashSet<>();
         if (uid != null) {
-            if (client.getCurrentSession() != null && "demo-user-123".equals(uid)) {
+            if (com.personaltracker.config.AppConfig.getInstance().isMockMode() || (client.getCurrentSession() != null && "demo-user-123".equals(uid))) {
                 unlockedIds.addAll(client.getMockUserAchievements(uid));
             } else {
                 try {
@@ -61,7 +61,7 @@ public class AchievementDAO {
         String uid = client.getCurrentUserId();
         if (uid == null || achievementId == null) return false;
 
-        if (client.getCurrentSession() != null && "demo-user-123".equals(uid)) {
+        if (com.personaltracker.config.AppConfig.getInstance().isMockMode() || (client.getCurrentSession() != null && "demo-user-123".equals(uid))) {
             Set<String> unlocked = client.getMockUserAchievements(uid);
             if (!unlocked.contains(achievementId)) {
                 client.unlockMockAchievement(uid, achievementId);

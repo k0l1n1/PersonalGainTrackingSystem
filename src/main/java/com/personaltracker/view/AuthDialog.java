@@ -3,9 +3,11 @@ package com.personaltracker.view;
 import com.personaltracker.components.ModernButton;
 import com.personaltracker.components.ModernPasswordField;
 import com.personaltracker.components.ModernTextField;
+import com.personaltracker.config.AppConfig;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.model.UserSession;
 import com.personaltracker.service.SupabaseAuthService;
+import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.IconFactory;
 import com.personaltracker.util.ValidationUtil;
 
@@ -22,7 +24,7 @@ public class AuthDialog extends JDialog {
     private boolean authenticated = false;
 
     private final ModernTextField txtEmail = new ModernTextField("alex@example.com");
-    private final ModernPasswordField txtPassword = new ModernPasswordField("••••••••");
+    private final ModernPasswordField txtPassword = new ModernPasswordField("password123", "••••••••");
     private final ModernTextField txtFullName = new ModernTextField("Alex Hunter");
 
     private final JLabel lblError = new JLabel("");
@@ -148,6 +150,7 @@ public class AuthDialog extends JDialog {
         btnDemo.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnDemo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         btnDemo.addActionListener(e -> {
+            SupabaseClient.getInstance().enableDemoMode();
             authenticated = true;
             dispose();
         });
@@ -286,6 +289,7 @@ public class AuthDialog extends JDialog {
                     try {
                         UserSession session = get();
                         if (session != null) {
+                            AppConfig.getInstance().setMockMode(false);
                             authenticated = true;
                             dispose();
                         }
@@ -323,6 +327,7 @@ public class AuthDialog extends JDialog {
                     try {
                         UserSession session = get();
                         if (session != null) {
+                            AppConfig.getInstance().setMockMode(false);
                             authenticated = true;
                             dispose();
                         }

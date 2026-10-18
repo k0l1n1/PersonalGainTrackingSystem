@@ -6,6 +6,15 @@
 -- Enable pgcrypto for UUID generation if not enabled
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- Ensure auth schema and auth.users table exist (for standalone/local PostgreSQL compatibility)
+CREATE SCHEMA IF NOT EXISTS auth;
+CREATE TABLE IF NOT EXISTS auth.users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE,
+    raw_user_meta_data JSONB,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- ============================================================================
 -- 1. USER PROFILES TABLE
 -- Linked to Supabase Auth (auth.users)
@@ -307,10 +316,11 @@ CREATE POLICY "Users can manage own reminders" ON public.reminders
     FOR ALL USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
--- 10. Achievements Catalog (Public Read for Authenticated Users)
+-- 10. Achievements Catalog (Public Read for Authenticated & Anon Users)
 DROP POLICY IF EXISTS "Authenticated users can view achievements" ON public.achievements;
-CREATE POLICY "Authenticated users can view achievements" ON public.achievements
-    FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Allow public read on achievements" ON public.achievements;
+CREATE POLICY "Allow public read on achievements" ON public.achievements
+    FOR SELECT USING (true);
 
 -- 11. User Achievements Policies
 DROP POLICY IF EXISTS "Users can manage own achievements" ON public.user_achievements;
@@ -334,14 +344,20 @@ BEGIN
     INSERT INTO public.profiles (id, email, full_name)
     VALUES (
         NEW.id,
-        NEW.email,
-        COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1))
+        COALESCE(NEW.email, ''),
+        COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(COALESCE(NEW.email, ''), '@', 1), '')
     )
     ON CONFLICT (id) DO UPDATE
-    SET email = EXCLUDED.email;
+    SET email = EXCLUDED.email,
+        full_name = CASE 
+            WHEN EXCLUDED.full_name IS NOT NULL AND EXCLUDED.full_name <> '' 
+            THEN EXCLUDED.full_name 
+            ELSE public.profiles.full_name 
+        END,
+        updated_at = now();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -349,8 +365,30 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================================================
--- SUPABASE STORAGE BUCKET CONFIGURATION
--- Run in SQL editor or create via Supabase Dashboard -> Storage -> 'progress_photos'
+-- SUPABASE STORAGE BUCKET CONFIGURATION (Progress Photos)
 -- ============================================================================
--- INSERT INTO storage.buckets (id, name, public) VALUES ('progress_photos', 'progress_photos', false)
--- ON CONFLICT (id) DO NOTHING;
+DO $$
+BEGIN
+    -- Check if storage schema exists (standard in Supabase)
+    IF EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'storage') THEN
+        INSERT INTO storage.buckets (id, name, public)
+        VALUES ('progress_photos', 'progress_photos', true)
+        ON CONFLICT (id) DO UPDATE SET public = true;
+
+        -- RLS Policies for Storage
+        DROP POLICY IF EXISTS "Allow authenticated uploads" ON storage.objects;
+        CREATE POLICY "Allow authenticated uploads" ON storage.objects
+            FOR INSERT TO authenticated WITH CHECK (bucket_id = 'progress_photos');
+
+        DROP POLICY IF EXISTS "Allow public photo viewing" ON storage.objects;
+        CREATE POLICY "Allow public photo viewing" ON storage.objects
+            FOR SELECT USING (bucket_id = 'progress_photos');
+
+        DROP POLICY IF EXISTS "Allow authenticated deletes" ON storage.objects;
+        CREATE POLICY "Allow authenticated deletes" ON storage.objects
+            FOR DELETE TO authenticated USING (bucket_id = 'progress_photos');
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Storage setup skipped or encountered notice: %', SQLERRM;
+END $$;

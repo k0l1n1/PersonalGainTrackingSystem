@@ -17,6 +17,8 @@ import com.personaltracker.util.IconFactory;
 import com.personaltracker.util.ValidationUtil;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
@@ -33,7 +35,7 @@ public class WorkoutPanel extends JPanel {
     private final WorkoutDAO workoutDAO = new WorkoutDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
 
-    private final ModernTextField txtSearch = new ModernTextField("Search workouts by title or type...");
+    private final ModernTextField txtSearch = new ModernTextField("", "Search workouts by title or type...");
     private final JComboBox<String> cmbTypeFilter = new JComboBox<>(new String[]{"All Types", "Strength", "Cardio", "HIIT", "Yoga", "Flexibility", "Endurance", "Other"});
     private final JComboBox<String> cmbStatusFilter = new JComboBox<>(new String[]{"All Statuses", "COMPLETED", "PLANNED"});
 
@@ -258,6 +260,11 @@ public class WorkoutPanel extends JPanel {
         }
         int modelRow = table.convertRowIndexToModel(selectedRow);
         Workout w = currentWorkouts.get(modelRow);
+        if (w.getExercises() == null && w.getId() != null) {
+            try {
+                w.setExercises(workoutDAO.getExercisesForWorkout(w.getId()));
+            } catch (Exception ignored) {}
+        }
 
         WorkoutDialog dialog = new WorkoutDialog(SwingUtilities.getWindowAncestor(this), w, 0);
         dialog.setVisible(true);
@@ -339,7 +346,7 @@ public class WorkoutPanel extends JPanel {
         private final ModernTextField txtDuration = new ModernTextField("45");
         private final ModernTextField txtCalories = new ModernTextField("350");
         private final JComboBox<String> cmbStatus = new JComboBox<>(new String[]{"COMPLETED", "PLANNED"});
-        private final JTextArea txtNotes = new JTextArea(3, 20);
+        private final JTextArea txtNotes = new JTextArea(2, 20);
 
         private final DefaultTableModel exercisesModel;
         private final ModernTable exercisesTable;
@@ -347,7 +354,7 @@ public class WorkoutPanel extends JPanel {
         public WorkoutDialog(Window owner, Workout workout, int prefillDurationMinutes) {
             super(owner, workout == null ? "Log New Workout" : "Edit Workout", ModalityType.APPLICATION_MODAL);
             this.editingWorkout = workout;
-            setSize(560, 680);
+            setSize(590, 720);
             setLocationRelativeTo(owner);
             setResizable(false);
             getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -355,63 +362,132 @@ public class WorkoutPanel extends JPanel {
             JPanel main = new JPanel();
             main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
             main.setOpaque(false);
-            main.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+            main.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
-            // Form inputs
-            main.add(createFieldRow("Workout Title", txtTitle));
+            // Section 1: Quick Workout Template Chips
+            if (workout == null) {
+                JLabel lblTpl = new JLabel("Quick Workout Presets");
+                lblTpl.setFont(ThemeConfig.FONT_SMALL);
+                lblTpl.setForeground(ThemeConfig.TEXT_SECONDARY);
+                main.add(lblTpl);
+                main.add(Box.createVerticalStrut(4));
+
+                JPanel tplRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+                tplRow.setOpaque(false);
+                tplRow.add(createTemplateChip("🏋️ Push Day", "Push Day (Chest & Triceps)", "Strength", 50, new String[][]{{"Bench Press", "3", "10", "60.0"}, {"Incline Dumbbell Press", "3", "12", "20.0"}}));
+                tplRow.add(createTemplateChip("💪 Pull Day", "Pull Day (Back & Biceps)", "Strength", 50, new String[][]{{"Lat Pulldown", "3", "10", "55.0"}, {"Barbell Row", "3", "10", "50.0"}}));
+                tplRow.add(createTemplateChip("🦵 Leg Day", "Leg Day (Quads & Hamstrings)", "Strength", 50, new String[][]{{"Squats", "3", "8", "80.0"}, {"Leg Press", "3", "12", "120.0"}}));
+                tplRow.add(createTemplateChip("🏃 5K Run", "5K Outdoor Run", "Cardio", 30, null));
+                tplRow.add(createTemplateChip("🔥 HIIT", "Full Body HIIT", "HIIT", 25, null));
+                main.add(tplRow);
+                main.add(Box.createVerticalStrut(12));
+            }
+
+            // Title
+            main.add(createFieldRow("Workout Title *", txtTitle));
             main.add(Box.createVerticalStrut(10));
 
+            // Type & Date Row with Quick Pills
             JPanel row2 = new JPanel(new GridLayout(1, 2, 12, 0));
             row2.setOpaque(false);
             row2.add(createFieldRow("Workout Type", cmbType));
-            row2.add(createFieldRow("Date (YYYY-MM-DD)", txtDate));
+
+            JPanel dateCol = new JPanel();
+            dateCol.setLayout(new BoxLayout(dateCol, BoxLayout.Y_AXIS));
+            dateCol.setOpaque(false);
+            JLabel lblDateTag = new JLabel("Date");
+            lblDateTag.setFont(ThemeConfig.FONT_SMALL);
+            lblDateTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            dateCol.add(lblDateTag);
+            dateCol.add(Box.createVerticalStrut(4));
+
+            JPanel dateControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+            dateControls.setOpaque(false);
+            JButton btnToday = createQuickPill("Today", true);
+            JButton btnYesterday = createQuickPill("Yesterday", false);
+            btnToday.addActionListener(e -> {
+                txtDate.setText(LocalDate.now().toString());
+                btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btnYesterday.setBackground(ThemeConfig.BG_CARD);
+            });
+            btnYesterday.addActionListener(e -> {
+                txtDate.setText(LocalDate.now().minusDays(1).toString());
+                btnYesterday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btnToday.setBackground(ThemeConfig.BG_CARD);
+            });
+            txtDate.setPreferredSize(new Dimension(105, 30));
+            dateControls.add(btnToday);
+            dateControls.add(btnYesterday);
+            dateControls.add(txtDate);
+            dateCol.add(dateControls);
+            row2.add(dateCol);
             main.add(row2);
             main.add(Box.createVerticalStrut(10));
 
-            JPanel row3 = new JPanel(new GridLayout(1, 3, 12, 0));
+            // Duration with Steppers, Auto Calories, Status
+            JPanel row3 = new JPanel(new GridLayout(1, 3, 10, 0));
             row3.setOpaque(false);
-            row3.add(createFieldRow("Duration (Mins)", txtDuration));
-            row3.add(createFieldRow("Calories Burned", txtCalories));
+
+            JPanel durPanel = new JPanel();
+            durPanel.setLayout(new BoxLayout(durPanel, BoxLayout.Y_AXIS));
+            durPanel.setOpaque(false);
+            JLabel lblDur = new JLabel("Duration (Mins)");
+            lblDur.setFont(ThemeConfig.FONT_SMALL);
+            lblDur.setForeground(ThemeConfig.TEXT_SECONDARY);
+            durPanel.add(lblDur);
+            durPanel.add(Box.createVerticalStrut(4));
+            durPanel.add(txtDuration);
+            durPanel.add(Box.createVerticalStrut(4));
+
+            JPanel durSteppers = new JPanel(new GridLayout(1, 4, 3, 0));
+            durSteppers.setOpaque(false);
+            durSteppers.add(createDurationAdjuster("-15", -15));
+            durSteppers.add(createDurationAdjuster("-5", -5));
+            durSteppers.add(createDurationAdjuster("+5", +5));
+            durSteppers.add(createDurationAdjuster("+15", +15));
+            durPanel.add(durSteppers);
+
+            row3.add(durPanel);
+            row3.add(createFieldRow("Calories Burned (Auto)", txtCalories));
             row3.add(createFieldRow("Status", cmbStatus));
             main.add(row3);
-            main.add(Box.createVerticalStrut(14));
+            main.add(Box.createVerticalStrut(12));
 
-            // Auto-calculate calories button
-            ModernButton btnEstimateCal = new ModernButton("⚡ Estimate Calories Burned", ModernButton.ButtonStyle.SECONDARY);
-            btnEstimateCal.addActionListener(e -> {
-                try {
-                    int mins = Integer.parseInt(txtDuration.getText().trim());
-                    String type = (String) cmbType.getSelectedItem();
-                    int estimated = HealthCalculator.estimateCaloriesBurned(type, mins, 75.0);
-                    txtCalories.setText(String.valueOf(estimated));
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Please enter a valid duration first.");
-                }
-            });
-            main.add(btnEstimateCal);
-            main.add(Box.createVerticalStrut(14));
-
-            // Exercises section
+            // Exercises section with Quick Add Exercise Chips
+            JPanel exHeader = new JPanel(new BorderLayout());
+            exHeader.setOpaque(false);
             JLabel lblExTitle = new JLabel("Exercises & Sets (Optional)");
             lblExTitle.setFont(ThemeConfig.FONT_SUBTITLE);
             lblExTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
-            main.add(lblExTitle);
+            exHeader.add(lblExTitle, BorderLayout.WEST);
+            main.add(exHeader);
+            main.add(Box.createVerticalStrut(4));
+
+            // Quick Add Common Exercise Chips
+            JPanel exChips = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+            exChips.setOpaque(false);
+            exChips.add(createExerciseChip("+ Bench Press", "Bench Press", 3, 10, 60.0));
+            exChips.add(createExerciseChip("+ Squat", "Squat", 3, 8, 80.0));
+            exChips.add(createExerciseChip("+ Deadlift", "Deadlift", 3, 5, 100.0));
+            exChips.add(createExerciseChip("+ Pull-ups", "Pull-ups", 3, 8, 0.0));
+            exChips.add(createExerciseChip("+ Curls", "Bicep Curls", 3, 12, 14.0));
+            main.add(exChips);
             main.add(Box.createVerticalStrut(6));
 
             String[] exCols = {"Exercise", "Sets", "Reps", "Weight (kg)"};
             exercisesModel = new DefaultTableModel(exCols, 0);
             exercisesTable = new ModernTable(exercisesModel);
-            exercisesTable.setRowHeight(30);
+            exercisesTable.setRowHeight(28);
             JScrollPane scrollEx = ModernTable.wrapInScrollPane(exercisesTable);
-            scrollEx.setPreferredSize(new Dimension(0, 110));
+            scrollEx.setPreferredSize(new Dimension(0, 95));
             main.add(scrollEx);
-            main.add(Box.createVerticalStrut(8));
+            main.add(Box.createVerticalStrut(6));
 
-            JPanel exBtnRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+            JPanel exBtnRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
             exBtnRow.setOpaque(false);
-            ModernButton btnAddEx = new ModernButton("+ Add Exercise Row", ModernButton.ButtonStyle.SECONDARY);
-            btnAddEx.addActionListener(e -> exercisesModel.addRow(new Object[]{"Bench Press", 3, 10, 60.0}));
-            ModernButton btnDelEx = new ModernButton("- Remove Row", ModernButton.ButtonStyle.GHOST);
+            ModernButton btnAddEx = new ModernButton("+ Custom Exercise", ModernButton.ButtonStyle.SECONDARY);
+            btnAddEx.addActionListener(e -> exercisesModel.addRow(new Object[]{"Exercise Name", 3, 10, 0.0}));
+            ModernButton btnDelEx = new ModernButton("- Remove Selected", ModernButton.ButtonStyle.GHOST);
             btnDelEx.addActionListener(e -> {
                 int r = exercisesTable.getSelectedRow();
                 if (r >= 0) exercisesModel.removeRow(r);
@@ -419,7 +495,7 @@ public class WorkoutPanel extends JPanel {
             exBtnRow.add(btnAddEx);
             exBtnRow.add(btnDelEx);
             main.add(exBtnRow);
-            main.add(Box.createVerticalStrut(12));
+            main.add(Box.createVerticalStrut(10));
 
             // Notes
             JLabel lblNotes = new JLabel("Notes & Performance");
@@ -433,20 +509,47 @@ public class WorkoutPanel extends JPanel {
             txtNotes.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1));
             txtNotes.setLineWrap(true);
             main.add(new JScrollPane(txtNotes));
-            main.add(Box.createVerticalStrut(16));
+            main.add(Box.createVerticalStrut(14));
 
             // Save / Cancel buttons
-            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            JPanel actions = new JPanel(new BorderLayout());
             actions.setOpaque(false);
+            JLabel lblHint = new JLabel("Tip: Press Enter to save");
+            lblHint.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            lblHint.setForeground(ThemeConfig.TEXT_MUTED);
+            actions.add(lblHint, BorderLayout.WEST);
+
+            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            btnRow.setOpaque(false);
             ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.GHOST);
             btnCancel.addActionListener(e -> dispose());
             ModernButton btnSave = new ModernButton("Save Workout", ModernButton.ButtonStyle.PRIMARY);
             btnSave.addActionListener(e -> saveWorkoutData());
-            actions.add(btnCancel);
-            actions.add(btnSave);
+            btnRow.add(btnCancel);
+            btnRow.add(btnSave);
+            actions.add(btnRow, BorderLayout.EAST);
             main.add(actions);
 
             setContentPane(main);
+
+            // Real-time automatic calorie estimation on duration or type changes
+            txtDuration.getDocument().addDocumentListener(new DocumentListener() {
+                @Override public void insertUpdate(DocumentEvent e) { autoEstimateCalories(); }
+                @Override public void removeUpdate(DocumentEvent e) { autoEstimateCalories(); }
+                @Override public void changedUpdate(DocumentEvent e) { autoEstimateCalories(); }
+            });
+            cmbType.addActionListener(e -> autoEstimateCalories());
+
+            // Enter key shortcut to save
+            txtTitle.addActionListener(e -> saveWorkoutData());
+            txtDate.addActionListener(e -> saveWorkoutData());
+            txtDuration.addActionListener(e -> saveWorkoutData());
+            txtCalories.addActionListener(e -> saveWorkoutData());
+
+            // Escape key to cancel
+            getRootPane().registerKeyboardAction(e -> dispose(),
+                    KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),
+                    JComponent.WHEN_IN_FOCUSED_WINDOW);
 
             // Populate if editing or prefilled
             if (workout != null) {
@@ -465,9 +568,87 @@ public class WorkoutPanel extends JPanel {
                 }
             } else if (prefillDurationMinutes > 0) {
                 txtDuration.setText(String.valueOf(prefillDurationMinutes));
-                int est = HealthCalculator.estimateCaloriesBurned("Strength", prefillDurationMinutes, 75.0);
-                txtCalories.setText(String.valueOf(est));
+                autoEstimateCalories();
             }
+
+            // Auto-focus on Title
+            SwingUtilities.invokeLater(() -> {
+                txtTitle.requestFocusInWindow();
+                txtTitle.selectAll();
+            });
+        }
+
+        private JButton createTemplateChip(String label, String title, String type, int duration, String[][] defaultExercises) {
+            JButton btn = new JButton(label);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(5, 9, 5, 9));
+            btn.addActionListener(e -> {
+                txtTitle.setText(title);
+                cmbType.setSelectedItem(type);
+                txtDuration.setText(String.valueOf(duration));
+                autoEstimateCalories();
+                if (defaultExercises != null) {
+                    exercisesModel.setRowCount(0);
+                    for (String[] row : defaultExercises) {
+                        exercisesModel.addRow(new Object[]{row[0], Integer.parseInt(row[1]), Integer.parseInt(row[2]), Double.parseDouble(row[3])});
+                    }
+                }
+            });
+            return btn;
+        }
+
+        private JButton createExerciseChip(String label, String exName, int sets, int reps, double weight) {
+            JButton btn = new JButton(label);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+            btn.setForeground(ThemeConfig.TEXT_SECONDARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(3, 7, 3, 7));
+            btn.addActionListener(e -> exercisesModel.addRow(new Object[]{exName, sets, reps, weight}));
+            return btn;
+        }
+
+        private JButton createQuickPill(String text, boolean active) {
+            JButton btn = new JButton(text);
+            btn.setFont(ThemeConfig.FONT_SMALL);
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(5, 9, 5, 9));
+            return btn;
+        }
+
+        private JButton createDurationAdjuster(String text, int delta) {
+            JButton btn = new JButton(text);
+            btn.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true));
+            btn.addActionListener(e -> {
+                try {
+                    int current = Integer.parseInt(txtDuration.getText().trim());
+                    txtDuration.setText(String.valueOf(Math.max(5, Math.min(300, current + delta))));
+                    autoEstimateCalories();
+                } catch (Exception ignored) {}
+            });
+            return btn;
+        }
+
+        private void autoEstimateCalories() {
+            try {
+                int mins = Integer.parseInt(txtDuration.getText().trim());
+                String type = (String) cmbType.getSelectedItem();
+                int estimated = HealthCalculator.estimateCaloriesBurned(type, mins, 75.0);
+                txtCalories.setText(String.valueOf(estimated));
+            } catch (Exception ignored) {}
         }
 
         private JPanel createFieldRow(String label, JComponent comp) {
@@ -516,13 +697,28 @@ public class WorkoutPanel extends JPanel {
             target.setStatus((String) cmbStatus.getSelectedItem());
             target.setNotes(txtNotes.getText().trim());
 
+            if (exercisesTable.isEditing()) {
+                exercisesTable.getCellEditor().stopCellEditing();
+            }
+
             // Collect exercises
             List<WorkoutExercise> exercises = new ArrayList<>();
             for (int r = 0; r < exercisesModel.getRowCount(); r++) {
-                String exName = exercisesModel.getValueAt(r, 0).toString().trim();
-                int sets = Integer.parseInt(exercisesModel.getValueAt(r, 1).toString().trim());
-                int reps = Integer.parseInt(exercisesModel.getValueAt(r, 2).toString().trim());
-                double weight = Double.parseDouble(exercisesModel.getValueAt(r, 3).toString().trim());
+                Object nameObj = exercisesModel.getValueAt(r, 0);
+                if (nameObj == null || nameObj.toString().trim().isEmpty()) continue;
+                String exName = nameObj.toString().trim();
+                int sets = 1;
+                int reps = 1;
+                double weight = 0.0;
+                try {
+                    if (exercisesModel.getValueAt(r, 1) != null) sets = Integer.parseInt(exercisesModel.getValueAt(r, 1).toString().trim());
+                    if (exercisesModel.getValueAt(r, 2) != null) reps = Integer.parseInt(exercisesModel.getValueAt(r, 2).toString().trim());
+                    if (exercisesModel.getValueAt(r, 3) != null) weight = Double.parseDouble(exercisesModel.getValueAt(r, 3).toString().trim());
+                    if (sets < 0 || reps < 0 || weight < 0) throw new NumberFormatException();
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(this, "Sets, Reps, and Weight must be valid non-negative numbers.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 exercises.add(new WorkoutExercise(exName, sets, reps, weight));
             }
             target.setExercises(exercises);

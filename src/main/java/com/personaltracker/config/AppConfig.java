@@ -54,6 +54,9 @@ public class AppConfig {
 
         this.supabaseUrl = getEnvValue("SUPABASE_URL", dotenv, "");
         this.supabaseAnonKey = getEnvValue("SUPABASE_ANON_KEY", dotenv, "");
+        if (this.supabaseAnonKey.isEmpty()) {
+            this.supabaseAnonKey = getEnvValue("SUPABASE_PUBLISHABLE_KEY", dotenv, "");
+        }
         this.dbHost = getEnvValue("DB_HOST", dotenv, "");
         String portStr = getEnvValue("DB_PORT", dotenv, "5432");
         try {
@@ -75,6 +78,8 @@ public class AppConfig {
                 }
                 if (props.getProperty("SUPABASE_ANON_KEY") != null) {
                     this.supabaseAnonKey = props.getProperty("SUPABASE_ANON_KEY");
+                } else if (props.getProperty("SUPABASE_PUBLISHABLE_KEY") != null) {
+                    this.supabaseAnonKey = props.getProperty("SUPABASE_PUBLISHABLE_KEY");
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.WARNING, "Failed to read property file: " + e.getMessage());
@@ -155,6 +160,10 @@ public class AppConfig {
 
     public boolean isMockMode() {
         return mockMode;
+    }
+
+    public void setMockMode(boolean mockMode) {
+        this.mockMode = mockMode;
     }
 
     public boolean isSupabaseConfigured() {
