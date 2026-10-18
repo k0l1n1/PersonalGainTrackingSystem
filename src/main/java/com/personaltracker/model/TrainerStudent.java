@@ -1,5 +1,6 @@
 package com.personaltracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -28,10 +29,15 @@ public class TrainerStudent {
     private OffsetDateTime createdAt;
 
     // Transient attributes populated for rich UI cards & progress tracking
+    @JsonIgnore
     private UserProfile studentProfile;
+    @JsonIgnore
     private int totalWorkouts = 0;
+    @JsonIgnore
     private int activeGoals = 0;
+    @JsonIgnore
     private Double latestWeightKg;
+    @JsonIgnore
     private LocalDate lastActiveDate;
 
     public TrainerStudent() {}
@@ -67,18 +73,28 @@ public class TrainerStudent {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 
+    @JsonIgnore
     public UserProfile getStudentProfile() { return studentProfile; }
+    @JsonIgnore
     public void setStudentProfile(UserProfile studentProfile) { this.studentProfile = studentProfile; }
 
+    @JsonIgnore
     public int getTotalWorkouts() { return totalWorkouts; }
+    @JsonIgnore
     public void setTotalWorkouts(int totalWorkouts) { this.totalWorkouts = totalWorkouts; }
 
+    @JsonIgnore
     public int getActiveGoals() { return activeGoals; }
+    @JsonIgnore
     public void setActiveGoals(int activeGoals) { this.activeGoals = activeGoals; }
 
+    @JsonIgnore
     public Double getLatestWeightKg() { return latestWeightKg; }
+    @JsonIgnore
     public void setLatestWeightKg(Double latestWeightKg) { this.latestWeightKg = latestWeightKg; }
 
+    @JsonIgnore
     public LocalDate getLastActiveDate() { return lastActiveDate; }
+    @JsonIgnore
     public void setLastActiveDate(LocalDate lastActiveDate) { this.lastActiveDate = lastActiveDate; }
 }

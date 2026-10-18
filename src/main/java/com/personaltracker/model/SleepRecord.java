@@ -1,5 +1,6 @@
 package com.personaltracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.personaltracker.util.HealthCalculator;
@@ -86,6 +87,7 @@ public class SleepRecord {
         }
     }
 
+    @JsonIgnore
     public double getDurationHours() {
         return Math.round((durationMinutes / 60.0) * 10.0) / 10.0;
     }

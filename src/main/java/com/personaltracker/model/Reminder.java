@@ -1,5 +1,6 @@
 package com.personaltracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -61,12 +62,15 @@ public class Reminder {
     public LocalTime getReminderTime() { return reminderTime; }
     public void setReminderTime(LocalTime reminderTime) { this.reminderTime = reminderTime; }
 
+    @JsonProperty("is_completed")
     public boolean isCompleted() { return isCompleted; }
+    @JsonProperty("is_completed")
     public void setCompleted(boolean completed) { isCompleted = completed; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 
+    @JsonIgnore
     public boolean isDueOrOverdue() {
         if (isCompleted) return false;
         LocalDate today = LocalDate.now();

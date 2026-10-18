@@ -1,5 +1,6 @@
 package com.personaltracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -76,7 +77,9 @@ public class UserProfile {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
+    @JsonProperty("full_name")
     public String getFullName() { return fullName; }
+    @JsonProperty("full_name")
     public void setFullName(String fullName) { this.fullName = fullName; }
 
     public String getGender() { return gender; }
@@ -103,13 +106,17 @@ public class UserProfile {
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
 
+    @JsonProperty("role")
     public String getRole() { return role != null ? role : ROLE_MEMBER; }
+    @JsonProperty("role")
     public void setRole(String role) { this.role = (role != null && !role.isBlank()) ? role : ROLE_MEMBER; }
 
+    @JsonIgnore
     public boolean isTrainer() {
         return ROLE_TRAINER.equalsIgnoreCase(role);
     }
 
+    @JsonProperty("user_code")
     public String getUserCode() {
         if (userCode == null || userCode.isBlank()) {
             userCode = generateUniqueUserCode();
@@ -117,6 +124,7 @@ public class UserProfile {
         return userCode;
     }
 
+    @JsonProperty("user_code")
     public void setUserCode(String userCode) { this.userCode = userCode; }
 
     public static String generateUniqueUserCode() {
@@ -129,6 +137,7 @@ public class UserProfile {
         return sb.toString();
     }
 
+    @JsonIgnore
     public String getDisplayName() {
         if (fullName != null && !fullName.trim().isEmpty()) {
             return fullName.trim();

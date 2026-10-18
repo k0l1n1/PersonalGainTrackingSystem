@@ -1,5 +1,6 @@
 package com.personaltracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -109,6 +110,7 @@ public class Goal {
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
 
+    @JsonIgnore
     public int getProgressPercentage() {
         if (targetValue <= 0) return 0;
         int pct = (int) Math.round((currentValue / targetValue) * 100);
@@ -126,11 +128,13 @@ public class Goal {
         }
     }
 
+    @JsonIgnore
     public boolean isCompleted() {
         checkStatus();
         return "COMPLETED".equals(status);
     }
 
+    @JsonIgnore
     public boolean isOverdue() {
         checkStatus();
         return "OVERDUE".equals(status);

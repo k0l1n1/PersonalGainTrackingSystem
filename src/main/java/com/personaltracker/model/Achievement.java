@@ -1,5 +1,6 @@
 package com.personaltracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -19,9 +20,10 @@ public class Achievement {
 
     private String category; // WORKOUT, GOAL, STREAK, NUTRITION, WATER, WEIGHT
 
+    @JsonIgnore
     private boolean unlocked = false;
 
-    @JsonProperty("unlocked_at")
+    @JsonIgnore
     private OffsetDateTime unlockedAt;
 
     public Achievement() {}
@@ -50,9 +52,13 @@ public class Achievement {
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
+    @JsonIgnore
     public boolean isUnlocked() { return unlocked; }
+    @JsonIgnore
     public void setUnlocked(boolean unlocked) { this.unlocked = unlocked; }
 
+    @JsonIgnore
     public OffsetDateTime getUnlockedAt() { return unlockedAt; }
+    @JsonIgnore
     public void setUnlockedAt(OffsetDateTime unlockedAt) { this.unlockedAt = unlockedAt; }
 }

@@ -1,5 +1,6 @@
 package com.personaltracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -43,6 +44,7 @@ public class Workout {
     private OffsetDateTime updatedAt;
 
     // Associated exercises (can be populated via join or sub-query)
+    @JsonIgnore
     private List<WorkoutExercise> exercises = new ArrayList<>();
 
     public Workout() {}
@@ -89,7 +91,10 @@ public class Workout {
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
 
+    @JsonIgnore
     public List<WorkoutExercise> getExercises() { return exercises; }
+
+    @JsonIgnore
     public void setExercises(List<WorkoutExercise> exercises) {
         this.exercises = exercises != null ? exercises : new ArrayList<>();
     }
@@ -99,6 +104,7 @@ public class Workout {
         this.exercises.add(exercise);
     }
 
+    @JsonIgnore
     public double getTotalWeightLiftedKg() {
         if (exercises == null || exercises.isEmpty()) return 0.0;
         double total = 0.0;

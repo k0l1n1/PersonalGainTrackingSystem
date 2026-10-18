@@ -2,10 +2,13 @@ package com.personaltracker;
 
 import com.personaltracker.config.AppConfig;
 import com.personaltracker.dao.TrainerStudentDAO;
+import com.personaltracker.model.Goal;
 import com.personaltracker.model.StudentProgressDetail;
 import com.personaltracker.model.TrainerStudent;
 import com.personaltracker.model.UserProfile;
 import com.personaltracker.model.UserSession;
+import com.personaltracker.model.Workout;
+import com.personaltracker.model.WorkoutExercise;
 import com.personaltracker.service.SupabaseClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -141,5 +144,40 @@ public class TrainerStudentTest {
 
         List<TrainerStudent> after = dao.getEnrolledStudents(trainerId);
         assertTrue(after.isEmpty(), "Roster should be empty after removal");
+    }
+
+    @Test
+    @DisplayName("Jackson serialization excludes computed helper methods and non-database columns")
+    public void testJacksonSerializationExcludesNonColumns() throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+
+        // 1. UserProfile serialization
+        UserProfile p = new UserProfile("u-123", "athlete@gym.com", "Test User", UserProfile.ROLE_TRAINER);
+        String profileJson = mapper.writeValueAsString(p);
+        assertFalse(profileJson.contains("displayName"), "Should not serialize displayName");
+        assertFalse(profileJson.contains("\"trainer\":"), "Should not serialize trainer boolean");
+        assertTrue(profileJson.contains("full_name"), "Should serialize full_name in snake_case");
+        assertTrue(profileJson.contains("user_code"), "Should serialize user_code in snake_case");
+        assertTrue(profileJson.contains("role"), "Should serialize role");
+
+        // 2. Goal serialization
+        Goal g = new Goal("Bench Press 100kg", "Strength", 100, 80, "kg", java.time.LocalDate.now().plusMonths(1));
+        String goalJson = mapper.writeValueAsString(g);
+        assertFalse(goalJson.contains("progressPercentage"), "Should not serialize progressPercentage");
+        assertFalse(goalJson.contains("\"completed\":"), "Should not serialize completed boolean");
+        assertFalse(goalJson.contains("\"overdue\":"), "Should not serialize overdue boolean");
+
+        // 3. Workout serialization
+        Workout w = new Workout("Morning Cardio", "Cardio", java.time.LocalDate.now(), 30, 250);
+        w.addExercise(new WorkoutExercise("Running", 1, 1, 0.0));
+        String workoutJson = mapper.writeValueAsString(w);
+        assertFalse(workoutJson.contains("exercises"), "Should not serialize exercises inside workout body");
+        assertFalse(workoutJson.contains("totalWeightLiftedKg"), "Should not serialize totalWeightLiftedKg");
+
+        // 4. WorkoutExercise serialization
+        WorkoutExercise ex = new WorkoutExercise("Squat", 3, 10, 80.0);
+        String exJson = mapper.writeValueAsString(ex);
+        assertFalse(exJson.contains("volumeLoad"), "Should not serialize volumeLoad");
     }
 }
