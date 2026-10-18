@@ -38,7 +38,8 @@ public class WorkoutPanel extends JPanel {
     private final AchievementDAO achievementDAO = new AchievementDAO();
     private final ReminderDAO reminderDAO = new ReminderDAO();
 
-    private final JTabbedPane tabbedPane = new JTabbedPane();
+    private final JScrollPane mainScrollPane;
+    private final JPanel pnlRemindersSection = new JPanel();
 
     // Workouts Tab Components
     private final ModernTextField txtSearch = new ModernTextField("", "Search workouts by title or type...");
@@ -54,17 +55,13 @@ public class WorkoutPanel extends JPanel {
 
     private List<Workout> currentWorkouts = new ArrayList<>();
 
-    // Reminders Tab Components
+    // Reminders Section Components
     private final JPanel pnlRemindersList = new JPanel();
     private List<Reminder> currentReminders = new ArrayList<>();
 
     public WorkoutPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
-
-        tabbedPane.setBackground(ThemeConfig.BG_DARK);
-        tabbedPane.setForeground(ThemeConfig.TEXT_PRIMARY);
-        tabbedPane.setFont(ThemeConfig.FONT_SUBTITLE);
 
         // Setup Workouts Table Model
         String[] columnNames = {"Date", "Title", "Type", "Duration", "Calories", "Status", "Notes"};
@@ -78,22 +75,6 @@ public class WorkoutPanel extends JPanel {
         sorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(sorter);
 
-        tabbedPane.addTab("Workouts Log", IconFactory.createIcon(IconFactory.IconType.WORKOUT, 16, ThemeConfig.PRIMARY_ACCENT), createWorkoutsTab());
-        tabbedPane.addTab("Reminders", IconFactory.createIcon(IconFactory.IconType.REMINDERS, 16, ThemeConfig.PRIMARY_ACCENT), createRemindersTab());
-
-        add(tabbedPane, BorderLayout.CENTER);
-
-        // Setup filter listener
-        txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
-        });
-        cmbTypeFilter.addActionListener(e -> applyFilters());
-        cmbStatusFilter.addActionListener(e -> applyFilters());
-    }
-
-    private JPanel createWorkoutsTab() {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setOpaque(false);
@@ -115,22 +96,33 @@ public class WorkoutPanel extends JPanel {
         // 4. Workouts Table
         JScrollPane scrollTable = ModernTable.wrapInScrollPane(table);
         scrollTable.setPreferredSize(new Dimension(0, 320));
+        scrollTable.setMaximumSize(new Dimension(Integer.MAX_VALUE, 360));
         contentPanel.add(scrollTable);
         contentPanel.add(Box.createVerticalStrut(12));
 
         // 5. Bottom Controls & Summary
         contentPanel.add(createBottomBar());
+        contentPanel.add(Box.createVerticalStrut(32));
 
-        JScrollPane mainScroll = new JScrollPane(contentPanel);
-        mainScroll.setBorder(null);
-        mainScroll.setOpaque(false);
-        mainScroll.getViewport().setOpaque(false);
-        mainScroll.getVerticalScrollBar().setUnitIncrement(16);
+        // 6. Workout Reminders Section (placed directly below workout log)
+        contentPanel.add(createRemindersSection());
 
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.add(mainScroll, BorderLayout.CENTER);
-        return wrapper;
+        mainScrollPane = new JScrollPane(contentPanel);
+        mainScrollPane.setBorder(null);
+        mainScrollPane.setOpaque(false);
+        mainScrollPane.getViewport().setOpaque(false);
+        mainScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        add(mainScrollPane, BorderLayout.CENTER);
+
+        // Setup filter listener
+        txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
+        });
+        cmbTypeFilter.addActionListener(e -> applyFilters());
+        cmbStatusFilter.addActionListener(e -> applyFilters());
     }
 
     private JPanel createHeaderPanel() {
@@ -202,8 +194,10 @@ public class WorkoutPanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actions.setOpaque(false);
 
-        ModernButton btnGoReminders = new ModernButton("Reminders Schedule →", ModernButton.ButtonStyle.GHOST);
-        btnGoReminders.addActionListener(e -> selectRemindersTab());
+        ModernButton btnGoReminders = new ModernButton("Workout Reminders ↓", ModernButton.ButtonStyle.GHOST);
+        btnGoReminders.setIcon(IconFactory.createIcon(IconFactory.IconType.REMINDERS, 12, ThemeConfig.TEXT_SECONDARY));
+        btnGoReminders.setIconTextGap(5);
+        btnGoReminders.addActionListener(e -> scrollToReminders());
 
         ModernButton btnEdit = new ModernButton("Edit Selected", ModernButton.ButtonStyle.SECONDARY);
         btnEdit.addActionListener(e -> editSelectedWorkout());
@@ -805,18 +799,26 @@ public class WorkoutPanel extends JPanel {
     // =========================================================================
 
     public void selectRemindersTab() {
-        tabbedPane.setSelectedIndex(1);
+        scrollToReminders();
+    }
+
+    public void scrollToReminders() {
+        SwingUtilities.invokeLater(() -> {
+            pnlRemindersSection.scrollRectToVisible(new Rectangle(0, 0, pnlRemindersSection.getWidth(), pnlRemindersSection.getHeight()));
+        });
     }
 
     public void selectWorkoutsTab() {
-        tabbedPane.setSelectedIndex(0);
+        SwingUtilities.invokeLater(() -> {
+            if (mainScrollPane != null) {
+                mainScrollPane.getVerticalScrollBar().setValue(0);
+            }
+        });
     }
 
-    private JPanel createRemindersTab() {
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setOpaque(false);
-        content.setBorder(BorderFactory.createEmptyBorder(22, 28, 28, 28));
+    private JPanel createRemindersSection() {
+        pnlRemindersSection.setLayout(new BoxLayout(pnlRemindersSection, BoxLayout.Y_AXIS));
+        pnlRemindersSection.setOpaque(false);
 
         // 1. Reminders Header
         JPanel header = new JPanel(new BorderLayout());
@@ -824,10 +826,16 @@ public class WorkoutPanel extends JPanel {
 
         JPanel titlePanel = new JPanel(new GridLayout(2, 1, 0, 4));
         titlePanel.setOpaque(false);
+
+        JPanel titleRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        titleRow.setOpaque(false);
+        JLabel icon = new JLabel(IconFactory.createIcon(IconFactory.IconType.REMINDERS, 18, ThemeConfig.PRIMARY_ACCENT));
         JLabel title = new JLabel("Workout & Schedule Reminders");
-        title.setFont(ThemeConfig.FONT_TITLE_LARGE);
+        title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
-        titlePanel.add(title);
+        titleRow.add(icon);
+        titleRow.add(title);
+        titlePanel.add(titleRow);
 
         JLabel subtitle = new JLabel("Stay disciplined with scheduled training alerts, hydration, and recovery routines");
         subtitle.setFont(ThemeConfig.FONT_BODY);
@@ -841,11 +849,13 @@ public class WorkoutPanel extends JPanel {
         btnNewReminder.addActionListener(e -> openReminderDialog());
         header.add(btnNewReminder, BorderLayout.EAST);
 
-        content.add(header);
-        content.add(Box.createVerticalStrut(20));
+        pnlRemindersSection.add(header);
+        pnlRemindersSection.add(Box.createVerticalStrut(14));
 
         // 2. Reminders Card
         ModernCard cardReminders = new ModernCard(14, new Insets(18, 20, 18, 20));
+        cardReminders.setLayout(new BorderLayout());
+
         JLabel lblRemHead = new JLabel("Active & Upcoming Reminders");
         lblRemHead.setFont(ThemeConfig.FONT_SUBTITLE);
         lblRemHead.setForeground(ThemeConfig.TEXT_PRIMARY);
@@ -855,23 +865,10 @@ public class WorkoutPanel extends JPanel {
         pnlRemindersList.setOpaque(false);
         pnlRemindersList.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
 
-        JScrollPane scrollRem = new JScrollPane(pnlRemindersList);
-        scrollRem.setOpaque(false);
-        scrollRem.getViewport().setOpaque(false);
-        scrollRem.setBorder(null);
-        cardReminders.add(scrollRem, BorderLayout.CENTER);
-        content.add(cardReminders);
+        cardReminders.add(pnlRemindersList, BorderLayout.CENTER);
+        pnlRemindersSection.add(cardReminders);
 
-        JScrollPane scrollPane = new JScrollPane(content);
-        scrollPane.setBorder(null);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.add(scrollPane, BorderLayout.CENTER);
-        return wrapper;
+        return pnlRemindersSection;
     }
 
     public void loadReminders() {
