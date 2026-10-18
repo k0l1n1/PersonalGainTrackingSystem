@@ -481,6 +481,7 @@ public class NutritionPanel extends JPanel {
         FoodDialog dialog = new FoodDialog(SwingUtilities.getWindowAncestor(this), editing, defaultMeal);
         dialog.setVisible(true);
         if (dialog.isSaved()) {
+            ToastNotification.showToast(this, editing == null ? "Meal logged successfully! 🥗" : "Meal updated.", ToastNotification.ToastType.SUCCESS);
             loadNutrition();
         }
     }
@@ -494,6 +495,7 @@ public class NutritionPanel extends JPanel {
             }
             @Override
             protected void done() {
+                ToastNotification.showToast(NutritionPanel.this, "Meal removed.", ToastNotification.ToastType.INFO);
                 loadNutrition();
             }
         };

@@ -7,7 +7,7 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 /**
- * Toast notification banner for displaying non-blocking feedback messages.
+ * Minimalist modern toast notification banner for sleek non-blocking feedback.
  */
 public class ToastNotification extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -18,6 +18,7 @@ public class ToastNotification extends JPanel {
         ERROR
     }
 
+    private final JLabel lblIcon;
     private final JLabel lblMessage;
     private final ToastType type;
     private Timer dismissTimer;
@@ -26,12 +27,37 @@ public class ToastNotification extends JPanel {
         this.type = type;
         setOpaque(false);
         setLayout(new BorderLayout(10, 0));
-        setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+        setBorder(BorderFactory.createEmptyBorder(9, 18, 9, 18));
+
+        String iconText;
+        Color accentColor;
+        switch (type) {
+            case SUCCESS -> {
+                iconText = "✓";
+                accentColor = ThemeConfig.SUCCESS;
+            }
+            case ERROR -> {
+                iconText = "✕";
+                accentColor = ThemeConfig.ERROR;
+            }
+            case INFO -> {
+                iconText = "●";
+                accentColor = ThemeConfig.PRIMARY_ACCENT;
+            }
+            default -> {
+                iconText = "●";
+                accentColor = ThemeConfig.PRIMARY_ACCENT;
+            }
+        }
+
+        lblIcon = new JLabel(iconText);
+        lblIcon.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblIcon.setForeground(accentColor);
+        add(lblIcon, BorderLayout.WEST);
 
         lblMessage = new JLabel(message);
         lblMessage.setFont(ThemeConfig.FONT_BODY_BOLD);
         lblMessage.setForeground(ThemeConfig.TEXT_PRIMARY);
-
         add(lblMessage, BorderLayout.CENTER);
     }
 
@@ -55,12 +81,12 @@ public class ToastNotification extends JPanel {
             final JLayeredPane targetPane = layeredPane;
             Dimension size = toast.getPreferredSize();
             int x = (targetPane.getWidth() - size.width) / 2;
-            int y = 24;
+            int y = 20;
             toast.setBounds(x, y, size.width, size.height);
             targetPane.add(toast, JLayeredPane.POPUP_LAYER);
             targetPane.repaint();
 
-            toast.dismissTimer = new Timer(3500, e -> {
+            toast.dismissTimer = new Timer(3200, e -> {
                 targetPane.remove(toast);
                 targetPane.repaint();
             });
@@ -77,30 +103,22 @@ public class ToastNotification extends JPanel {
         int w = getWidth();
         int h = getHeight();
 
-        Color bg;
+        // Sleek minimal dark pill surface (#161616 with high opacity)
+        g2.setColor(new Color(0x16, 0x16, 0x16, 245));
+        g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, 22, 22));
+
+        // Subtle accent border outline
         Color border;
         switch (type) {
-            case SUCCESS:
-                bg = new Color(0x4C, 0xAF, 0x50, 230);
-                border = ThemeConfig.SUCCESS;
-                break;
-            case ERROR:
-                bg = new Color(0xF0, 0x44, 0x44, 230);
-                border = ThemeConfig.ERROR;
-                break;
-            case INFO:
-            default:
-                bg = new Color(0x24, 0x24, 0x24, 240);
-                border = ThemeConfig.PRIMARY_ACCENT;
-                break;
+            case SUCCESS -> border = new Color(0x4C, 0xAF, 0x50, 160);
+            case ERROR -> border = new Color(0xF0, 0x44, 0x44, 160);
+            case INFO -> border = new Color(0xF0, 0x44, 0x44, 140);
+            default -> border = new Color(0x35, 0x35, 0x35, 180);
         }
 
-        g2.setColor(bg);
-        g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, 10, 10));
-
         g2.setColor(border);
-        g2.setStroke(new BasicStroke(1.5f));
-        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, 10, 10));
+        g2.setStroke(new BasicStroke(1.2f));
+        g2.draw(new RoundRectangle2D.Float(0.6f, 0.6f, w - 1.2f, h - 1.2f, 22, 22));
 
         g2.dispose();
         super.paintComponent(g);

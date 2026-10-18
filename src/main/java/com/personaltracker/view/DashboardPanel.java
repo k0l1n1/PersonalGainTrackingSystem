@@ -4,6 +4,7 @@ import com.personaltracker.components.ModernButton;
 import com.personaltracker.components.ModernCard;
 import com.personaltracker.components.ModernProgressBar;
 import com.personaltracker.components.StatCard;
+import com.personaltracker.components.ToastNotification;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.*;
 import com.personaltracker.model.*;
@@ -40,8 +41,18 @@ import java.util.function.Consumer;
 public class DashboardPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
+    private static final String[] MOTIVATIONAL_FOCUS_LINES = {
+        "Small daily improvements over time lead to stunning results.",
+        "Consistency beats intensity every single time.",
+        "Every rep counts. Make today's session progress toward your goals.",
+        "Discipline is choosing between what you want now and what you want most.",
+        "Your only limit is you. Let's make today count.",
+        "Stay patient, stay focused, and trust the process."
+    };
+
     private final JLabel lblGreeting = new JLabel("Welcome back!");
     private final JLabel lblDate = new JLabel(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy")));
+    private final JLabel lblFocusQuote = new JLabel();
 
     // Top Stat Cards
     private final StatCard cardWorkouts = new StatCard("TOTAL WORKOUTS", "0", "0 mins this week", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_ACCENT);
@@ -75,19 +86,19 @@ public class DashboardPanel extends JPanel {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setOpaque(false);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(24, 28, 28, 28));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(22, 28, 28, 28));
 
-        // 1. Welcome Header
+        // 1. Welcome Header with Dynamic Greeting & Focus Line
         contentPanel.add(createHeaderPanel());
-        contentPanel.add(Box.createVerticalStrut(20));
+        contentPanel.add(Box.createVerticalStrut(18));
 
-        // 2. Metric Cards Grid
+        // 2. Interactive Metric Cards Grid
         contentPanel.add(createStatsGrid());
-        contentPanel.add(Box.createVerticalStrut(20));
+        contentPanel.add(Box.createVerticalStrut(18));
 
         // 3. Middle Section: Charts Grid (Weekly Workout Activity & Weight Progression)
         contentPanel.add(createChartsGrid());
-        contentPanel.add(Box.createVerticalStrut(20));
+        contentPanel.add(Box.createVerticalStrut(18));
 
         // 4. Bottom Section: Goals, Hydration/Sleep, & Reminders
         contentPanel.add(createBottomGrid());
@@ -98,49 +109,114 @@ public class DashboardPanel extends JPanel {
         scrollPane.getViewport().setOpaque(false);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
+
+        // Hook up stat card click-throughs for effortless navigation
+        setupStatCardClickThroughs();
+        updateHeaderGreeting();
     }
 
     public void setNavigationConsumer(Consumer<SidebarPanel.NavItem> consumer) {
         this.navigationConsumer = consumer;
     }
 
+    private void setupStatCardClickThroughs() {
+        cardWorkouts.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cardWorkouts.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.WORKOUTS);
+            }
+        });
+
+        cardWeight.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cardWeight.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.MEASUREMENTS);
+            }
+        });
+
+        cardCalories.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cardCalories.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.NUTRITION);
+            }
+        });
+
+        cardStreak.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cardStreak.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.WORKOUTS);
+            }
+        });
+    }
+
+    private void updateHeaderGreeting() {
+        UserSession sess = SupabaseClient.getInstance().getCurrentSession();
+        String name = "Athlete";
+        boolean isTrainer = false;
+        if (sess != null && sess.getProfile() != null) {
+            name = sess.getProfile().getDisplayName();
+            isTrainer = sess.getProfile().isTrainer();
+        }
+
+        int hour = java.time.LocalTime.now().getHour();
+        String timeGreeting = (hour < 12) ? "Good morning" : (hour < 17) ? "Good afternoon" : "Good evening";
+        String rolePrefix = isTrainer ? "Coach " : "";
+        lblGreeting.setText(timeGreeting + ", " + rolePrefix + name + " 👋");
+
+        int quoteIndex = Math.abs(LocalDate.now().getDayOfYear()) % MOTIVATIONAL_FOCUS_LINES.length;
+        lblFocusQuote.setText("“" + MOTIVATIONAL_FOCUS_LINES[quoteIndex] + "”");
+    }
+
     private JPanel createHeaderPanel() {
-        JPanel header = new JPanel(new BorderLayout());
+        JPanel header = new JPanel(new BorderLayout(16, 0));
         header.setOpaque(false);
 
-        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 4));
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
         textPanel.setOpaque(false);
 
         lblGreeting.setFont(ThemeConfig.FONT_TITLE_LARGE);
         lblGreeting.setForeground(ThemeConfig.TEXT_PRIMARY);
         textPanel.add(lblGreeting);
+        textPanel.add(Box.createVerticalStrut(3));
 
         lblDate.setFont(ThemeConfig.FONT_BODY);
         lblDate.setForeground(ThemeConfig.TEXT_SECONDARY);
         textPanel.add(lblDate);
+        textPanel.add(Box.createVerticalStrut(4));
+
+        lblFocusQuote.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        lblFocusQuote.setForeground(new Color(0xA8, 0xA8, 0xA8));
+        textPanel.add(lblFocusQuote);
 
         header.add(textPanel, BorderLayout.WEST);
 
-        // Quick action buttons
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        // Minimalist Quick Action Pills Bar
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 4));
         actions.setOpaque(false);
 
-        ModernButton btnLogWorkout = new ModernButton("+ Log Workout", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btnLogWorkout = new ModernButton("+ Workout", ModernButton.ButtonStyle.PRIMARY);
         btnLogWorkout.addActionListener(e -> {
             if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.WORKOUTS);
         });
 
-        ModernButton btnLogFood = new ModernButton("+ Add Meal", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton btnLogFood = new ModernButton("+ Meal", ModernButton.ButtonStyle.SECONDARY);
         btnLogFood.addActionListener(e -> {
             if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.NUTRITION);
         });
 
-        ModernButton btnQuickWater = new ModernButton("+ 250ml Water", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton btnQuickWater = new ModernButton("💧 +250ml", ModernButton.ButtonStyle.SECONDARY);
         btnQuickWater.addActionListener(e -> quickAddWater(250));
+
+        ModernButton btnQuickGoal = new ModernButton("+ Goal", ModernButton.ButtonStyle.GHOST);
+        btnQuickGoal.addActionListener(e -> {
+            if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.GOALS);
+        });
 
         actions.add(btnLogWorkout);
         actions.add(btnLogFood);
         actions.add(btnQuickWater);
+        actions.add(btnQuickGoal);
 
         header.add(actions, BorderLayout.EAST);
         return header;
@@ -194,10 +270,32 @@ public class DashboardPanel extends JPanel {
 
         // 1. Goals card
         ModernCard cardGoals = new ModernCard(14, new Insets(16, 18, 16, 18));
+        cardGoals.setHoverEffect(true);
+        JPanel goalsHeader = new JPanel(new BorderLayout());
+        goalsHeader.setOpaque(false);
+
         JLabel lblGoalsTitle = new JLabel("Active Goals");
         lblGoalsTitle.setFont(ThemeConfig.FONT_SUBTITLE);
         lblGoalsTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
-        cardGoals.add(lblGoalsTitle, BorderLayout.NORTH);
+        lblGoalsTitle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblGoalsTitle.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.GOALS);
+            }
+        });
+        goalsHeader.add(lblGoalsTitle, BorderLayout.WEST);
+
+        JLabel lblViewAllGoals = new JLabel("View All →");
+        lblViewAllGoals.setFont(ThemeConfig.FONT_SMALL);
+        lblViewAllGoals.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        lblViewAllGoals.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblViewAllGoals.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.GOALS);
+            }
+        });
+        goalsHeader.add(lblViewAllGoals, BorderLayout.EAST);
+        cardGoals.add(goalsHeader, BorderLayout.NORTH);
 
         pnlGoalsList.setLayout(new BoxLayout(pnlGoalsList, BoxLayout.Y_AXIS));
         pnlGoalsList.setOpaque(false);
@@ -210,10 +308,32 @@ public class DashboardPanel extends JPanel {
 
         // 2. Hydration & Sleep Snapshot
         ModernCard cardDailyHealth = new ModernCard(14, new Insets(16, 18, 16, 18));
+        cardDailyHealth.setHoverEffect(true);
+        JPanel healthHeader = new JPanel(new BorderLayout());
+        healthHeader.setOpaque(false);
+
         JLabel lblDailyTitle = new JLabel("Today's Hydration & Sleep");
         lblDailyTitle.setFont(ThemeConfig.FONT_SUBTITLE);
         lblDailyTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
-        cardDailyHealth.add(lblDailyTitle, BorderLayout.NORTH);
+        lblDailyTitle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblDailyTitle.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.WATER_SLEEP);
+            }
+        });
+        healthHeader.add(lblDailyTitle, BorderLayout.WEST);
+
+        JLabel lblViewHealth = new JLabel("Details →");
+        lblViewHealth.setFont(ThemeConfig.FONT_SMALL);
+        lblViewHealth.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        lblViewHealth.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblViewHealth.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.WATER_SLEEP);
+            }
+        });
+        healthHeader.add(lblViewHealth, BorderLayout.EAST);
+        cardDailyHealth.add(healthHeader, BorderLayout.NORTH);
 
         JPanel pnlDailyCenter = new JPanel();
         pnlDailyCenter.setLayout(new BoxLayout(pnlDailyCenter, BoxLayout.Y_AXIS));
@@ -226,15 +346,29 @@ public class DashboardPanel extends JPanel {
         pnlDailyCenter.add(lblWaterHeading);
         pnlDailyCenter.add(Box.createVerticalStrut(6));
 
-        barWater.setColors(ThemeConfig.PRIMARY_BLUE, ThemeConfig.ACCENT_CYAN);
+        barWater.setColors(ThemeConfig.PRIMARY_ACCENT, ThemeConfig.ACCENT_CYAN);
         pnlDailyCenter.add(barWater);
         pnlDailyCenter.add(Box.createVerticalStrut(4));
 
         lblWaterValue.setFont(ThemeConfig.FONT_SMALL);
         lblWaterValue.setForeground(ThemeConfig.TEXT_MUTED);
         pnlDailyCenter.add(lblWaterValue);
+        pnlDailyCenter.add(Box.createVerticalStrut(6));
 
-        pnlDailyCenter.add(Box.createVerticalStrut(18));
+        // Quick inline water logging buttons
+        JPanel pnlWaterButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        pnlWaterButtons.setOpaque(false);
+        ModernButton btnWater250 = new ModernButton("+250ml", ModernButton.ButtonStyle.GHOST);
+        btnWater250.setFont(ThemeConfig.FONT_SMALL);
+        btnWater250.addActionListener(e -> quickAddWater(250));
+        ModernButton btnWater500 = new ModernButton("+500ml", ModernButton.ButtonStyle.GHOST);
+        btnWater500.setFont(ThemeConfig.FONT_SMALL);
+        btnWater500.addActionListener(e -> quickAddWater(500));
+        pnlWaterButtons.add(btnWater250);
+        pnlWaterButtons.add(btnWater500);
+        pnlDailyCenter.add(pnlWaterButtons);
+
+        pnlDailyCenter.add(Box.createVerticalStrut(14));
 
         JLabel lblSleepHeading = new JLabel("Last Night's Sleep");
         lblSleepHeading.setFont(ThemeConfig.FONT_BODY_BOLD);
@@ -251,10 +385,32 @@ public class DashboardPanel extends JPanel {
 
         // 3. Reminders & Recent Activity
         ModernCard cardReminders = new ModernCard(14, new Insets(16, 18, 16, 18));
+        cardReminders.setHoverEffect(true);
+        JPanel remindersHeader = new JPanel(new BorderLayout());
+        remindersHeader.setOpaque(false);
+
         JLabel lblRemindersTitle = new JLabel("Upcoming Reminders");
         lblRemindersTitle.setFont(ThemeConfig.FONT_SUBTITLE);
         lblRemindersTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
-        cardReminders.add(lblRemindersTitle, BorderLayout.NORTH);
+        lblRemindersTitle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblRemindersTitle.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.REMINDERS_BADGES);
+            }
+        });
+        remindersHeader.add(lblRemindersTitle, BorderLayout.WEST);
+
+        JLabel lblViewReminders = new JLabel("Manage →");
+        lblViewReminders.setFont(ThemeConfig.FONT_SMALL);
+        lblViewReminders.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        lblViewReminders.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblViewReminders.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.REMINDERS_BADGES);
+            }
+        });
+        remindersHeader.add(lblViewReminders, BorderLayout.EAST);
+        cardReminders.add(remindersHeader, BorderLayout.NORTH);
 
         pnlReminders.setLayout(new BoxLayout(pnlReminders, BoxLayout.Y_AXIS));
         pnlReminders.setOpaque(false);
@@ -269,10 +425,7 @@ public class DashboardPanel extends JPanel {
     }
 
     public void refreshDashboardData() {
-        UserSession session = SupabaseClient.getInstance().getCurrentSession();
-        if (session != null && session.getProfile() != null) {
-            lblGreeting.setText("Welcome back, " + session.getProfile().getDisplayName() + "! 💪");
-        }
+        updateHeaderGreeting();
 
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
             private List<Workout> workouts;
@@ -383,10 +536,10 @@ public class DashboardPanel extends JPanel {
                 }
             }
             if (shown == 0) {
-                pnlGoalsList.add(createEmptyLabel("All goals completed! Great work! 🎉"));
+                pnlGoalsList.add(createEmptyActionRow("🎉 All goals completed!", "+ Set Goal", SidebarPanel.NavItem.GOALS));
             }
         } else {
-            pnlGoalsList.add(createEmptyLabel("No goals yet. Set your first fitness target!"));
+            pnlGoalsList.add(createEmptyActionRow("No active goals yet.", "+ Create Goal", SidebarPanel.NavItem.GOALS));
         }
         pnlGoalsList.revalidate();
         pnlGoalsList.repaint();
@@ -428,10 +581,10 @@ public class DashboardPanel extends JPanel {
                 }
             }
             if (count == 0) {
-                pnlReminders.add(createEmptyLabel("No upcoming reminders"));
+                pnlReminders.add(createEmptyActionRow("✓ You're all caught up!", "+ Add Reminder", SidebarPanel.NavItem.REMINDERS_BADGES));
             }
         } else {
-            pnlReminders.add(createEmptyLabel("No upcoming reminders"));
+            pnlReminders.add(createEmptyActionRow("No upcoming reminders.", "+ Add Reminder", SidebarPanel.NavItem.REMINDERS_BADGES));
         }
         pnlReminders.revalidate();
         pnlReminders.repaint();
@@ -440,6 +593,12 @@ public class DashboardPanel extends JPanel {
     private JPanel createGoalRow(Goal g) {
         JPanel row = new JPanel(new BorderLayout(8, 4));
         row.setOpaque(false);
+        row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        row.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.GOALS);
+            }
+        });
 
         JLabel lblTitle = new JLabel(g.getTitle());
         lblTitle.setFont(ThemeConfig.FONT_BODY_BOLD);
@@ -448,11 +607,14 @@ public class DashboardPanel extends JPanel {
 
         JLabel lblPct = new JLabel(g.getProgressPercentage() + "%");
         lblPct.setFont(ThemeConfig.FONT_SMALL);
-        lblPct.setForeground(ThemeConfig.PRIMARY_BLUE);
+        lblPct.setForeground(g.isCompleted() ? ThemeConfig.SUCCESS : ThemeConfig.PRIMARY_ACCENT);
         row.add(lblPct, BorderLayout.EAST);
 
         ModernProgressBar bar = new ModernProgressBar(0, 100);
         bar.setValue(g.getProgressPercentage());
+        if (g.isCompleted()) {
+            bar.setProgressColor(ThemeConfig.SUCCESS);
+        }
         row.add(bar, BorderLayout.SOUTH);
         return row;
     }
@@ -460,8 +622,14 @@ public class DashboardPanel extends JPanel {
     private JPanel createReminderRow(Reminder r) {
         JPanel row = new JPanel(new BorderLayout(8, 0));
         row.setOpaque(false);
+        row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        row.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.REMINDERS_BADGES);
+            }
+        });
 
-        JLabel icon = new JLabel(IconFactory.createIcon(IconFactory.IconType.REMINDERS, 14, ThemeConfig.PRIMARY_BLUE));
+        JLabel icon = new JLabel(IconFactory.createIcon(IconFactory.IconType.REMINDERS, 14, ThemeConfig.PRIMARY_ACCENT));
         row.add(icon, BorderLayout.WEST);
 
         JLabel title = new JLabel(r.getTitle());
@@ -474,6 +642,23 @@ public class DashboardPanel extends JPanel {
         time.setForeground(ThemeConfig.TEXT_MUTED);
         row.add(time, BorderLayout.EAST);
         return row;
+    }
+
+    private JPanel createEmptyActionRow(String message, String actionLabel, SidebarPanel.NavItem targetNav) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        p.setOpaque(false);
+        JLabel lbl = new JLabel(message);
+        lbl.setFont(ThemeConfig.FONT_SMALL);
+        lbl.setForeground(ThemeConfig.TEXT_MUTED);
+        p.add(lbl);
+
+        ModernButton btn = new ModernButton(actionLabel, ModernButton.ButtonStyle.GHOST);
+        btn.setFont(ThemeConfig.FONT_SMALL);
+        btn.addActionListener(e -> {
+            if (navigationConsumer != null) navigationConsumer.accept(targetNav);
+        });
+        p.add(btn);
+        return p;
     }
 
     private JLabel createEmptyLabel(String text) {
@@ -600,6 +785,7 @@ public class DashboardPanel extends JPanel {
 
             @Override
             protected void done() {
+                ToastNotification.showToast(DashboardPanel.this, "💧 Logged +" + ml + "ml water intake", ToastNotification.ToastType.SUCCESS);
                 refreshDashboardData();
             }
         };

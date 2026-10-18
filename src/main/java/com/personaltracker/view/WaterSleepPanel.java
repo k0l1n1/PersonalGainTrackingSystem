@@ -393,6 +393,7 @@ public class WaterSleepPanel extends JPanel {
 
             @Override
             protected void done() {
+                ToastNotification.showToast(WaterSleepPanel.this, "💧 Logged +" + ml + "ml water intake", ToastNotification.ToastType.SUCCESS);
                 loadData();
             }
         };
@@ -424,6 +425,7 @@ public class WaterSleepPanel extends JPanel {
             protected void done() {
                 try {
                     get();
+                    ToastNotification.showToast(WaterSleepPanel.this, "Water entry removed", ToastNotification.ToastType.INFO);
                     loadData();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(WaterSleepPanel.this, "Failed to delete water intake: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

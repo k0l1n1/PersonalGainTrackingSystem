@@ -247,6 +247,7 @@ public class WorkoutPanel extends JPanel {
         WorkoutDialog dialog = new WorkoutDialog(SwingUtilities.getWindowAncestor(this), null, initialMinutes);
         dialog.setVisible(true);
         if (dialog.isSaved()) {
+            ToastNotification.showToast(this, "Workout logged successfully! 💪", ToastNotification.ToastType.SUCCESS);
             loadWorkouts();
             checkWorkoutAchievements();
         }
@@ -255,7 +256,7 @@ public class WorkoutPanel extends JPanel {
     private void editSelectedWorkout() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a workout to edit.", "Selection Required", JOptionPane.INFORMATION_MESSAGE);
+            ToastNotification.showToast(this, "Please select a workout to edit.", ToastNotification.ToastType.INFO);
             return;
         }
         int modelRow = table.convertRowIndexToModel(selectedRow);
@@ -269,6 +270,7 @@ public class WorkoutPanel extends JPanel {
         WorkoutDialog dialog = new WorkoutDialog(SwingUtilities.getWindowAncestor(this), w, 0);
         dialog.setVisible(true);
         if (dialog.isSaved()) {
+            ToastNotification.showToast(this, "Workout updated.", ToastNotification.ToastType.INFO);
             loadWorkouts();
         }
     }
@@ -276,7 +278,7 @@ public class WorkoutPanel extends JPanel {
     private void deleteSelectedWorkout() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a workout to delete.", "Selection Required", JOptionPane.INFORMATION_MESSAGE);
+            ToastNotification.showToast(this, "Please select a workout to delete.", ToastNotification.ToastType.INFO);
             return;
         }
         int modelRow = table.convertRowIndexToModel(selectedRow);

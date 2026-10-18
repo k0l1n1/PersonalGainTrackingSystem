@@ -239,11 +239,30 @@ public class GoalPanel extends JPanel {
     }
 
     private ModernCard createEmptyCard(String text) {
-        ModernCard card = new ModernCard(14, new Insets(24, 20, 24, 20));
+        ModernCard card = new ModernCard(14, new Insets(28, 24, 28, 24));
+        JPanel center = new JPanel();
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+        center.setOpaque(false);
+
+        JLabel icon = new JLabel(IconFactory.createIcon(IconFactory.IconType.GOAL, 28, ThemeConfig.TEXT_MUTED));
+        icon.setAlignmentX(Component.CENTER_ALIGNMENT);
+        center.add(icon);
+        center.add(Box.createVerticalStrut(10));
+
         JLabel lbl = new JLabel(text);
         lbl.setFont(ThemeConfig.FONT_BODY);
         lbl.setForeground(ThemeConfig.TEXT_MUTED);
-        card.add(lbl, BorderLayout.CENTER);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        center.add(lbl);
+        center.add(Box.createVerticalStrut(12));
+
+        ModernButton btn = new ModernButton("+ Set New Goal", ModernButton.ButtonStyle.PRIMARY);
+        btn.setFont(ThemeConfig.FONT_SMALL);
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.addActionListener(e -> openGoalDialog(null));
+        center.add(btn);
+
+        card.add(center, BorderLayout.CENTER);
         return card;
     }
 
@@ -271,7 +290,11 @@ public class GoalPanel extends JPanel {
 
                     @Override
                     protected void done() {
-                        ToastNotification.showToast(GoalPanel.this, "Goal progress updated!", ToastNotification.ToastType.SUCCESS);
+                        if (goal.isCompleted()) {
+                            ToastNotification.showToast(GoalPanel.this, "🎯 Goal Completed! Incredible progress!", ToastNotification.ToastType.SUCCESS);
+                        } else {
+                            ToastNotification.showToast(GoalPanel.this, "Goal progress updated!", ToastNotification.ToastType.SUCCESS);
+                        }
                         loadGoals();
                     }
                 };
