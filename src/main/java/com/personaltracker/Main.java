@@ -26,6 +26,9 @@ public class Main {
             authDialog.setVisible(true);
 
             if (authDialog.isAuthenticated()) {
+                // 3.5. Onboarding Form Filling Session (Only for new users)
+                com.personaltracker.view.OnboardingDialog.showIfNewUser(null);
+
                 // 4. Launch main desktop application
                 MainFrame mainFrame = new MainFrame();
                 mainFrame.setVisible(true);

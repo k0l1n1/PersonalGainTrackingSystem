@@ -124,6 +124,7 @@ public class MainFrame extends JFrame {
             authDialog.setVisible(true);
 
             if (authDialog.isAuthenticated()) {
+                OnboardingDialog.showIfNewUser(this);
                 sidebar.updateUserInfo();
                 navigateTo(SidebarPanel.NavItem.DASHBOARD);
                 setVisible(true);

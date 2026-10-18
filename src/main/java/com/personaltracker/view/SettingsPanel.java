@@ -118,6 +118,20 @@ public class SettingsPanel extends JPanel {
         ModernButton btnSaveProfile = new ModernButton("Save Profile Details", ModernButton.ButtonStyle.PRIMARY);
         btnSaveProfile.addActionListener(e -> saveProfileDetails());
         pForm.add(btnSaveProfile);
+        pForm.add(Box.createVerticalStrut(10));
+
+        ModernButton btnLaunchWizard = new ModernButton("✨ Launch Onboarding Setup Wizard", ModernButton.ButtonStyle.SECONDARY);
+        btnLaunchWizard.addActionListener(e -> {
+            UserSession session = SupabaseClient.getInstance().getCurrentSession();
+            if (session != null) {
+                UserProfile p = session.getProfile();
+                OnboardingDialog dialog = new OnboardingDialog(SwingUtilities.getWindowAncestor(this), p);
+                dialog.setVisible(true);
+                loadSettings();
+                if (onProfileUpdatedCallback != null) onProfileUpdatedCallback.run();
+            }
+        });
+        pForm.add(btnLaunchWizard);
 
         cardProfile.add(pForm, BorderLayout.CENTER);
         grid.add(cardProfile);
