@@ -575,8 +575,7 @@ public class SettingsPanel extends JPanel {
         worker.execute();
 
         // Account Sync status
-        UserSession session = SupabaseClient.getInstance().getCurrentSession();
-        if (session != null && session.getEmail() != null) {
+        if (session.getEmail() != null) {
             lblAccountEmail.setText(session.getEmail());
         }
         if (config.isMockMode()) {

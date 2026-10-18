@@ -8,7 +8,9 @@ import com.personaltracker.components.ToastNotification;
 import com.personaltracker.components.WorkoutTimerPanel;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.AchievementDAO;
+import com.personaltracker.dao.ReminderDAO;
 import com.personaltracker.dao.WorkoutDAO;
+import com.personaltracker.model.Reminder;
 import com.personaltracker.model.Workout;
 import com.personaltracker.model.WorkoutExercise;
 import com.personaltracker.util.DateUtil;
@@ -34,7 +36,11 @@ public class WorkoutPanel extends JPanel {
 
     private final WorkoutDAO workoutDAO = new WorkoutDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
+    private final ReminderDAO reminderDAO = new ReminderDAO();
 
+    private final JTabbedPane tabbedPane = new JTabbedPane();
+
+    // Workouts Tab Components
     private final ModernTextField txtSearch = new ModernTextField("", "Search workouts by title or type...");
     private final JComboBox<String> cmbTypeFilter = new JComboBox<>(new String[]{"All Types", "Strength", "Cardio", "HIIT", "Yoga", "Flexibility", "Endurance", "Other"});
     private final JComboBox<String> cmbStatusFilter = new JComboBox<>(new String[]{"All Statuses", "COMPLETED", "PLANNED"});
@@ -48,14 +54,50 @@ public class WorkoutPanel extends JPanel {
 
     private List<Workout> currentWorkouts = new ArrayList<>();
 
+    // Reminders Tab Components
+    private final JPanel pnlRemindersList = new JPanel();
+    private List<Reminder> currentReminders = new ArrayList<>();
+
     public WorkoutPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
 
+        tabbedPane.setBackground(ThemeConfig.BG_DARK);
+        tabbedPane.setForeground(ThemeConfig.TEXT_PRIMARY);
+        tabbedPane.setFont(ThemeConfig.FONT_SUBTITLE);
+
+        // Setup Workouts Table Model
+        String[] columnNames = {"Date", "Title", "Type", "Duration", "Calories", "Status", "Notes"};
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table = new ModernTable(tableModel);
+        sorter = new TableRowSorter<>(tableModel);
+        table.setRowSorter(sorter);
+
+        tabbedPane.addTab("Workouts Log", IconFactory.createIcon(IconFactory.IconType.WORKOUT, 16, ThemeConfig.PRIMARY_ACCENT), createWorkoutsTab());
+        tabbedPane.addTab("Reminders", IconFactory.createIcon(IconFactory.IconType.REMINDERS, 16, ThemeConfig.PRIMARY_ACCENT), createRemindersTab());
+
+        add(tabbedPane, BorderLayout.CENTER);
+
+        // Setup filter listener
+        txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
+        });
+        cmbTypeFilter.addActionListener(e -> applyFilters());
+        cmbStatusFilter.addActionListener(e -> applyFilters());
+    }
+
+    private JPanel createWorkoutsTab() {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setOpaque(false);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(24, 28, 28, 28));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(22, 28, 28, 28));
 
         // 1. Header & Actions
         contentPanel.add(createHeaderPanel());
@@ -71,17 +113,6 @@ public class WorkoutPanel extends JPanel {
         contentPanel.add(Box.createVerticalStrut(12));
 
         // 4. Workouts Table
-        String[] columnNames = {"Date", "Title", "Type", "Duration", "Calories", "Status", "Notes"};
-        tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        table = new ModernTable(tableModel);
-        sorter = new TableRowSorter<>(tableModel);
-        table.setRowSorter(sorter);
-
         JScrollPane scrollTable = ModernTable.wrapInScrollPane(table);
         scrollTable.setPreferredSize(new Dimension(0, 320));
         contentPanel.add(scrollTable);
@@ -95,16 +126,11 @@ public class WorkoutPanel extends JPanel {
         mainScroll.setOpaque(false);
         mainScroll.getViewport().setOpaque(false);
         mainScroll.getVerticalScrollBar().setUnitIncrement(16);
-        add(mainScroll, BorderLayout.CENTER);
 
-        // Setup filter listener
-        txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { applyFilters(); }
-        });
-        cmbTypeFilter.addActionListener(e -> applyFilters());
-        cmbStatusFilter.addActionListener(e -> applyFilters());
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.add(mainScroll, BorderLayout.CENTER);
+        return wrapper;
     }
 
     private JPanel createHeaderPanel() {
@@ -125,9 +151,22 @@ public class WorkoutPanel extends JPanel {
 
         header.add(textPanel, BorderLayout.WEST);
 
+        JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        btnBar.setOpaque(false);
+
+        ModernButton btnSetReminder = new ModernButton("+ Set Reminder", ModernButton.ButtonStyle.SECONDARY);
+        btnSetReminder.setIcon(IconFactory.createIcon(IconFactory.IconType.REMINDERS, 13, ThemeConfig.PRIMARY_ACCENT));
+        btnSetReminder.setIconTextGap(6);
+        btnSetReminder.addActionListener(e -> openReminderDialog());
+        btnBar.add(btnSetReminder);
+
         ModernButton btnNew = new ModernButton("+ Log Workout", ModernButton.ButtonStyle.PRIMARY);
+        btnNew.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 13, Color.WHITE));
+        btnNew.setIconTextGap(6);
         btnNew.addActionListener(e -> openAddWorkoutDialog(0));
-        header.add(btnNew, BorderLayout.EAST);
+        btnBar.add(btnNew);
+
+        header.add(btnBar, BorderLayout.EAST);
 
         return header;
     }
@@ -163,12 +202,16 @@ public class WorkoutPanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actions.setOpaque(false);
 
+        ModernButton btnGoReminders = new ModernButton("Reminders Schedule →", ModernButton.ButtonStyle.GHOST);
+        btnGoReminders.addActionListener(e -> selectRemindersTab());
+
         ModernButton btnEdit = new ModernButton("Edit Selected", ModernButton.ButtonStyle.SECONDARY);
         btnEdit.addActionListener(e -> editSelectedWorkout());
 
         ModernButton btnDelete = new ModernButton("Delete", ModernButton.ButtonStyle.DANGER);
         btnDelete.addActionListener(e -> deleteSelectedWorkout());
 
+        actions.add(btnGoReminders);
         actions.add(btnEdit);
         actions.add(btnDelete);
         bar.add(actions, BorderLayout.EAST);
@@ -238,6 +281,7 @@ public class WorkoutPanel extends JPanel {
                 } catch (Exception e) {
                     lblSummaryStats.setText("Failed to load workouts: " + e.getMessage());
                 }
+                loadReminders();
             }
         };
         worker.execute();
@@ -749,6 +793,461 @@ public class WorkoutPanel extends JPanel {
                 }
             };
             worker.execute();
+        }
+
+        public boolean isSaved() {
+            return saved;
+        }
+    }
+
+    // =========================================================================
+    // REMINDERS SUB-VIEW & ACTIONS
+    // =========================================================================
+
+    public void selectRemindersTab() {
+        tabbedPane.setSelectedIndex(1);
+    }
+
+    public void selectWorkoutsTab() {
+        tabbedPane.setSelectedIndex(0);
+    }
+
+    private JPanel createRemindersTab() {
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setOpaque(false);
+        content.setBorder(BorderFactory.createEmptyBorder(22, 28, 28, 28));
+
+        // 1. Reminders Header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+
+        JPanel titlePanel = new JPanel(new GridLayout(2, 1, 0, 4));
+        titlePanel.setOpaque(false);
+        JLabel title = new JLabel("Workout & Schedule Reminders");
+        title.setFont(ThemeConfig.FONT_TITLE_LARGE);
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        titlePanel.add(title);
+
+        JLabel subtitle = new JLabel("Stay disciplined with scheduled training alerts, hydration, and recovery routines");
+        subtitle.setFont(ThemeConfig.FONT_BODY);
+        subtitle.setForeground(ThemeConfig.TEXT_SECONDARY);
+        titlePanel.add(subtitle);
+        header.add(titlePanel, BorderLayout.WEST);
+
+        ModernButton btnNewReminder = new ModernButton("+ Set Reminder", ModernButton.ButtonStyle.PRIMARY);
+        btnNewReminder.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 13, Color.WHITE));
+        btnNewReminder.setIconTextGap(6);
+        btnNewReminder.addActionListener(e -> openReminderDialog());
+        header.add(btnNewReminder, BorderLayout.EAST);
+
+        content.add(header);
+        content.add(Box.createVerticalStrut(20));
+
+        // 2. Reminders Card
+        ModernCard cardReminders = new ModernCard(14, new Insets(18, 20, 18, 20));
+        JLabel lblRemHead = new JLabel("Active & Upcoming Reminders");
+        lblRemHead.setFont(ThemeConfig.FONT_SUBTITLE);
+        lblRemHead.setForeground(ThemeConfig.TEXT_PRIMARY);
+        cardReminders.add(lblRemHead, BorderLayout.NORTH);
+
+        pnlRemindersList.setLayout(new BoxLayout(pnlRemindersList, BoxLayout.Y_AXIS));
+        pnlRemindersList.setOpaque(false);
+        pnlRemindersList.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
+
+        JScrollPane scrollRem = new JScrollPane(pnlRemindersList);
+        scrollRem.setOpaque(false);
+        scrollRem.getViewport().setOpaque(false);
+        scrollRem.setBorder(null);
+        cardReminders.add(scrollRem, BorderLayout.CENTER);
+        content.add(cardReminders);
+
+        JScrollPane scrollPane = new JScrollPane(content);
+        scrollPane.setBorder(null);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.add(scrollPane, BorderLayout.CENTER);
+        return wrapper;
+    }
+
+    public void loadReminders() {
+        SwingWorker<List<Reminder>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<Reminder> doInBackground() throws Exception {
+                return reminderDAO.getAllReminders();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    currentReminders = get();
+                    updateRemindersView();
+                } catch (Exception ignored) {}
+            }
+        };
+        worker.execute();
+    }
+
+    private void updateRemindersView() {
+        pnlRemindersList.removeAll();
+        for (Reminder r : currentReminders) {
+            JPanel row = new JPanel(new BorderLayout(12, 0));
+            row.setOpaque(false);
+            row.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x35, 0x35, 0x35, 120)),
+                    BorderFactory.createEmptyBorder(10, 4, 10, 4)
+            ));
+
+            JCheckBox chk = new JCheckBox();
+            chk.setSelected(r.isCompleted());
+            chk.setOpaque(false);
+            chk.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            chk.addActionListener(e -> toggleReminderStatus(r, chk.isSelected()));
+            row.add(chk, BorderLayout.WEST);
+
+            JPanel center = new JPanel(new GridLayout(2, 1, 0, 3));
+            center.setOpaque(false);
+            JLabel title = new JLabel(r.getTitle());
+            title.setFont(ThemeConfig.FONT_BODY_BOLD);
+            title.setForeground(r.isCompleted() ? ThemeConfig.TEXT_MUTED : ThemeConfig.TEXT_PRIMARY);
+            center.add(title);
+
+            String descText = (r.getDescription() != null && !r.getDescription().isBlank()) ? r.getDescription() + " • " : "";
+            JLabel sub = new JLabel(descText + "Due: " + DateUtil.formatDate(r.getReminderDate()) + " at " + DateUtil.formatTime(r.getReminderTime()));
+            sub.setFont(ThemeConfig.FONT_SMALL);
+            sub.setForeground(r.isDueOrOverdue() && !r.isCompleted() ? ThemeConfig.ERROR : ThemeConfig.TEXT_MUTED);
+            center.add(sub);
+            row.add(center, BorderLayout.CENTER);
+
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+            actions.setOpaque(false);
+
+            if (r.isDueOrOverdue() && !r.isCompleted()) {
+                JLabel dueBadge = new JLabel("DUE");
+                dueBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
+                dueBadge.setForeground(ThemeConfig.ERROR);
+                actions.add(dueBadge);
+            }
+
+            JButton btnDel = new JButton("Delete");
+            btnDel.setFont(ThemeConfig.FONT_SMALL);
+            btnDel.setForeground(ThemeConfig.ERROR);
+            btnDel.setContentAreaFilled(false);
+            btnDel.setBorderPainted(false);
+            btnDel.setFocusPainted(false);
+            btnDel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btnDel.addActionListener(e -> deleteReminder(r));
+            actions.add(btnDel);
+
+            row.add(actions, BorderLayout.EAST);
+            pnlRemindersList.add(row);
+        }
+
+        if (currentReminders.isEmpty()) {
+            JPanel emptyBox = new JPanel();
+            emptyBox.setLayout(new BoxLayout(emptyBox, BoxLayout.Y_AXIS));
+            emptyBox.setOpaque(false);
+            emptyBox.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
+
+            JLabel lblEmpty = new JLabel("No workout reminders scheduled.");
+            lblEmpty.setFont(ThemeConfig.FONT_BODY_BOLD);
+            lblEmpty.setForeground(ThemeConfig.TEXT_SECONDARY);
+            lblEmpty.setAlignmentX(Component.CENTER_ALIGNMENT);
+            emptyBox.add(lblEmpty);
+            emptyBox.add(Box.createVerticalStrut(6));
+
+            JLabel lblSub = new JLabel("Plan routine alerts, hydration checks, or recovery sessions.");
+            lblSub.setFont(ThemeConfig.FONT_SMALL);
+            lblSub.setForeground(ThemeConfig.TEXT_MUTED);
+            lblSub.setAlignmentX(Component.CENTER_ALIGNMENT);
+            emptyBox.add(lblSub);
+            emptyBox.add(Box.createVerticalStrut(14));
+
+            ModernButton btnAddPrompt = new ModernButton("+ Set First Reminder", ModernButton.ButtonStyle.PRIMARY);
+            btnAddPrompt.setAlignmentX(Component.CENTER_ALIGNMENT);
+            btnAddPrompt.addActionListener(e -> openReminderDialog());
+            emptyBox.add(btnAddPrompt);
+
+            pnlRemindersList.add(emptyBox);
+        }
+
+        pnlRemindersList.revalidate();
+        pnlRemindersList.repaint();
+    }
+
+    private void toggleReminderStatus(Reminder r, boolean completed) {
+        r.setCompleted(completed);
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                reminderDAO.updateReminder(r);
+                return null;
+            }
+            @Override
+            protected void done() {
+                ToastNotification.showToast(WorkoutPanel.this, completed ? "Reminder marked as completed!" : "Reminder marked active.", ToastNotification.ToastType.SUCCESS);
+                loadReminders();
+            }
+        };
+        worker.execute();
+    }
+
+    private void deleteReminder(Reminder r) {
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                reminderDAO.deleteReminder(r.getId());
+                return null;
+            }
+            @Override
+            protected void done() {
+                ToastNotification.showToast(WorkoutPanel.this, "Reminder deleted.", ToastNotification.ToastType.INFO);
+                loadReminders();
+            }
+        };
+        worker.execute();
+    }
+
+    public void openReminderDialog() {
+        ReminderDialog dialog = new ReminderDialog(SwingUtilities.getWindowAncestor(this));
+        dialog.setVisible(true);
+        if (dialog.isSaved()) {
+            ToastNotification.showToast(this, "Reminder scheduled successfully!", ToastNotification.ToastType.SUCCESS);
+            loadReminders();
+        }
+    }
+
+    // Modal Reminder Dialog
+    private class ReminderDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
+        private boolean saved = false;
+
+        private final ModernTextField txtTitle = new ModernTextField("Evening Workout Session");
+        private final ModernTextField txtDesc = new ModernTextField("Leg day workout & protein shake");
+        private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString());
+        private final ModernTextField txtTime = new ModernTextField("18:00");
+
+        public ReminderDialog(Window owner) {
+            super(owner, "Create New Reminder", ModalityType.APPLICATION_MODAL);
+            setSize(490, 560);
+            setLocationRelativeTo(owner);
+            setResizable(false);
+            getContentPane().setBackground(ThemeConfig.BG_DARK);
+
+            JPanel main = new JPanel();
+            main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
+            main.setOpaque(false);
+            main.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
+
+            // Section 1: Quick Reminder Presets
+            JLabel lblPresets = new JLabel("Quick Reminder Templates");
+            lblPresets.setFont(ThemeConfig.FONT_SMALL);
+            lblPresets.setForeground(ThemeConfig.TEXT_SECONDARY);
+            main.add(lblPresets);
+            main.add(Box.createVerticalStrut(4));
+
+            JPanel presetRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            presetRow.setOpaque(false);
+            presetRow.add(createReminderPresetChip("Workout", "Workout Session", "Crush today's planned training", "18:00"));
+            presetRow.add(createReminderPresetChip("Hydration", "Hydration Check", "Drink at least 500ml of water", "14:00"));
+            presetRow.add(createReminderPresetChip("Log Food", "Log Daily Nutrition", "Review daily calories and macros", "20:30"));
+            presetRow.add(createReminderPresetChip("Sleep", "Bedtime Wind-down", "Screens off, prepare for sleep", "22:30"));
+            main.add(presetRow);
+            main.add(Box.createVerticalStrut(12));
+
+            // Title & Description
+            main.add(createFieldRow("Reminder Title *", txtTitle));
+            main.add(Box.createVerticalStrut(10));
+            main.add(createFieldRow("Description", txtDesc));
+            main.add(Box.createVerticalStrut(10));
+
+            // Date with Quick Pills
+            JPanel dateRow = new JPanel(new BorderLayout(8, 0));
+            dateRow.setOpaque(false);
+            JLabel lblDateTag = new JLabel("Reminder Date");
+            lblDateTag.setFont(ThemeConfig.FONT_SMALL);
+            lblDateTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            dateRow.add(lblDateTag, BorderLayout.NORTH);
+
+            JPanel dateControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            dateControls.setOpaque(false);
+            JButton btnToday = createQuickPill("Today", true);
+            JButton btnTomorrow = createQuickPill("Tomorrow", false);
+            btnToday.addActionListener(e -> {
+                txtDate.setText(LocalDate.now().toString());
+                btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btnTomorrow.setBackground(ThemeConfig.BG_CARD);
+            });
+            btnTomorrow.addActionListener(e -> {
+                txtDate.setText(LocalDate.now().plusDays(1).toString());
+                btnTomorrow.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btnToday.setBackground(ThemeConfig.BG_CARD);
+            });
+            txtDate.setPreferredSize(new Dimension(130, 32));
+            dateControls.add(btnToday);
+            dateControls.add(btnTomorrow);
+            dateControls.add(txtDate);
+            dateRow.add(dateControls, BorderLayout.CENTER);
+            main.add(dateRow);
+            main.add(Box.createVerticalStrut(12));
+
+            // Time with Quick Hour Chips
+            JPanel timeSection = new JPanel();
+            timeSection.setLayout(new BoxLayout(timeSection, BoxLayout.Y_AXIS));
+            timeSection.setOpaque(false);
+            JLabel lblTimeTag = new JLabel("Time (HH:MM 24h) *");
+            lblTimeTag.setFont(ThemeConfig.FONT_SMALL);
+            lblTimeTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+            timeSection.add(lblTimeTag);
+            timeSection.add(Box.createVerticalStrut(4));
+
+            JPanel timeChips = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            timeChips.setOpaque(false);
+            timeChips.add(createTimeChip("Morning 08:00", "08:00"));
+            timeChips.add(createTimeChip("Noon 12:30", "12:30"));
+            timeChips.add(createTimeChip("Evening 18:00", "18:00"));
+            timeChips.add(createTimeChip("Night 21:30", "21:30"));
+            txtTime.setPreferredSize(new Dimension(90, 30));
+            timeChips.add(txtTime);
+            timeSection.add(timeChips);
+            main.add(timeSection);
+
+            main.add(Box.createVerticalGlue());
+            main.add(Box.createVerticalStrut(16));
+
+            // Action Buttons
+            JPanel actions = new JPanel(new BorderLayout());
+            actions.setOpaque(false);
+            JLabel lblHint = new JLabel("Tip: Press Enter to save");
+            lblHint.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            lblHint.setForeground(ThemeConfig.TEXT_MUTED);
+            actions.add(lblHint, BorderLayout.WEST);
+
+            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            btnRow.setOpaque(false);
+            ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.GHOST);
+            btnCancel.addActionListener(e -> dispose());
+            ModernButton btnSave = new ModernButton("Set Reminder", ModernButton.ButtonStyle.PRIMARY);
+            btnSave.addActionListener(e -> saveReminder());
+            btnRow.add(btnCancel);
+            btnRow.add(btnSave);
+            actions.add(btnRow, BorderLayout.EAST);
+            main.add(actions);
+
+            setContentPane(main);
+
+            // Shortcuts
+            txtTitle.addActionListener(e -> saveReminder());
+            txtDesc.addActionListener(e -> saveReminder());
+            txtDate.addActionListener(e -> saveReminder());
+            txtTime.addActionListener(e -> saveReminder());
+
+            getRootPane().registerKeyboardAction(e -> dispose(),
+                    KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),
+                    JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+            SwingUtilities.invokeLater(() -> {
+                txtTitle.requestFocusInWindow();
+                txtTitle.selectAll();
+            });
+        }
+
+        private JButton createReminderPresetChip(String label, String title, String desc, String time) {
+            JButton btn = new JButton(label);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(5, 9, 5, 9));
+            btn.addActionListener(e -> {
+                txtTitle.setText(title);
+                txtDesc.setText(desc);
+                txtTime.setText(time);
+            });
+            return btn;
+        }
+
+        private JButton createTimeChip(String text, String timeVal) {
+            JButton btn = new JButton(text);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+            btn.addActionListener(e -> txtTime.setText(timeVal));
+            return btn;
+        }
+
+        private JButton createQuickPill(String text, boolean active) {
+            JButton btn = new JButton(text);
+            btn.setFont(ThemeConfig.FONT_SMALL);
+            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            return btn;
+        }
+
+        private JPanel createFieldRow(String label, JComponent comp) {
+            JPanel p = new JPanel();
+            p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+            p.setOpaque(false);
+            JLabel l = new JLabel(label);
+            l.setFont(ThemeConfig.FONT_SMALL);
+            l.setForeground(ThemeConfig.TEXT_SECONDARY);
+            p.add(l);
+            p.add(Box.createVerticalStrut(4));
+            p.add(comp);
+            return p;
+        }
+
+        private void saveReminder() {
+            String title = txtTitle.getText().trim();
+            if (title.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a reminder title.");
+                return;
+            }
+
+            LocalDate date = DateUtil.parseDateOrNull(txtDate.getText().trim());
+            if (date == null) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid date.");
+                return;
+            }
+
+            try {
+                String[] parts = txtTime.getText().trim().split(":");
+                java.time.LocalTime time = java.time.LocalTime.of(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+                Reminder r = new Reminder(title, txtDesc.getText().trim(), date, time);
+
+                SwingWorker<Void, Void> worker = new SwingWorker<>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        reminderDAO.saveReminder(r);
+                        return null;
+                    }
+                    @Override
+                    protected void done() {
+                        try {
+                            get();
+                            saved = true;
+                            dispose();
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(ReminderDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                };
+                worker.execute();
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Please enter time in HH:MM format (e.g. 18:30).");
+            }
         }
 
         public boolean isSaved() {

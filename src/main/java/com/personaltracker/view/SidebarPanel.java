@@ -27,7 +27,6 @@ public class SidebarPanel extends JPanel {
         NUTRITION("Nutrition", IconFactory.IconType.NUTRITION),
         WATER_SLEEP("Water & Sleep", IconFactory.IconType.WATER),
         ANALYTICS("Analytics & Reports", IconFactory.IconType.ANALYTICS),
-        REMINDERS_BADGES("Reminders & Badges", IconFactory.IconType.BADGES),
         SETTINGS("Profile & Settings", IconFactory.IconType.SETTINGS);
 
         private final String label;

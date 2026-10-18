@@ -78,6 +78,19 @@ public class DashboardPanel extends JPanel {
 
     // Navigation callbacks
     private Consumer<SidebarPanel.NavItem> navigationConsumer;
+    private Runnable onOpenRemindersCallback;
+
+    public void setOnOpenRemindersCallback(Runnable callback) {
+        this.onOpenRemindersCallback = callback;
+    }
+
+    private void openRemindersView() {
+        if (onOpenRemindersCallback != null) {
+            onOpenRemindersCallback.run();
+        } else if (navigationConsumer != null) {
+            navigationConsumer.accept(SidebarPanel.NavItem.WORKOUTS);
+        }
+    }
 
     public DashboardPanel() {
         setOpaque(false);
@@ -398,7 +411,7 @@ public class DashboardPanel extends JPanel {
         lblRemindersTitle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         lblRemindersTitle.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.REMINDERS_BADGES);
+                openRemindersView();
             }
         });
         remindersHeader.add(lblRemindersTitle, BorderLayout.WEST);
@@ -409,7 +422,7 @@ public class DashboardPanel extends JPanel {
         lblViewReminders.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         lblViewReminders.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.REMINDERS_BADGES);
+                openRemindersView();
             }
         });
         remindersHeader.add(lblViewReminders, BorderLayout.EAST);
@@ -584,10 +597,10 @@ public class DashboardPanel extends JPanel {
                 }
             }
             if (count == 0) {
-                pnlReminders.add(createEmptyActionRow("✓ You're all caught up!", "+ Add Reminder", SidebarPanel.NavItem.REMINDERS_BADGES));
+                pnlReminders.add(createEmptyActionRow("✓ You're all caught up!", "+ Add Reminder", e -> openRemindersView()));
             }
         } else {
-            pnlReminders.add(createEmptyActionRow("No upcoming reminders.", "+ Add Reminder", SidebarPanel.NavItem.REMINDERS_BADGES));
+            pnlReminders.add(createEmptyActionRow("No upcoming reminders.", "+ Add Reminder", e -> openRemindersView()));
         }
         pnlReminders.revalidate();
         pnlReminders.repaint();
@@ -628,7 +641,7 @@ public class DashboardPanel extends JPanel {
         row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         row.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.REMINDERS_BADGES);
+                openRemindersView();
             }
         });
 
@@ -648,6 +661,12 @@ public class DashboardPanel extends JPanel {
     }
 
     private JPanel createEmptyActionRow(String message, String actionLabel, SidebarPanel.NavItem targetNav) {
+        return createEmptyActionRow(message, actionLabel, e -> {
+            if (navigationConsumer != null) navigationConsumer.accept(targetNav);
+        });
+    }
+
+    private JPanel createEmptyActionRow(String message, String actionLabel, java.awt.event.ActionListener action) {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         p.setOpaque(false);
         JLabel lbl = new JLabel(message);
@@ -657,9 +676,7 @@ public class DashboardPanel extends JPanel {
 
         ModernButton btn = new ModernButton(actionLabel, ModernButton.ButtonStyle.GHOST);
         btn.setFont(ThemeConfig.FONT_SMALL);
-        btn.addActionListener(e -> {
-            if (navigationConsumer != null) navigationConsumer.accept(targetNav);
-        });
+        btn.addActionListener(action);
         p.add(btn);
         return p;
     }
