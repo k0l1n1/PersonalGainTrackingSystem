@@ -31,7 +31,16 @@ public class GoalPanel extends JPanel {
 
     private final JPanel pnlActiveGoals = new JPanel();
     private final JPanel pnlCompletedGoals = new JPanel();
-    private final JLabel lblStatsSummary = new JLabel("Tracking goals...");
+
+    // Metric KPI summary labels
+    private final JLabel lblKpiActive = new JLabel("0");
+    private final JLabel lblKpiCompleted = new JLabel("0");
+    private final JLabel lblKpiRate = new JLabel("0%");
+    private final JLabel lblKpiNextTarget = new JLabel("--");
+
+    // Section headers & badges
+    private final JLabel lblActiveBadge = new JLabel("0 ACTIVE");
+    private final JLabel lblDoneBadge = new JLabel("0 COMPLETED");
 
     private List<Goal> currentGoals = new ArrayList<>();
 
@@ -42,53 +51,37 @@ public class GoalPanel extends JPanel {
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
-        content.setBorder(BorderFactory.createEmptyBorder(24, 28, 28, 28));
+        content.setBorder(BorderFactory.createEmptyBorder(22, 28, 28, 28));
 
-        // Header
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
+        // 1. Header with Title & Action Button
+        content.add(createHeaderPanel());
+        content.add(Box.createVerticalStrut(16));
 
-        JPanel titlePanel = new JPanel(new GridLayout(2, 1, 0, 4));
-        titlePanel.setOpaque(false);
-        JLabel title = new JLabel("Fitness & Health Goals");
-        title.setFont(ThemeConfig.FONT_TITLE_LARGE);
-        title.setForeground(ThemeConfig.TEXT_PRIMARY);
-        titlePanel.add(title);
+        // 2. KPI Metric Cards Row
+        content.add(createKpiCardsPanel());
+        content.add(Box.createVerticalStrut(22));
 
-        JLabel subtitle = new JLabel("Set milestones, update current values & track progress");
-        subtitle.setFont(ThemeConfig.FONT_BODY);
-        subtitle.setForeground(ThemeConfig.TEXT_SECONDARY);
-        titlePanel.add(subtitle);
-        header.add(titlePanel, BorderLayout.WEST);
-
-        ModernButton btnNewGoal = new ModernButton("+ Create New Goal", ModernButton.ButtonStyle.PRIMARY);
-        btnNewGoal.addActionListener(e -> openGoalDialog(null));
-        header.add(btnNewGoal, BorderLayout.EAST);
-        content.add(header);
-        content.add(Box.createVerticalStrut(18));
-
-        // Active Goals Section
-        JLabel lblActiveSection = new JLabel("Active & In-Progress Goals");
-        lblActiveSection.setFont(ThemeConfig.FONT_SUBTITLE);
-        lblActiveSection.setForeground(ThemeConfig.TEXT_PRIMARY);
-        content.add(lblActiveSection);
-        content.add(Box.createVerticalStrut(10));
+        // 3. Active Goals Section Header
+        content.add(createSectionHeader("Active & In-Progress Goals", lblActiveBadge, IconFactory.IconType.GOAL, ThemeConfig.PRIMARY_ACCENT));
+        content.add(Box.createVerticalStrut(12));
 
         pnlActiveGoals.setLayout(new GridLayout(0, 2, 16, 16));
         pnlActiveGoals.setOpaque(false);
+        pnlActiveGoals.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(pnlActiveGoals);
-        content.add(Box.createVerticalStrut(24));
+        content.add(Box.createVerticalStrut(26));
 
-        // Completed / Overdue Goals Section
-        JLabel lblDoneSection = new JLabel("Achieved & Past Goals");
-        lblDoneSection.setFont(ThemeConfig.FONT_SUBTITLE);
-        lblDoneSection.setForeground(ThemeConfig.TEXT_SECONDARY);
-        content.add(lblDoneSection);
-        content.add(Box.createVerticalStrut(10));
+        // 4. Completed / Overdue Goals Section Header
+        content.add(createSectionHeader("Achieved & Past Goals", lblDoneBadge, IconFactory.IconType.CHECK, ThemeConfig.SUCCESS_EMERALD));
+        content.add(Box.createVerticalStrut(12));
 
         pnlCompletedGoals.setLayout(new GridLayout(0, 2, 16, 16));
         pnlCompletedGoals.setOpaque(false);
+        pnlCompletedGoals.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(pnlCompletedGoals);
+
+        // Vertical glue consumes any leftover space, preventing vertical component elongation
+        content.add(Box.createVerticalGlue());
 
         JScrollPane scrollPane = new JScrollPane(content);
         scrollPane.setBorder(null);
@@ -96,6 +89,103 @@ public class GoalPanel extends JPanel {
         scrollPane.getViewport().setOpaque(false);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private JPanel createHeaderPanel() {
+        JPanel header = new JPanel(new BorderLayout(16, 0));
+        header.setOpaque(false);
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel titlePanel = new JPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setOpaque(false);
+
+        JLabel title = new JLabel("Fitness & Health Goals");
+        title.setFont(ThemeConfig.FONT_TITLE_LARGE);
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        titlePanel.add(title);
+        titlePanel.add(Box.createVerticalStrut(3));
+
+        JLabel subtitle = new JLabel("Set milestones, update current values & track your progress");
+        subtitle.setFont(ThemeConfig.FONT_BODY);
+        subtitle.setForeground(ThemeConfig.TEXT_SECONDARY);
+        titlePanel.add(subtitle);
+        header.add(titlePanel, BorderLayout.WEST);
+
+        JPanel btnWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        btnWrapper.setOpaque(false);
+        ModernButton btnNewGoal = new ModernButton("Create New Goal", ModernButton.ButtonStyle.PRIMARY);
+        btnNewGoal.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 13, Color.WHITE));
+        btnNewGoal.setIconTextGap(8);
+        btnNewGoal.setPreferredSize(new Dimension(172, 40));
+        btnNewGoal.addActionListener(e -> openGoalDialog(null));
+        btnWrapper.add(btnNewGoal);
+
+        header.add(btnWrapper, BorderLayout.EAST);
+        return header;
+    }
+
+    private JPanel createKpiCardsPanel() {
+        JPanel grid = new JPanel(new GridLayout(1, 4, 14, 0));
+        grid.setOpaque(false);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 86));
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        grid.add(createMetricCard("Active Goals", lblKpiActive, "In-progress targets", IconFactory.IconType.GOAL, ThemeConfig.PRIMARY_ACCENT));
+        grid.add(createMetricCard("Goals Achieved", lblKpiCompleted, "Milestones completed", IconFactory.IconType.CHECK, ThemeConfig.SUCCESS_EMERALD));
+        grid.add(createMetricCard("Completion Rate", lblKpiRate, "Success percentage", IconFactory.IconType.FIRE, new Color(0xF5, 0x9E, 0x0B)));
+        grid.add(createMetricCard("Nearest Deadline", lblKpiNextTarget, "Next upcoming target", IconFactory.IconType.TIMER, new Color(0x3B, 0x82, 0xF6)));
+
+        return grid;
+    }
+
+    private ModernCard createMetricCard(String title, JLabel valLabel, String sub, IconFactory.IconType iconType, Color iconColor) {
+        ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
+        card.setLayout(new BorderLayout(10, 0));
+
+        JPanel left = new JPanel(new GridLayout(2, 1, 0, 2));
+        left.setOpaque(false);
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(ThemeConfig.FONT_SMALL);
+        lblTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
+        left.add(lblTitle);
+
+        valLabel.setFont(ThemeConfig.FONT_TITLE);
+        valLabel.setForeground(ThemeConfig.TEXT_PRIMARY);
+        left.add(valLabel);
+
+        card.add(left, BorderLayout.CENTER);
+
+        JLabel icon = new JLabel(IconFactory.createIcon(iconType, 22, iconColor));
+        card.add(icon, BorderLayout.EAST);
+
+        return card;
+    }
+
+    private JPanel createSectionHeader(String title, JLabel badgeLabel, IconFactory.IconType iconType, Color accentColor) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        panel.setOpaque(false);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel icon = new JLabel(IconFactory.createIcon(iconType, 16, accentColor));
+        panel.add(icon);
+
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(ThemeConfig.FONT_SUBTITLE);
+        lblTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
+        panel.add(lblTitle);
+
+        badgeLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        badgeLabel.setForeground(accentColor);
+        badgeLabel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 120), 1, true),
+                BorderFactory.createEmptyBorder(2, 8, 2, 8)
+        ));
+        panel.add(badgeLabel);
+
+        return panel;
     }
 
     public void loadGoals() {
@@ -114,6 +204,7 @@ public class GoalPanel extends JPanel {
 
                     int activeCount = 0;
                     int completedCount = 0;
+                    LocalDate nearestDate = null;
 
                     for (Goal g : currentGoals) {
                         if (g.isCompleted()) {
@@ -122,11 +213,28 @@ public class GoalPanel extends JPanel {
                         } else {
                             activeCount++;
                             pnlActiveGoals.add(createGoalCard(g));
+                            if (g.getTargetDate() != null) {
+                                if (nearestDate == null || g.getTargetDate().isBefore(nearestDate)) {
+                                    nearestDate = g.getTargetDate();
+                                }
+                            }
                         }
                     }
 
+                    // Update KPIs
+                    lblKpiActive.setText(String.valueOf(activeCount));
+                    lblKpiCompleted.setText(String.valueOf(completedCount));
+                    int total = activeCount + completedCount;
+                    int rate = total > 0 ? (int) Math.round((completedCount * 100.0) / total) : 0;
+                    lblKpiRate.setText(rate + "%");
+                    lblKpiNextTarget.setText(nearestDate != null ? DateUtil.formatDate(nearestDate) : "--");
+
+                    // Update Section Badges
+                    lblActiveBadge.setText(activeCount + " ACTIVE");
+                    lblDoneBadge.setText(completedCount + " COMPLETED");
+
                     if (activeCount == 0) {
-                        pnlActiveGoals.add(createEmptyCard("No active goals. Click '+ Create New Goal' above!"));
+                        pnlActiveGoals.add(createEmptyCard("No active goals right now. Set your next target!"));
                     }
                     if (completedCount == 0) {
                         pnlCompletedGoals.add(createEmptyCard("No completed goals yet. Keep working towards your milestones!"));
@@ -146,44 +254,62 @@ public class GoalPanel extends JPanel {
     }
 
     private ModernCard createGoalCard(Goal goal) {
-        ModernCard card = new ModernCard(14, new Insets(16, 18, 16, 18));
+        ModernCard card = new ModernCard(14, new Insets(16, 20, 16, 20));
         card.setHoverEffect(true);
+        card.setLayout(new BorderLayout(0, 12));
 
+        // Top Header: Category Tag & Status Tag
         JPanel top = new JPanel(new BorderLayout(8, 0));
         top.setOpaque(false);
 
-        JLabel catTag = new JLabel(" " + goal.getCategory().toUpperCase() + " ");
+        JLabel catTag = new JLabel(goal.getCategory().toUpperCase());
         catTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        catTag.setOpaque(true);
-        catTag.setBackground(new Color(0xF0, 0x44, 0x44, 30));
         catTag.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        catTag.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xF0, 0x44, 0x44, 120), 1, true),
+                BorderFactory.createEmptyBorder(2, 8, 2, 8)
+        ));
         top.add(catTag, BorderLayout.WEST);
 
-        JLabel statusTag = new JLabel(goal.getStatus());
-        statusTag.setFont(ThemeConfig.FONT_SMALL);
+        JLabel statusTag = new JLabel();
+        statusTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
         if (goal.isCompleted()) {
-            statusTag.setForeground(ThemeConfig.SUCCESS);
+            statusTag.setText("✓ COMPLETED");
+            statusTag.setForeground(ThemeConfig.SUCCESS_EMERALD);
+            statusTag.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 120), 1, true),
+                    BorderFactory.createEmptyBorder(2, 8, 2, 8)
+            ));
         } else if (goal.isOverdue()) {
-            statusTag.setForeground(ThemeConfig.ERROR);
+            statusTag.setText("! OVERDUE");
+            statusTag.setForeground(ThemeConfig.DANGER_ROSE);
+            statusTag.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0xF4, 0x3F, 0x5E, 120), 1, true),
+                    BorderFactory.createEmptyBorder(2, 8, 2, 8)
+            ));
         } else {
-            statusTag.setForeground(ThemeConfig.WARNING);
+            statusTag.setText("● IN PROGRESS");
+            statusTag.setForeground(ThemeConfig.WARNING_AMBER);
+            statusTag.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0xF5, 0x9E, 0x0B, 120), 1, true),
+                    BorderFactory.createEmptyBorder(2, 8, 2, 8)
+            ));
         }
         top.add(statusTag, BorderLayout.EAST);
-
         card.add(top, BorderLayout.NORTH);
 
+        // Center: Title, Values & Progress
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
         center.setOpaque(false);
-        center.setBorder(BorderFactory.createEmptyBorder(12, 0, 10, 0));
 
         JLabel titleLbl = new JLabel(goal.getTitle());
-        titleLbl.setFont(ThemeConfig.FONT_SUBTITLE);
+        titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
         titleLbl.setForeground(ThemeConfig.TEXT_PRIMARY);
         center.add(titleLbl);
-        center.add(Box.createVerticalStrut(8));
+        center.add(Box.createVerticalStrut(10));
 
-        // Values & Progress Bar
+        // Values & Progress Row
         JPanel valRow = new JPanel(new BorderLayout());
         valRow.setOpaque(false);
 
@@ -194,53 +320,77 @@ public class GoalPanel extends JPanel {
 
         JLabel pct = new JLabel(goal.getProgressPercentage() + "%");
         pct.setFont(ThemeConfig.FONT_BODY_BOLD);
-        pct.setForeground(goal.isCompleted() ? ThemeConfig.SUCCESS : ThemeConfig.PRIMARY_ACCENT);
+        pct.setForeground(goal.isCompleted() ? ThemeConfig.SUCCESS_EMERALD : (goal.isOverdue() ? ThemeConfig.DANGER_ROSE : ThemeConfig.PRIMARY_ACCENT));
         valRow.add(pct, BorderLayout.EAST);
         center.add(valRow);
         center.add(Box.createVerticalStrut(6));
 
         ModernProgressBar bar = new ModernProgressBar(0, 100);
         bar.setValue(goal.getProgressPercentage());
+        bar.setPreferredSize(new Dimension(0, 8));
         if (goal.isCompleted()) {
-            bar.setProgressColor(ThemeConfig.SUCCESS);
+            bar.setProgressColor(ThemeConfig.SUCCESS_EMERALD);
+        } else if (goal.isOverdue()) {
+            bar.setProgressColor(ThemeConfig.DANGER_ROSE);
+        } else {
+            bar.setProgressColor(ThemeConfig.PRIMARY_ACCENT);
         }
         center.add(bar);
-        center.add(Box.createVerticalStrut(8));
-
-        JLabel dates = new JLabel("Target deadline: " + DateUtil.formatDate(goal.getTargetDate()));
-        dates.setFont(ThemeConfig.FONT_SMALL);
-        dates.setForeground(ThemeConfig.TEXT_MUTED);
-        center.add(dates);
 
         card.add(center, BorderLayout.CENTER);
 
-        // Bottom action buttons
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        // Bottom: Deadline & Action Buttons
+        JPanel bottom = new JPanel(new BorderLayout(8, 0));
         bottom.setOpaque(false);
 
-        ModernButton btnUpdate = new ModernButton("+ Update Value", ModernButton.ButtonStyle.SECONDARY);
+        JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        datePanel.setOpaque(false);
+        JLabel iconCal = new JLabel(IconFactory.createIcon(IconFactory.IconType.TIMER, 13, ThemeConfig.TEXT_MUTED));
+        datePanel.add(iconCal);
+        JLabel dates = new JLabel("Target: " + DateUtil.formatDate(goal.getTargetDate()));
+        dates.setFont(ThemeConfig.FONT_SMALL);
+        dates.setForeground(ThemeConfig.TEXT_MUTED);
+        datePanel.add(dates);
+        bottom.add(datePanel, BorderLayout.WEST);
+
+        JPanel btnBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        btnBox.setOpaque(false);
+
+        ModernButton btnUpdate = new ModernButton("Update", ModernButton.ButtonStyle.SECONDARY);
+        btnUpdate.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 11, ThemeConfig.TEXT_PRIMARY));
+        btnUpdate.setIconTextGap(4);
         btnUpdate.setFont(ThemeConfig.FONT_SMALL);
+        btnUpdate.setPreferredSize(new Dimension(92, 30));
         btnUpdate.addActionListener(e -> updateGoalProgressDialog(goal));
 
         ModernButton btnEdit = new ModernButton("Edit", ModernButton.ButtonStyle.GHOST);
+        btnEdit.setIcon(IconFactory.createIcon(IconFactory.IconType.EDIT, 11, ThemeConfig.TEXT_SECONDARY));
+        btnEdit.setIconTextGap(4);
         btnEdit.setFont(ThemeConfig.FONT_SMALL);
+        btnEdit.setPreferredSize(new Dimension(74, 30));
         btnEdit.addActionListener(e -> openGoalDialog(goal));
 
         ModernButton btnDel = new ModernButton("Delete", ModernButton.ButtonStyle.GHOST);
+        btnDel.setIcon(IconFactory.createIcon(IconFactory.IconType.TRASH, 11, ThemeConfig.DANGER_ROSE));
+        btnDel.setIconTextGap(4);
         btnDel.setFont(ThemeConfig.FONT_SMALL);
         btnDel.setForeground(ThemeConfig.DANGER_ROSE);
+        btnDel.setPreferredSize(new Dimension(84, 30));
         btnDel.addActionListener(e -> deleteGoal(goal));
 
-        bottom.add(btnUpdate);
-        bottom.add(btnEdit);
-        bottom.add(btnDel);
-        card.add(bottom, BorderLayout.SOUTH);
+        btnBox.add(btnUpdate);
+        btnBox.add(btnEdit);
+        btnBox.add(btnDel);
+        bottom.add(btnBox, BorderLayout.EAST);
 
+        card.add(bottom, BorderLayout.SOUTH);
         return card;
     }
 
     private ModernCard createEmptyCard(String text) {
-        ModernCard card = new ModernCard(14, new Insets(28, 24, 28, 24));
+        ModernCard card = new ModernCard(14, new Insets(24, 24, 24, 24));
+        card.setLayout(new BorderLayout());
+
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
         center.setOpaque(false);
@@ -257,9 +407,13 @@ public class GoalPanel extends JPanel {
         center.add(lbl);
         center.add(Box.createVerticalStrut(12));
 
-        ModernButton btn = new ModernButton("+ Set New Goal", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btn = new ModernButton("Set New Goal", ModernButton.ButtonStyle.PRIMARY);
+        btn.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 12, Color.WHITE));
+        btn.setIconTextGap(6);
         btn.setFont(ThemeConfig.FONT_SMALL);
         btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.setPreferredSize(new Dimension(145, 34));
+        btn.setMaximumSize(new Dimension(145, 34));
         btn.addActionListener(e -> openGoalDialog(null));
         center.add(btn);
 
