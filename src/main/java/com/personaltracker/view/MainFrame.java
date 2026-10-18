@@ -19,6 +19,7 @@ public class MainFrame extends JFrame {
 
     // Feature Views
     private final DashboardPanel dashboardPanel = new DashboardPanel();
+    private final TrainerPanel trainerPanel = new TrainerPanel();
     private final WorkoutPanel workoutPanel = new WorkoutPanel();
     private final GoalPanel goalPanel = new GoalPanel();
     private final MeasurementPanel measurementPanel = new MeasurementPanel();
@@ -45,6 +46,7 @@ public class MainFrame extends JFrame {
         // Content Area with CardLayout
         contentCards.setOpaque(false);
         contentCards.add(dashboardPanel, SidebarPanel.NavItem.DASHBOARD.name());
+        contentCards.add(trainerPanel, SidebarPanel.NavItem.STUDENTS.name());
         contentCards.add(workoutPanel, SidebarPanel.NavItem.WORKOUTS.name());
         contentCards.add(goalPanel, SidebarPanel.NavItem.GOALS.name());
         contentCards.add(measurementPanel, SidebarPanel.NavItem.MEASUREMENTS.name());
@@ -63,6 +65,7 @@ public class MainFrame extends JFrame {
         dashboardPanel.setNavigationConsumer(this::navigateTo);
         settingsPanel.setOnProfileUpdatedCallback(() -> {
             sidebar.updateUserInfo();
+            sidebar.refreshNavItems();
             dashboardPanel.refreshDashboardData();
         });
 
@@ -78,6 +81,9 @@ public class MainFrame extends JFrame {
         switch (item) {
             case DASHBOARD:
                 dashboardPanel.refreshDashboardData();
+                break;
+            case STUDENTS:
+                trainerPanel.loadData();
                 break;
             case WORKOUTS:
                 workoutPanel.loadWorkouts();

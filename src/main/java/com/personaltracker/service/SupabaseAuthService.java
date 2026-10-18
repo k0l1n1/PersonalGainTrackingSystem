@@ -102,9 +102,14 @@ public class SupabaseAuthService {
     }
 
     /**
-     * Registers a new user with email and password.
-     */
     public UserSession register(String email, String password, String fullName) throws Exception {
+        return register(email, password, fullName, UserProfile.ROLE_MEMBER);
+    }
+
+    /**
+     * Registers a new user with email, password, full name, and selected role (MEMBER or TRAINER).
+     */
+    public UserSession register(String email, String password, String fullName, String role) throws Exception {
         if (!ValidationUtil.isValidEmail(email)) {
             throw new IllegalArgumentException("Please enter a valid email address.");
         }
@@ -112,8 +117,10 @@ public class SupabaseAuthService {
             throw new IllegalArgumentException("Password must be at least 6 characters.");
         }
 
+        String userRole = (role != null && !role.isBlank()) ? role : UserProfile.ROLE_MEMBER;
+
         if (config.isMockMode()) {
-            return registerMock(email.trim().toLowerCase(), fullName);
+            return registerMock(email.trim().toLowerCase(), fullName, userRole);
         }
 
         String url = config.getSupabaseUrl() + "/auth/v1/signup";
@@ -123,6 +130,7 @@ public class SupabaseAuthService {
 
         Map<String, String> data = new HashMap<>();
         data.put("full_name", fullName != null ? fullName.trim() : "");
+        data.put("role", userRole);
         body.put("data", data);
 
         String jsonBody = objectMapper.writeValueAsString(body);
@@ -152,7 +160,7 @@ public class SupabaseAuthService {
             }
 
             UserSession session = new UserSession(userId, userEmail, accessToken, refreshToken, expiresIn);
-            UserProfile profile = new UserProfile(userId, userEmail, fullName);
+            UserProfile profile = new UserProfile(userId, userEmail, fullName, userRole);
             session.setProfile(profile);
             supabaseClient.setCurrentSession(session);
             return session;
@@ -229,9 +237,9 @@ public class SupabaseAuthService {
         return session;
     }
 
-    private UserSession registerMock(String email, String fullName) {
+    private UserSession registerMock(String email, String fullName, String role) {
         String uid = "user-" + Math.abs(email.hashCode());
-        UserProfile profile = new UserProfile(uid, email, fullName != null ? fullName : "Athlete");
+        UserProfile profile = new UserProfile(uid, email, fullName != null ? fullName : "Athlete", role);
         supabaseClient.updateMockProfile(profile);
 
         UserSession session = new UserSession(uid, email, "mock-jwt-" + uid, "mock-refresh", 86400);

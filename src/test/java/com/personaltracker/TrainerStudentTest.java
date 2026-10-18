@@ -1,0 +1,145 @@
+package com.personaltracker;
+
+import com.personaltracker.config.AppConfig;
+import com.personaltracker.dao.TrainerStudentDAO;
+import com.personaltracker.model.StudentProgressDetail;
+import com.personaltracker.model.TrainerStudent;
+import com.personaltracker.model.UserProfile;
+import com.personaltracker.model.UserSession;
+import com.personaltracker.service.SupabaseClient;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Unit tests verifying Trainer-Student enrollment, role assignment,
+ * unique code generation, validation constraints, and progress tracking data access.
+ */
+public class TrainerStudentTest {
+
+    private TrainerStudentDAO dao;
+    private SupabaseClient client;
+
+    @BeforeEach
+    public void setup() {
+        AppConfig.getInstance().setMockMode(true);
+        client = SupabaseClient.getInstance();
+        client.enableDemoMode();
+        dao = new TrainerStudentDAO();
+    }
+
+    @Test
+    @DisplayName("User code generation produces expected format PG-XXXXXX")
+    public void testUserCodeGeneration() {
+        String code1 = UserProfile.generateUniqueUserCode();
+        String code2 = UserProfile.generateUniqueUserCode();
+
+        assertNotNull(code1);
+        assertNotNull(code2);
+        assertTrue(code1.startsWith("PG-"), "Code should start with PG- prefix: " + code1);
+        assertEquals(9, code1.length(), "Code format should be PG-XXXXXX (9 chars)");
+        assertNotEquals(code1, code2, "Subsequent codes should be distinct");
+    }
+
+    @Test
+    @DisplayName("Role defaults to MEMBER and isTrainer accurately reflects TRAINER role")
+    public void testRoleDefaultAndTrainerDetection() {
+        UserProfile member = new UserProfile("u-1", "member@test.com", "Member Test");
+        assertEquals(UserProfile.ROLE_MEMBER, member.getRole());
+        assertFalse(member.isTrainer());
+
+        UserProfile trainer = new UserProfile("u-2", "coach@test.com", "Coach Test", UserProfile.ROLE_TRAINER);
+        assertEquals(UserProfile.ROLE_TRAINER, trainer.getRole());
+        assertTrue(trainer.isTrainer());
+        assertEquals("Coach Test", trainer.getDisplayName());
+
+        UserProfile namelessTrainer = new UserProfile("u-3", null, null, UserProfile.ROLE_TRAINER);
+        assertEquals("Coach", namelessTrainer.getDisplayName());
+    }
+
+    @Test
+    @DisplayName("Trainer successfully enrolls student via valid unique student code")
+    public void testEnrollStudentByCodeSuccess() throws Exception {
+        String trainerId = "test-trainer-99";
+        // Pre-seeded demo student has code PG-MARCUS
+        TrainerStudent enrolled = dao.enrollStudentByCode(trainerId, "PG-MARCUS");
+
+        assertNotNull(enrolled);
+        assertEquals(trainerId, enrolled.getTrainerId());
+        assertNotNull(enrolled.getStudentProfile());
+        assertEquals("Marcus Vance", enrolled.getStudentProfile().getFullName());
+        assertEquals("PG-MARCUS", enrolled.getStudentProfile().getUserCode());
+
+        // Verify roster contains student
+        List<TrainerStudent> roster = dao.getEnrolledStudents(trainerId);
+        assertTrue(roster.stream().anyMatch(ts -> "PG-MARCUS".equalsIgnoreCase(ts.getStudentProfile().getUserCode())));
+    }
+
+    @Test
+    @DisplayName("Trainer cannot enroll themselves as a student")
+    public void testCannotEnrollSelfAsStudent() {
+        String trainerId = "demo-user-123";
+        // demo-user-123 has code PG-ALEX99
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            dao.enrollStudentByCode(trainerId, "PG-ALEX99");
+        });
+        assertTrue(ex.getMessage().contains("cannot enroll yourself"));
+    }
+
+    @Test
+    @DisplayName("Enrolling duplicate student throws friendly validation error")
+    public void testCannotEnrollDuplicateStudent() throws Exception {
+        String trainerId = "trainer-dup-test";
+        dao.enrollStudentByCode(trainerId, "PG-MARCUS");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            dao.enrollStudentByCode(trainerId, "pg-marcus");
+        });
+        assertTrue(ex.getMessage().contains("already in your student roster"));
+    }
+
+    @Test
+    @DisplayName("Enrolling with invalid non-existent code throws clear error")
+    public void testInvalidStudentCodeThrowsError() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            dao.enrollStudentByCode("trainer-1", "PG-INVALID99");
+        });
+        assertTrue(ex.getMessage().contains("No user found with code"));
+    }
+
+    @Test
+    @DisplayName("Student progress detail accurately retrieves workouts, goals, and measurements")
+    public void testStudentProgressDetailRetrieval() throws Exception {
+        // Sarah Connor has pre-seeded workouts, goals, and measurements
+        String sarahId = "student-sarah-101";
+        StudentProgressDetail detail = dao.getStudentProgressDetail(sarahId);
+
+        assertNotNull(detail);
+        assertNotNull(detail.getProfile());
+        assertEquals("Sarah Connor", detail.getProfile().getFullName());
+        assertFalse(detail.getWorkouts().isEmpty(), "Should have workouts logged");
+        assertFalse(detail.getGoals().isEmpty(), "Should have goals logged");
+        assertFalse(detail.getMeasurements().isEmpty(), "Should have measurements logged");
+        assertFalse(detail.getNutritionEntries().isEmpty(), "Should have nutrition logged");
+        assertTrue(detail.getCurrentWeight() > 0, "Current weight should be positive");
+    }
+
+    @Test
+    @DisplayName("Removing student unlinks them from trainer roster")
+    public void testRemoveStudentFromRoster() throws Exception {
+        String trainerId = "trainer-remove-test";
+        dao.enrollStudentByCode(trainerId, "PG-MARCUS");
+
+        List<TrainerStudent> before = dao.getEnrolledStudents(trainerId);
+        assertEquals(1, before.size());
+
+        dao.removeStudent(trainerId, "student-marcus-102");
+
+        List<TrainerStudent> after = dao.getEnrolledStudents(trainerId);
+        assertTrue(after.isEmpty(), "Roster should be empty after removal");
+    }
+}

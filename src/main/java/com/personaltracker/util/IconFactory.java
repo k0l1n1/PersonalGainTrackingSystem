@@ -24,6 +24,7 @@ public class IconFactory {
         REMINDERS,
         BADGES,
         SETTINGS,
+        STUDENTS,
         USER,
         LOGOUT,
         PLUS,
@@ -167,6 +168,22 @@ public class IconFactory {
                     // Cog
                     g2.draw(new Ellipse2D.Float(s * 0.25f, s * 0.25f, s * 0.5f, s * 0.5f));
                     g2.draw(new Ellipse2D.Float(s * 0.4f, s * 0.4f, s * 0.2f, s * 0.2f));
+                    break;
+
+                case STUDENTS:
+                    // Multiple people silhouettes (Coach & student)
+                    // Primary person
+                    g2.draw(new Ellipse2D.Float(s * 0.22f, s * 0.2f, s * 0.26f, s * 0.26f));
+                    Path2D body1 = new Path2D.Float();
+                    body1.moveTo(s * 0.12f, s * 0.82f);
+                    body1.curveTo(s * 0.14f, s * 0.62f, s * 0.56f, s * 0.62f, s * 0.58f, s * 0.82f);
+                    g2.draw(body1);
+                    // Secondary person in background
+                    g2.draw(new Ellipse2D.Float(s * 0.58f, s * 0.24f, s * 0.22f, s * 0.22f));
+                    Path2D body2 = new Path2D.Float();
+                    body2.moveTo(s * 0.6f, s * 0.64f);
+                    body2.curveTo(s * 0.72f, s * 0.62f, s * 0.86f, s * 0.66f, s * 0.88f, s * 0.82f);
+                    g2.draw(body2);
                     break;
 
                 case USER:

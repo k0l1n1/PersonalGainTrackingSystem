@@ -27,6 +27,12 @@ public class AuthDialog extends JDialog {
     private final ModernPasswordField txtPassword = new ModernPasswordField("password123", "••••••••");
     private final ModernTextField txtFullName = new ModernTextField("Alex Hunter");
 
+    private String selectedRole = com.personaltracker.model.UserProfile.ROLE_MEMBER;
+    private final JLabel lblRoleTag = new JLabel("Account Type");
+    private final JPanel pnlRoleSelector = new JPanel(new GridLayout(1, 2, 8, 0));
+    private final JButton btnRoleMember = new JButton("👤 Normal Member");
+    private final JButton btnRoleTrainer = new JButton("🏋️ Trainer / Coach");
+
     private final JLabel lblError = new JLabel("");
     private final JLabel lblStatus = new JLabel("");
     private final ModernButton btnPrimary = new ModernButton("Sign In", ModernButton.ButtonStyle.PRIMARY);
@@ -91,6 +97,34 @@ public class AuthDialog extends JDialog {
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setOpaque(false);
 
+        // Account Role selection (only in Register mode)
+        lblRoleTag.setFont(ThemeConfig.FONT_SMALL);
+        lblRoleTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+        lblRoleTag.setVisible(false);
+
+        pnlRoleSelector.setOpaque(false);
+        pnlRoleSelector.setVisible(false);
+
+        btnRoleMember.setFont(ThemeConfig.FONT_SMALL);
+        btnRoleMember.setFocusPainted(false);
+        btnRoleMember.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRoleMember.addActionListener(e -> {
+            selectedRole = com.personaltracker.model.UserProfile.ROLE_MEMBER;
+            updateRoleButtonStyles();
+        });
+
+        btnRoleTrainer.setFont(ThemeConfig.FONT_SMALL);
+        btnRoleTrainer.setFocusPainted(false);
+        btnRoleTrainer.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRoleTrainer.addActionListener(e -> {
+            selectedRole = com.personaltracker.model.UserProfile.ROLE_TRAINER;
+            updateRoleButtonStyles();
+        });
+
+        pnlRoleSelector.add(btnRoleMember);
+        pnlRoleSelector.add(btnRoleTrainer);
+        updateRoleButtonStyles();
+
         // Full Name (only in Register mode)
         JLabel lblNameTag = new JLabel("Full Name");
         lblNameTag.setFont(ThemeConfig.FONT_SMALL);
@@ -105,6 +139,11 @@ public class AuthDialog extends JDialog {
         JLabel lblPassTag = new JLabel("Password");
         lblPassTag.setFont(ThemeConfig.FONT_SMALL);
         lblPassTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+
+        formPanel.add(lblRoleTag);
+        formPanel.add(Box.createVerticalStrut(4));
+        formPanel.add(pnlRoleSelector);
+        formPanel.add(Box.createVerticalStrut(10));
 
         formPanel.add(lblNameTag);
         formPanel.add(Box.createVerticalStrut(4));
@@ -180,15 +219,35 @@ public class AuthDialog extends JDialog {
         setContentPane(mainPanel);
     }
 
+    private void updateRoleButtonStyles() {
+        boolean isMember = com.personaltracker.model.UserProfile.ROLE_MEMBER.equalsIgnoreCase(selectedRole);
+        btnRoleMember.setBackground(isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
+        btnRoleMember.setForeground(isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
+        btnRoleMember.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+        ));
+
+        btnRoleTrainer.setBackground(!isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
+        btnRoleTrainer.setForeground(!isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
+        btnRoleTrainer.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(!isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+        ));
+    }
+
     private void switchToLoginMode() {
         isRegisterMode = false;
         isResetMode = false;
         setTitle("Sign In - Personal Gain Tracking System");
+        lblRoleTag.setVisible(false);
+        pnlRoleSelector.setVisible(false);
         txtFullName.setVisible(false);
         txtPassword.setVisible(true);
         lblForgotPwd.setVisible(true);
         btnPrimary.setText("Sign In");
         lblSwitchMode.setText("Don't have an account? Sign Up");
+        setSize(420, 520);
         clearMessages();
         revalidate();
         repaint();
@@ -198,11 +257,14 @@ public class AuthDialog extends JDialog {
         isRegisterMode = true;
         isResetMode = false;
         setTitle("Sign Up - Personal Gain Tracking System");
+        lblRoleTag.setVisible(true);
+        pnlRoleSelector.setVisible(true);
         txtFullName.setVisible(true);
         txtPassword.setVisible(true);
         lblForgotPwd.setVisible(false);
         btnPrimary.setText("Create Account");
         lblSwitchMode.setText("Already have an account? Sign In");
+        setSize(430, 580);
         clearMessages();
         revalidate();
         repaint();
@@ -212,11 +274,14 @@ public class AuthDialog extends JDialog {
         isResetMode = true;
         isRegisterMode = false;
         setTitle("Reset Password - Personal Gain Tracking System");
+        lblRoleTag.setVisible(false);
+        pnlRoleSelector.setVisible(false);
         txtFullName.setVisible(false);
         txtPassword.setVisible(false);
         lblForgotPwd.setVisible(false);
         btnPrimary.setText("Send Reset Link");
         lblSwitchMode.setText("Back to Sign In");
+        setSize(420, 440);
         clearMessages();
         revalidate();
         repaint();
@@ -279,7 +344,7 @@ public class AuthDialog extends JDialog {
             SwingWorker<UserSession, Void> worker = new SwingWorker<>() {
                 @Override
                 protected UserSession doInBackground() throws Exception {
-                    return authService.register(email, password, fullName);
+                    return authService.register(email, password, fullName, selectedRole);
                 }
 
                 @Override

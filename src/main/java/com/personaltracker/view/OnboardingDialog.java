@@ -51,6 +51,9 @@ public class OnboardingDialog extends JDialog {
     private String selectedGender = "Male";
     private final JPanel pnlGenderPills = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
 
+    private String selectedRole = com.personaltracker.model.UserProfile.ROLE_MEMBER;
+    private final JPanel pnlRolePills = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+
     // Live feedback indicators
     private final JLabel lblLiveBmi = new JLabel("⚡ Initial BMI: --");
     private final JLabel lblTargetGap = new JLabel("🎯 Goal Delta: --");
@@ -113,6 +116,10 @@ public class OnboardingDialog extends JDialog {
             }
         }
         txtFullName = new ModernTextField(initialName != null ? initialName : "Athlete");
+
+        if (profile.getRole() != null && !profile.getRole().isBlank()) {
+            selectedRole = profile.getRole();
+        }
 
         if (profile.getGender() != null && !profile.getGender().isBlank()) {
             selectedGender = profile.getGender();
@@ -217,6 +224,14 @@ public class OnboardingDialog extends JDialog {
     private JPanel createIdentityCard() {
         JPanel card = createStyledCard("1. Personal Details");
 
+        // Role row with pills
+        card.add(createFieldHeader("Account Role"));
+        card.add(Box.createVerticalStrut(4));
+        pnlRolePills.setOpaque(false);
+        refreshRolePills();
+        card.add(pnlRolePills);
+        card.add(Box.createVerticalStrut(10));
+
         // Full Name row
         card.add(createFieldHeader("Full Name"));
         card.add(Box.createVerticalStrut(4));
@@ -288,6 +303,36 @@ public class OnboardingDialog extends JDialog {
                 pnlGenderPills.repaint();
             });
             pnlGenderPills.add(pill);
+        }
+    }
+
+    private void refreshRolePills() {
+        pnlRolePills.removeAll();
+        String[][] roles = {
+            {com.personaltracker.model.UserProfile.ROLE_MEMBER, "👤 Normal Member (Workout & Health)"},
+            {com.personaltracker.model.UserProfile.ROLE_TRAINER, "🏋️ Personal Trainer (Manage Students)"}
+        };
+        for (String[] r : roles) {
+            String roleVal = r[0];
+            String roleLabel = r[1];
+            boolean isSelected = roleVal.equalsIgnoreCase(selectedRole);
+            JButton pill = new JButton(roleLabel);
+            pill.setFont(ThemeConfig.FONT_SMALL);
+            pill.setForeground(isSelected ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
+            pill.setBackground(isSelected ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_DARK);
+            pill.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(isSelected ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
+                    BorderFactory.createEmptyBorder(4, 10, 4, 10)
+            ));
+            pill.setFocusPainted(false);
+            pill.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            pill.addActionListener(e -> {
+                selectedRole = roleVal;
+                refreshRolePills();
+                pnlRolePills.revalidate();
+                pnlRolePills.repaint();
+            });
+            pnlRolePills.add(pill);
         }
     }
 
@@ -685,6 +730,10 @@ public class OnboardingDialog extends JDialog {
         // Populate profile model
         profile.setFullName(fullName);
         profile.setGender(selectedGender);
+        profile.setRole(selectedRole);
+        if (profile.getUserCode() == null || profile.getUserCode().isBlank()) {
+            profile.setUserCode(com.personaltracker.model.UserProfile.generateUniqueUserCode());
+        }
         if (dob != null) profile.setDateOfBirth(dob);
         profile.setHeightCm(height);
         profile.setTargetWeightKg(targetWeight);

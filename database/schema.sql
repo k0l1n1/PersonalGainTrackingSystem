@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT UNIQUE NOT NULL,
     full_name TEXT NOT NULL DEFAULT '',
+    role TEXT NOT NULL DEFAULT 'MEMBER' CHECK (role IN ('MEMBER', 'TRAINER')),
+    user_code TEXT UNIQUE,
     gender TEXT CHECK (gender IN ('Male', 'Female', 'Non-Binary', 'Other', 'Prefer not to say')),
     date_of_birth DATE,
     height_cm NUMERIC(5,2) CHECK (height_cm > 0),
@@ -212,6 +214,19 @@ CREATE TABLE IF NOT EXISTS public.progress_photos (
 );
 
 -- ============================================================================
+-- 13. TRAINER-STUDENT ENROLLMENTS TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.trainer_students (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trainer_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    enrolled_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (trainer_id, student_id)
+);
+
+-- ============================================================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================================================
 CREATE INDEX IF NOT EXISTS idx_workouts_user_date ON public.workouts(user_id, workout_date DESC);
@@ -224,6 +239,9 @@ CREATE INDEX IF NOT EXISTS idx_sleep_user_date ON public.sleep_records(user_id, 
 CREATE INDEX IF NOT EXISTS idx_reminders_user_date ON public.reminders(user_id, reminder_date, is_completed);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON public.user_achievements(user_id);
 CREATE INDEX IF NOT EXISTS idx_photos_user_date ON public.progress_photos(user_id, photo_date DESC);
+CREATE INDEX IF NOT EXISTS idx_trainer_students_trainer ON public.trainer_students(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_trainer_students_student ON public.trainer_students(student_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_user_code ON public.profiles(user_code);
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -231,6 +249,7 @@ CREATE INDEX IF NOT EXISTS idx_photos_user_date ON public.progress_photos(user_i
 -- ============================================================================
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trainer_students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workout_exercises ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.goals ENABLE ROW LEVEL SECURITY;
@@ -334,18 +353,34 @@ CREATE POLICY "Users can manage own progress photos" ON public.progress_photos
     FOR ALL USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+-- 13. Trainer-Student Policies
+DROP POLICY IF EXISTS "Trainers can manage own student relationships" ON public.trainer_students;
+CREATE POLICY "Trainers can manage own student relationships" ON public.trainer_students
+    FOR ALL USING (auth.uid() = trainer_id)
+    WITH CHECK (auth.uid() = trainer_id);
+
+DROP POLICY IF EXISTS "Students can view trainer relationships" ON public.trainer_students;
+CREATE POLICY "Students can view trainer relationships" ON public.trainer_students
+    FOR SELECT USING (auth.uid() = student_id);
+
 -- ============================================================================
 -- AUTOMATIC PROFILE CREATION TRIGGER
 -- When a user registers in auth.users, automatically initialize public.profiles
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+    gen_code TEXT;
 BEGIN
-    INSERT INTO public.profiles (id, email, full_name)
+    gen_code := 'PG-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 6));
+
+    INSERT INTO public.profiles (id, email, full_name, role, user_code)
     VALUES (
         NEW.id,
         COALESCE(NEW.email, ''),
-        COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(COALESCE(NEW.email, ''), '@', 1), '')
+        COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(COALESCE(NEW.email, ''), '@', 1), ''),
+        COALESCE(NEW.raw_user_meta_data->>'role', 'MEMBER'),
+        gen_code
     )
     ON CONFLICT (id) DO UPDATE
     SET email = EXCLUDED.email,
@@ -354,6 +389,7 @@ BEGIN
             THEN EXCLUDED.full_name 
             ELSE public.profiles.full_name 
         END,
+        role = COALESCE(NEW.raw_user_meta_data->>'role', public.profiles.role),
         updated_at = now();
     RETURN NEW;
 END;

@@ -20,6 +20,7 @@ public class SidebarPanel extends JPanel {
 
     public enum NavItem {
         DASHBOARD("Dashboard", IconFactory.IconType.DASHBOARD),
+        STUDENTS("My Students", IconFactory.IconType.STUDENTS),
         WORKOUTS("Workouts", IconFactory.IconType.WORKOUT),
         GOALS("Goals", IconFactory.IconType.GOAL),
         MEASUREMENTS("Body & Weight", IconFactory.IconType.MEASUREMENT),
@@ -42,6 +43,7 @@ public class SidebarPanel extends JPanel {
     }
 
     private final List<NavButton> navButtons = new ArrayList<>();
+    private final JPanel menuPanel = new JPanel();
     private NavItem activeItem = NavItem.DASHBOARD;
     private Consumer<NavItem> onNavigationListener;
     private Runnable onLogoutListener;
@@ -79,17 +81,11 @@ public class SidebarPanel extends JPanel {
         add(brandPanel, BorderLayout.NORTH);
 
         // Center: Navigation menu
-        JPanel menuPanel = new JPanel();
         menuPanel.setOpaque(false);
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
         menuPanel.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
 
-        for (NavItem item : NavItem.values()) {
-            NavButton btn = new NavButton(item);
-            navButtons.add(btn);
-            menuPanel.add(btn);
-            menuPanel.add(Box.createVerticalStrut(4));
-        }
+        refreshNavItems();
 
         JScrollPane scrollMenu = new JScrollPane(menuPanel);
         scrollMenu.setOpaque(false);
@@ -165,15 +161,39 @@ public class SidebarPanel extends JPanel {
         updateActiveButton();
     }
 
+    public void refreshNavItems() {
+        menuPanel.removeAll();
+        navButtons.clear();
+
+        UserSession session = SupabaseClient.getInstance().getCurrentSession();
+        boolean isTrainer = session != null && session.getProfile() != null && session.getProfile().isTrainer();
+
+        for (NavItem item : NavItem.values()) {
+            if (item == NavItem.STUDENTS && !isTrainer) {
+                continue; // Do not show trainer students tab for normal members
+            }
+            NavButton btn = new NavButton(item);
+            navButtons.add(btn);
+            menuPanel.add(btn);
+            menuPanel.add(Box.createVerticalStrut(4));
+        }
+
+        updateActiveButton();
+        menuPanel.revalidate();
+        menuPanel.repaint();
+    }
+
     public void updateUserInfo() {
         UserSession session = SupabaseClient.getInstance().getCurrentSession();
         if (session != null && session.getProfile() != null) {
-            lblUserName.setText(session.getProfile().getDisplayName());
+            String roleTag = session.getProfile().isTrainer() ? " (Coach)" : "";
+            lblUserName.setText(session.getProfile().getDisplayName() + roleTag);
             lblUserEmail.setText(session.getEmail() != null ? session.getEmail() : "");
         } else {
             lblUserName.setText("Guest");
             lblUserEmail.setText("Not signed in");
         }
+        refreshNavItems();
     }
 
     private void updateActiveButton() {

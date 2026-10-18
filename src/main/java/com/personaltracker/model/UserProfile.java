@@ -11,11 +11,20 @@ import java.time.OffsetDateTime;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserProfile {
+    public static final String ROLE_MEMBER = "MEMBER";
+    public static final String ROLE_TRAINER = "TRAINER";
+
     private String id;
     private String email;
 
     @JsonProperty("full_name")
     private String fullName = "";
+
+    @JsonProperty("role")
+    private String role = ROLE_MEMBER;
+
+    @JsonProperty("user_code")
+    private String userCode;
 
     private String gender;
 
@@ -40,12 +49,25 @@ public class UserProfile {
     @JsonProperty("updated_at")
     private OffsetDateTime updatedAt;
 
-    public UserProfile() {}
+    public UserProfile() {
+        if (this.userCode == null || this.userCode.isBlank()) {
+            this.userCode = generateUniqueUserCode();
+        }
+    }
 
     public UserProfile(String id, String email, String fullName) {
         this.id = id;
         this.email = email;
         this.fullName = fullName != null ? fullName : "";
+        this.userCode = generateUniqueUserCode();
+    }
+
+    public UserProfile(String id, String email, String fullName, String role) {
+        this.id = id;
+        this.email = email;
+        this.fullName = fullName != null ? fullName : "";
+        this.role = (role != null && !role.isBlank()) ? role : ROLE_MEMBER;
+        this.userCode = generateUniqueUserCode();
     }
 
     public String getId() { return id; }
@@ -81,6 +103,32 @@ public class UserProfile {
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
 
+    public String getRole() { return role != null ? role : ROLE_MEMBER; }
+    public void setRole(String role) { this.role = (role != null && !role.isBlank()) ? role : ROLE_MEMBER; }
+
+    public boolean isTrainer() {
+        return ROLE_TRAINER.equalsIgnoreCase(role);
+    }
+
+    public String getUserCode() {
+        if (userCode == null || userCode.isBlank()) {
+            userCode = generateUniqueUserCode();
+        }
+        return userCode;
+    }
+
+    public void setUserCode(String userCode) { this.userCode = userCode; }
+
+    public static String generateUniqueUserCode() {
+        String alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        StringBuilder sb = new StringBuilder("PG-");
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        for (int i = 0; i < 6; i++) {
+            sb.append(alphabet.charAt(random.nextInt(alphabet.length())));
+        }
+        return sb.toString();
+    }
+
     public String getDisplayName() {
         if (fullName != null && !fullName.trim().isEmpty()) {
             return fullName.trim();
@@ -88,6 +136,6 @@ public class UserProfile {
         if (email != null && email.contains("@")) {
             return email.substring(0, email.indexOf('@'));
         }
-        return "Athlete";
+        return isTrainer() ? "Coach" : "Athlete";
     }
 }

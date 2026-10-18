@@ -51,6 +51,7 @@ public class SupabaseClient {
     private final Map<String, List<SleepRecord>> mockSleep = new ConcurrentHashMap<>();
     private final Map<String, List<Reminder>> mockReminders = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> mockUserAchievements = new ConcurrentHashMap<>();
+    private final Map<String, List<TrainerStudent>> mockTrainerStudents = new ConcurrentHashMap<>();
 
     private SupabaseClient() {
         this.config = AppConfig.getInstance();
@@ -233,6 +234,8 @@ public class SupabaseClient {
         demoProfile.setTargetWeightKg(75.0);
         demoProfile.setDailyCalorieTarget(2200);
         demoProfile.setDailyWaterTargetMl(3000);
+        demoProfile.setUserCode("PG-ALEX99");
+        demoProfile.setRole(UserProfile.ROLE_MEMBER);
         mockProfiles.put(demoUserId, demoProfile);
 
         // Demo workouts
@@ -362,6 +365,115 @@ public class SupabaseClient {
         unlocked.add("HYDRATION_HERO");
         mockUserAchievements.put(demoUserId, unlocked);
 
+        // =========================================================================
+        // SEED DEMO STUDENTS (For Trainer Portal)
+        // =========================================================================
+        String s1Id = "student-sarah-101";
+        UserProfile pSarah = new UserProfile(s1Id, "sarah.connor@example.com", "Sarah Connor", UserProfile.ROLE_MEMBER);
+        pSarah.setUserCode("PG-SARAH7");
+        pSarah.setGender("Female");
+        pSarah.setDateOfBirth(LocalDate.of(2001, 3, 22));
+        pSarah.setHeightCm(168.0);
+        pSarah.setTargetWeightKg(60.0);
+        pSarah.setDailyCalorieTarget(1850);
+        pSarah.setDailyWaterTargetMl(2500);
+        mockProfiles.put(s1Id, pSarah);
+
+        List<Workout> s1Workouts = new ArrayList<>();
+        Workout sw1 = new Workout("Lower Body Tone & Glutes", "Strength", today.minusDays(1), 50, 390);
+        sw1.setId(UUID.randomUUID().toString());
+        sw1.setUserId(s1Id);
+        sw1.addExercise(new WorkoutExercise("Barbell Hip Thrust", 4, 12, 65.0));
+        sw1.addExercise(new WorkoutExercise("Goblet Squat", 3, 12, 20.0));
+        sw1.addExercise(new WorkoutExercise("Bulgarian Split Squat", 3, 10, 14.0));
+        s1Workouts.add(sw1);
+
+        Workout sw2 = new Workout("5K Interval Conditioning", "Cardio", today.minusDays(3), 32, 310);
+        sw2.setId(UUID.randomUUID().toString());
+        sw2.setUserId(s1Id);
+        s1Workouts.add(sw2);
+        mockWorkouts.put(s1Id, s1Workouts);
+
+        List<Goal> s1Goals = new ArrayList<>();
+        Goal sg1 = new Goal("Reach Target Weight", "Weight", 60.0, 63.5, "kg", today.plusMonths(2));
+        sg1.setId(UUID.randomUUID().toString());
+        sg1.setUserId(s1Id);
+        s1Goals.add(sg1);
+
+        Goal sg2 = new Goal("Log 16 Workouts this Month", "Workout Frequency", 16.0, 12.0, "workouts", today.plusDays(10));
+        sg2.setId(UUID.randomUUID().toString());
+        sg2.setUserId(s1Id);
+        s1Goals.add(sg2);
+        mockGoals.put(s1Id, s1Goals);
+
+        List<BodyMeasurement> s1Meas = new ArrayList<>();
+        BodyMeasurement sm1 = new BodyMeasurement(today, 63.5, 168.0);
+        sm1.setId(UUID.randomUUID().toString());
+        sm1.setUserId(s1Id);
+        sm1.setWaistCm(69.0);
+        s1Meas.add(sm1);
+        BodyMeasurement sm2 = new BodyMeasurement(today.minusDays(14), 65.0, 168.0);
+        sm2.setId(UUID.randomUUID().toString());
+        sm2.setUserId(s1Id);
+        sm2.setWaistCm(71.0);
+        s1Meas.add(sm2);
+        mockMeasurements.put(s1Id, s1Meas);
+
+        List<NutritionEntry> s1Nut = new ArrayList<>();
+        NutritionEntry sn1 = new NutritionEntry("Avocado Toast & Egg Whites", "BREAKFAST", 410, 24.0, 38.0, 15.0, today);
+        sn1.setId(UUID.randomUUID().toString());
+        sn1.setUserId(s1Id);
+        s1Nut.add(sn1);
+        NutritionEntry sn2 = new NutritionEntry("Grilled Salmon Salad", "LUNCH", 560, 42.0, 22.0, 28.0, today);
+        sn2.setId(UUID.randomUUID().toString());
+        sn2.setUserId(s1Id);
+        s1Nut.add(sn2);
+        mockNutrition.put(s1Id, s1Nut);
+
+        // Student 2: Marcus Vance
+        String s2Id = "student-marcus-102";
+        UserProfile pMarcus = new UserProfile(s2Id, "marcus.vance@example.com", "Marcus Vance", UserProfile.ROLE_MEMBER);
+        pMarcus.setUserCode("PG-MARCUS");
+        pMarcus.setGender("Male");
+        pMarcus.setDateOfBirth(LocalDate.of(1996, 8, 10));
+        pMarcus.setHeightCm(183.0);
+        pMarcus.setTargetWeightKg(82.0);
+        pMarcus.setDailyCalorieTarget(2700);
+        pMarcus.setDailyWaterTargetMl(3500);
+        mockProfiles.put(s2Id, pMarcus);
+
+        List<Workout> s2Workouts = new ArrayList<>();
+        Workout mw1 = new Workout("Heavy Back & Biceps", "Strength", today.minusDays(2), 65, 520);
+        mw1.setId(UUID.randomUUID().toString());
+        mw1.setUserId(s2Id);
+        mw1.addExercise(new WorkoutExercise("Conventional Deadlift", 4, 6, 140.0));
+        mw1.addExercise(new WorkoutExercise("Pull-Ups", 4, 10, 0.0));
+        mw1.addExercise(new WorkoutExercise("Barbell Bicep Curl", 3, 12, 35.0));
+        s2Workouts.add(mw1);
+        mockWorkouts.put(s2Id, s2Workouts);
+
+        List<Goal> s2Goals = new ArrayList<>();
+        Goal mg1 = new Goal("Drop to 82kg Cutting Target", "Weight", 82.0, 87.2, "kg", today.plusMonths(3));
+        mg1.setId(UUID.randomUUID().toString());
+        mg1.setUserId(s2Id);
+        s2Goals.add(mg1);
+        mockGoals.put(s2Id, s2Goals);
+
+        List<BodyMeasurement> s2Meas = new ArrayList<>();
+        BodyMeasurement mm1 = new BodyMeasurement(today, 87.2, 183.0);
+        mm1.setId(UUID.randomUUID().toString());
+        mm1.setUserId(s2Id);
+        s2Meas.add(mm1);
+        mockMeasurements.put(s2Id, s2Meas);
+
+        // Pre-enroll Sarah Connor for demo user so trainer roster is immediately interactive
+        List<TrainerStudent> demoTrainerRoster = new ArrayList<>();
+        TrainerStudent tsSarah = new TrainerStudent(demoUserId, s1Id, "Goal: Lean muscle definition & 5k speed");
+        tsSarah.setId(UUID.randomUUID().toString());
+        tsSarah.setStudentProfile(pSarah);
+        demoTrainerRoster.add(tsSarah);
+        mockTrainerStudents.put(demoUserId, demoTrainerRoster);
+
         // Set default session to demo user
         this.currentSession = new UserSession(demoUserId, demoProfile.getEmail(), "demo-token", "demo-refresh", 3600);
         this.currentSession.setProfile(demoProfile);
@@ -388,6 +500,8 @@ public class SupabaseClient {
             case "profiles":
                 UserProfile p = mockProfiles.get(uid);
                 return p != null ? (List<T>) Collections.singletonList(p) : new ArrayList<>();
+            case "trainer_students":
+                return (List<T>) new ArrayList<>(mockTrainerStudents.computeIfAbsent(uid, k -> new ArrayList<>()));
             case "user_achievements":
                 Set<String> unlocked = mockUserAchievements.get(uid);
                 List<UserAchievement> uasList = new ArrayList<>();
@@ -474,6 +588,12 @@ public class SupabaseClient {
             UserProfile prof = (UserProfile) body;
             mockProfiles.put(prof.getId() != null ? prof.getId() : uid, prof);
             return (T) prof;
+        } else if (body instanceof TrainerStudent) {
+            TrainerStudent ts = (TrainerStudent) body;
+            if (ts.getId() == null || ts.getId().isEmpty()) ts.setId(newId);
+            if (ts.getTrainerId() == null) ts.setTrainerId(uid);
+            mockTrainerStudents.computeIfAbsent(ts.getTrainerId(), k -> new ArrayList<>()).add(0, ts);
+            return (T) ts;
         }
         return (T) body;
     }
@@ -579,6 +699,14 @@ public class SupabaseClient {
                 List<Reminder> rList = mockReminders.get(uid);
                 if (rList != null) rList.removeIf(r -> Objects.equals(r.getId(), id));
                 break;
+            case "trainer_students":
+                List<TrainerStudent> tsList = mockTrainerStudents.get(uid);
+                if (tsList != null) {
+                    if (id != null) {
+                        tsList.removeIf(ts -> Objects.equals(ts.getId(), id));
+                    }
+                }
+                break;
         }
     }
 
@@ -607,6 +735,50 @@ public class SupabaseClient {
     public void updateMockProfile(UserProfile profile) {
         if (profile != null && profile.getId() != null) {
             mockProfiles.put(profile.getId(), profile);
+        }
+    }
+
+    public UserProfile findProfileByCode(String code) {
+        if (code == null) return null;
+        String clean = code.trim().toUpperCase();
+        for (UserProfile p : mockProfiles.values()) {
+            if (p.getUserCode() != null && clean.equalsIgnoreCase(p.getUserCode())) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    public List<Workout> getWorkoutsForUser(String userId) {
+        return new ArrayList<>(mockWorkouts.computeIfAbsent(userId, k -> new ArrayList<>()));
+    }
+
+    public List<Goal> getGoalsForUser(String userId) {
+        return new ArrayList<>(mockGoals.computeIfAbsent(userId, k -> new ArrayList<>()));
+    }
+
+    public List<BodyMeasurement> getMeasurementsForUser(String userId) {
+        return new ArrayList<>(mockMeasurements.computeIfAbsent(userId, k -> new ArrayList<>()));
+    }
+
+    public List<NutritionEntry> getNutritionForUser(String userId) {
+        return new ArrayList<>(mockNutrition.computeIfAbsent(userId, k -> new ArrayList<>()));
+    }
+
+    public List<TrainerStudent> getTrainerStudents(String trainerId) {
+        return mockTrainerStudents.computeIfAbsent(trainerId, k -> new ArrayList<>());
+    }
+
+    public void addMockTrainerStudent(TrainerStudent ts) {
+        if (ts != null && ts.getTrainerId() != null) {
+            mockTrainerStudents.computeIfAbsent(ts.getTrainerId(), k -> new ArrayList<>()).add(ts);
+        }
+    }
+
+    public void removeMockTrainerStudent(String trainerId, String studentId) {
+        List<TrainerStudent> list = mockTrainerStudents.get(trainerId);
+        if (list != null && studentId != null) {
+            list.removeIf(ts -> studentId.equalsIgnoreCase(ts.getStudentId()));
         }
     }
 }

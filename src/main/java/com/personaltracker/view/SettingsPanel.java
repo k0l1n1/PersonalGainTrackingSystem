@@ -51,6 +51,8 @@ public class SettingsPanel extends JPanel {
     // Personal Info Display Labels (Clean, non-editable)
     private final JLabel valFullName = new JLabel("--");
     private final JLabel valEmail = new JLabel("--");
+    private final JLabel valRole = new JLabel("--");
+    private final JLabel valUserCode = new JLabel("--");
     private final JLabel valGender = new JLabel("--");
     private final JLabel valBirthDate = new JLabel("--");
     private final JLabel valAge = new JLabel("--");
@@ -195,17 +197,64 @@ public class SettingsPanel extends JPanel {
         ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        JLabel title = new JLabel("Personal Information");
+        JLabel title = new JLabel("Personal Information & Unique ID");
         title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         card.add(title);
+        card.add(Box.createVerticalStrut(14));
+
+        // Unique Member / Student Code Banner
+        JPanel codeBanner = new JPanel(new BorderLayout(12, 0));
+        codeBanner.setBackground(ThemeConfig.BG_DARK);
+        codeBanner.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
+                BorderFactory.createEmptyBorder(10, 14, 10, 14)
+        ));
+
+        JPanel codeText = new JPanel(new GridLayout(2, 1, 0, 2));
+        codeText.setOpaque(false);
+        JLabel lblCodeTitle = new JLabel("UNIQUE STUDENT / USER ID CODE");
+        lblCodeTitle.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        lblCodeTitle.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        codeText.add(lblCodeTitle);
+
+        valUserCode.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        valUserCode.setForeground(Color.WHITE);
+        codeText.add(valUserCode);
+        codeBanner.add(codeText, BorderLayout.CENTER);
+
+        JButton btnCopyCode = new JButton("📋 Copy Code");
+        btnCopyCode.setFont(ThemeConfig.FONT_SMALL);
+        btnCopyCode.setForeground(Color.WHITE);
+        btnCopyCode.setBackground(ThemeConfig.BG_CARD);
+        btnCopyCode.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        btnCopyCode.setFocusPainted(false);
+        btnCopyCode.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnCopyCode.addActionListener(e -> {
+            String code = valUserCode.getText();
+            java.awt.datatransfer.StringSelection selection = new java.awt.datatransfer.StringSelection(code);
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
+            ToastNotification.showToast(SettingsPanel.this, "Copied code: " + code + " to clipboard! 📋", ToastNotification.ToastType.SUCCESS);
+        });
+        codeBanner.add(btnCopyCode, BorderLayout.EAST);
+
+        card.add(codeBanner);
+        card.add(Box.createVerticalStrut(10));
+
+        JLabel lblCodeHint = new JLabel("💡 Share this unique code with your trainer so they can monitor your progress in their roster.");
+        lblCodeHint.setFont(ThemeConfig.FONT_SMALL);
+        lblCodeHint.setForeground(ThemeConfig.TEXT_MUTED);
+        card.add(lblCodeHint);
         card.add(Box.createVerticalStrut(14));
 
         JPanel grid = new JPanel(new GridLayout(3, 2, 14, 14));
         grid.setOpaque(false);
 
         grid.add(createInfoTile("FULL NAME", valFullName, ThemeConfig.TEXT_PRIMARY));
-        grid.add(createInfoTile("EMAIL ADDRESS", valEmail, ThemeConfig.PRIMARY_BLUE));
+        grid.add(createInfoTile("ACCOUNT ROLE", valRole, ThemeConfig.PRIMARY_BLUE));
         grid.add(createInfoTile("GENDER", valGender, ThemeConfig.TEXT_PRIMARY));
         grid.add(createInfoTile("DATE OF BIRTH", valBirthDate, ThemeConfig.TEXT_SECONDARY));
         grid.add(createInfoTile("CURRENT AGE", valAge, ThemeConfig.PRIMARY_ACCENT));
@@ -424,8 +473,14 @@ public class SettingsPanel extends JPanel {
                 valTargetWeight.setText("-- kg");
             }
 
+            String roleDisplay = profile.isTrainer() ? "🏋️ Personal Trainer" : "🏃 Member / Athlete";
+            valRole.setText(roleDisplay);
+            valUserCode.setText(profile.getUserCode());
+
             if (profile.getCreatedAt() != null) {
-                lblHeroMeta.setText("Athlete • Member since " + profile.getCreatedAt().getYear());
+                lblHeroMeta.setText(roleDisplay + " • Code: " + profile.getUserCode() + " • Member since " + profile.getCreatedAt().getYear());
+            } else {
+                lblHeroMeta.setText(roleDisplay + " • Code: " + profile.getUserCode());
             }
         }
 
@@ -553,7 +608,7 @@ public class SettingsPanel extends JPanel {
         }
 
         JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Personal Profile", Dialog.ModalityType.APPLICATION_MODAL);
-        dlg.setSize(480, 520);
+        dlg.setSize(480, 580);
         dlg.setLocationRelativeTo(this);
         dlg.setResizable(false);
         dlg.getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -570,6 +625,9 @@ public class SettingsPanel extends JPanel {
         pnl.add(Box.createVerticalStrut(14));
 
         ModernTextField txtName = new ModernTextField(profile.getFullName());
+        JComboBox<String> cmbRole = new JComboBox<>(new String[]{"👤 Normal Member", "🏋️ Personal Trainer"});
+        cmbRole.setSelectedIndex(profile.isTrainer() ? 1 : 0);
+
         JComboBox<String> cmbGen = new JComboBox<>(new String[]{"Male", "Female", "Non-Binary", "Other", "Prefer not to say"});
         if (profile.getGender() != null) cmbGen.setSelectedItem(profile.getGender());
 
@@ -578,6 +636,8 @@ public class SettingsPanel extends JPanel {
         ModernTextField txtW = new ModernTextField(profile.getTargetWeightKg() != null ? String.format(Locale.US, "%.1f", profile.getTargetWeightKg()) : "70.0");
 
         pnl.add(createFieldRow("Full Name", txtName));
+        pnl.add(Box.createVerticalStrut(10));
+        pnl.add(createFieldRow("Account Role", cmbRole));
         pnl.add(Box.createVerticalStrut(10));
         pnl.add(createFieldRow("Gender", cmbGen));
         pnl.add(Box.createVerticalStrut(10));
@@ -613,6 +673,7 @@ public class SettingsPanel extends JPanel {
                 LocalDate dobVal = DateUtil.parseDateOrNull(txtDob.getText().trim());
 
                 targetProfile.setFullName(nameVal);
+                targetProfile.setRole(cmbRole.getSelectedIndex() == 1 ? UserProfile.ROLE_TRAINER : UserProfile.ROLE_MEMBER);
                 targetProfile.setGender((String) cmbGen.getSelectedItem());
                 if (dobVal != null) targetProfile.setDateOfBirth(dobVal);
                 targetProfile.setHeightCm(heightVal);
