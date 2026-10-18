@@ -46,7 +46,8 @@ public class SettingsPanel extends JPanel {
     private final JLabel lblHeroName = new JLabel("Alex Hunter");
     private final JLabel lblHeroEmail = new JLabel("athlete@demo.com");
     private final JLabel lblHeroMeta = new JLabel("Athlete • Active Profile");
-    private final JLabel lblStatusBadge = new JLabel("● Online", SwingConstants.CENTER);
+    private final JLabel lblStatusBadge = new JLabel("● ACTIVE SESSION", SwingConstants.CENTER);
+    private JPanel avatarPanel;
 
     // Personal Info Display Labels (Clean, non-editable)
     private final JLabel valFullName = new JLabel("--");
@@ -132,59 +133,103 @@ public class SettingsPanel extends JPanel {
     // =========================================================================
 
     private JPanel createHeroBanner() {
-        ModernCard heroCard = new ModernCard(16, new Insets(18, 24, 18, 24));
+        ModernCard heroCard = new ModernCard(16, new Insets(20, 24, 20, 24));
 
-        JPanel banner = new JPanel(new BorderLayout(18, 0));
+        JPanel banner = new JPanel(new BorderLayout(20, 0));
         banner.setOpaque(false);
 
-        // Avatar ring with initials
-        JPanel avatarPanel = new JPanel() {
+        // Avatar ring with mathematically centered initials
+        avatarPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(36, 36, 36));
-                g2.fill(new Ellipse2D.Float(0, 0, 68, 68));
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+                int size = 70;
+                int x = (getWidth() - size) / 2;
+                int y = (getHeight() - size) / 2;
+
+                // Subtle dark circular fill
+                g2.setColor(new Color(28, 28, 28));
+                g2.fill(new Ellipse2D.Float(x, y, size, size));
+
+                // Crimson accent outer ring
                 g2.setColor(ThemeConfig.PRIMARY_ACCENT);
-                g2.setStroke(new BasicStroke(2.8f));
-                g2.draw(new Ellipse2D.Float(2, 2, 64, 64));
+                g2.setStroke(new BasicStroke(2.6f));
+                g2.draw(new Ellipse2D.Float(x + 1.5f, y + 1.5f, size - 3f, size - 3f));
+
+                // Centered initials
+                String initials = lblAvatarInitials.getText();
+                if (initials == null || initials.isBlank()) initials = "PG";
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 22));
+                g2.setColor(Color.WHITE);
+                FontMetrics fm = g2.getFontMetrics();
+                int tx = x + (size - fm.stringWidth(initials)) / 2;
+                int ty = y + (size - fm.getHeight()) / 2 + fm.getAscent();
+                g2.drawString(initials, tx, ty);
+
                 g2.dispose();
-                super.paintComponent(g);
             }
         };
-        avatarPanel.setPreferredSize(new Dimension(68, 68));
+        avatarPanel.setPreferredSize(new Dimension(76, 76));
+        avatarPanel.setMinimumSize(new Dimension(76, 76));
         avatarPanel.setOpaque(false);
-        avatarPanel.setLayout(new BorderLayout());
-
-        lblAvatarInitials.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblAvatarInitials.setForeground(Color.WHITE);
-        avatarPanel.add(lblAvatarInitials, BorderLayout.CENTER);
         banner.add(avatarPanel, BorderLayout.WEST);
 
         // Center: Name & Metadata
-        JPanel namePanel = new JPanel(new GridLayout(3, 1, 0, 2));
+        JPanel namePanel = new JPanel();
+        namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.Y_AXIS));
         namePanel.setOpaque(false);
 
+        // Top line: Name + Active badge
+        JPanel nameRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        nameRow.setOpaque(false);
         lblHeroName.setFont(ThemeConfig.FONT_TITLE_LARGE);
         lblHeroName.setForeground(ThemeConfig.TEXT_PRIMARY);
+        nameRow.add(lblHeroName);
 
+        lblStatusBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        lblStatusBadge.setForeground(ThemeConfig.SUCCESS_EMERALD);
+        lblStatusBadge.setText("● ACTIVE SESSION");
+        lblStatusBadge.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 120), 1, true),
+                BorderFactory.createEmptyBorder(2, 8, 2, 8)
+        ));
+        nameRow.add(lblStatusBadge);
+        namePanel.add(nameRow);
+        namePanel.add(Box.createVerticalStrut(4));
+
+        // Middle line: Email
+        JPanel emailRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        emailRow.setOpaque(false);
+        JLabel emailIcon = new JLabel(IconFactory.createIcon(IconFactory.IconType.USER, 13, ThemeConfig.TEXT_MUTED));
+        emailRow.add(emailIcon);
         lblHeroEmail.setFont(ThemeConfig.FONT_BODY);
         lblHeroEmail.setForeground(ThemeConfig.TEXT_SECONDARY);
+        emailRow.add(lblHeroEmail);
+        namePanel.add(emailRow);
+        namePanel.add(Box.createVerticalStrut(6));
 
+        // Bottom line: Role & Code metadata
+        JPanel metaRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        metaRow.setOpaque(false);
         lblHeroMeta.setFont(ThemeConfig.FONT_SMALL);
         lblHeroMeta.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        metaRow.add(lblHeroMeta);
+        namePanel.add(metaRow);
 
-        namePanel.add(lblHeroName);
-        namePanel.add(lblHeroEmail);
-        namePanel.add(lblHeroMeta);
         banner.add(namePanel, BorderLayout.CENTER);
 
         // Right: Edit Profile Action Button
-        JPanel actionBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 14));
+        JPanel actionBox = new JPanel(new GridBagLayout());
         actionBox.setOpaque(false);
 
-        ModernButton btnEditProfile = new ModernButton("✏️ Edit Profile Info", ModernButton.ButtonStyle.PRIMARY);
-        btnEditProfile.setPreferredSize(new Dimension(180, 40));
+        ModernButton btnEditProfile = new ModernButton("Edit Profile Info", ModernButton.ButtonStyle.PRIMARY);
+        btnEditProfile.setIcon(IconFactory.createIcon(IconFactory.IconType.EDIT, 13, Color.WHITE));
+        btnEditProfile.setIconTextGap(8);
+        btnEditProfile.setPreferredSize(new Dimension(175, 42));
         btnEditProfile.addActionListener(e -> openEditProfileDialog());
         actionBox.add(btnEditProfile);
 
@@ -487,6 +532,9 @@ public class SettingsPanel extends JPanel {
             } else {
                 lblHeroMeta.setText(roleDisplay + " • Code: " + profile.getUserCode());
             }
+            if (avatarPanel != null) {
+                avatarPanel.repaint();
+            }
         }
 
         // Fetch body measurement history to calculate current vs starting weight journey
@@ -702,7 +750,7 @@ public class SettingsPanel extends JPanel {
                     protected void done() {
                         btnSave.setEnabled(true);
                         dlg.dispose();
-                        ToastNotification.showToast(SettingsPanel.this, "Profile updated successfully! ✨", ToastNotification.ToastType.SUCCESS);
+                        ToastNotification.showToast(SettingsPanel.this, "Profile updated successfully!", ToastNotification.ToastType.SUCCESS);
                         loadSettings();
                         if (onProfileUpdatedCallback != null) onProfileUpdatedCallback.run();
                     }
