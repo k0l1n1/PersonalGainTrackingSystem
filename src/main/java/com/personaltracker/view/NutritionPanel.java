@@ -441,7 +441,7 @@ public class NutritionPanel extends JPanel {
     }
 
     private void updateMacroChart(double p, double c, double f) {
-        DefaultPieDataset dataset = new DefaultPieDataset();
+        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
         if (p == 0 && c == 0 && f == 0) {
             dataset.setValue("No Data", 1);
         } else {

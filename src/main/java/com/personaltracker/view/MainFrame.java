@@ -26,7 +26,6 @@ public class MainFrame extends JFrame {
     private final WaterSleepPanel waterSleepPanel = new WaterSleepPanel();
     private final AnalyticsPanel analyticsPanel = new AnalyticsPanel();
     private final ReminderBadgePanel reminderBadgePanel = new ReminderBadgePanel();
-    private final PhotoPanel photoPanel = new PhotoPanel();
     private final SettingsPanel settingsPanel = new SettingsPanel();
 
     public MainFrame() {
@@ -53,7 +52,6 @@ public class MainFrame extends JFrame {
         contentCards.add(waterSleepPanel, SidebarPanel.NavItem.WATER_SLEEP.name());
         contentCards.add(analyticsPanel, SidebarPanel.NavItem.ANALYTICS.name());
         contentCards.add(reminderBadgePanel, SidebarPanel.NavItem.REMINDERS_BADGES.name());
-        contentCards.add(photoPanel, SidebarPanel.NavItem.PHOTOS.name());
         contentCards.add(settingsPanel, SidebarPanel.NavItem.SETTINGS.name());
 
         add(contentCards, BorderLayout.CENTER);
@@ -101,9 +99,6 @@ public class MainFrame extends JFrame {
                 break;
             case REMINDERS_BADGES:
                 reminderBadgePanel.loadData();
-                break;
-            case PHOTOS:
-                photoPanel.loadPhotos();
                 break;
             case SETTINGS:
                 settingsPanel.loadSettings();

@@ -23,7 +23,6 @@ public class IconFactory {
         ANALYTICS,
         REMINDERS,
         BADGES,
-        PHOTOS,
         SETTINGS,
         USER,
         LOGOUT,
@@ -163,12 +162,6 @@ public class IconFactory {
                     g2.drawLine((int)(s * 0.35f), (int)(s * 0.8f), (int)(s * 0.65f), (int)(s * 0.8f));
                     break;
 
-                case PHOTOS:
-                    // Camera
-                    g2.draw(new RoundRectangle2D.Float(s * 0.15f, s * 0.3f, s * 0.7f, s * 0.52f, 4, 4));
-                    g2.draw(new RoundRectangle2D.Float(s * 0.35f, s * 0.22f, s * 0.3f, s * 0.12f, 2, 2));
-                    g2.draw(new Ellipse2D.Float(s * 0.38f, s * 0.43f, s * 0.24f, s * 0.24f));
-                    break;
 
                 case SETTINGS:
                     // Cog

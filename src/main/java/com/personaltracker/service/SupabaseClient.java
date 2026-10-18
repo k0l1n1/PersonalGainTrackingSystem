@@ -51,7 +51,6 @@ public class SupabaseClient {
     private final Map<String, List<SleepRecord>> mockSleep = new ConcurrentHashMap<>();
     private final Map<String, List<Reminder>> mockReminders = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> mockUserAchievements = new ConcurrentHashMap<>();
-    private final Map<String, List<ProgressPhoto>> mockPhotos = new ConcurrentHashMap<>();
 
     private SupabaseClient() {
         this.config = AppConfig.getInstance();
@@ -386,8 +385,6 @@ public class SupabaseClient {
                 return (List<T>) new ArrayList<>(mockSleep.computeIfAbsent(uid, k -> new ArrayList<>()));
             case "reminders":
                 return (List<T>) new ArrayList<>(mockReminders.computeIfAbsent(uid, k -> new ArrayList<>()));
-            case "progress_photos":
-                return (List<T>) new ArrayList<>(mockPhotos.computeIfAbsent(uid, k -> new ArrayList<>()));
             case "profiles":
                 UserProfile p = mockProfiles.get(uid);
                 return p != null ? (List<T>) Collections.singletonList(p) : new ArrayList<>();
@@ -468,12 +465,6 @@ public class SupabaseClient {
             r.setUserId(uid);
             mockReminders.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, r);
             return (T) r;
-        } else if (body instanceof ProgressPhoto) {
-            ProgressPhoto p = (ProgressPhoto) body;
-            if (p.getId() == null || p.getId().isEmpty()) p.setId(newId);
-            p.setUserId(uid);
-            mockPhotos.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, p);
-            return (T) p;
         } else if (body instanceof UserAchievement) {
             UserAchievement ua = (UserAchievement) body;
             if (ua.getId() == null || ua.getId().isEmpty()) ua.setId(newId);
@@ -587,10 +578,6 @@ public class SupabaseClient {
             case "reminders":
                 List<Reminder> rList = mockReminders.get(uid);
                 if (rList != null) rList.removeIf(r -> Objects.equals(r.getId(), id));
-                break;
-            case "progress_photos":
-                List<ProgressPhoto> pList = mockPhotos.get(uid);
-                if (pList != null) pList.removeIf(p -> Objects.equals(p.getId(), id));
                 break;
         }
     }

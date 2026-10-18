@@ -94,10 +94,6 @@ The **Personal Gain Tracking System** was developed for university and professio
   - 10 unlockable achievement badges (e.g., *First Step*, *3-Day Streak*, *Hydration Hero*, *Goal Getter*).
   - Visual status (Golden Unlocked vs. Locked).
 
-- **Progress Photos**:
-  - Physique transformation gallery with date association and notes.
-  - File chooser with instant local preview and metadata storage.
-
 ---
 
 ## 3. Architecture and Design
@@ -121,8 +117,7 @@ src/main/java/com/personaltracker/
 │   ├── WaterIntake.java
 │   ├── SleepRecord.java
 │   ├── Reminder.java
-│   ├── Achievement.java
-│   └── ProgressPhoto.java
+│   └── Achievement.java
 ├── service/
 │   ├── SupabaseClient.java       # HTTP REST client with JWT Bearer auth & RLS
 │   └── SupabaseAuthService.java  # GoTrue Auth API integration
@@ -135,8 +130,7 @@ src/main/java/com/personaltracker/
 │   ├── WaterDAO.java
 │   ├── SleepDAO.java
 │   ├── ReminderDAO.java
-│   ├── AchievementDAO.java
-│   └── PhotoDAO.java
+│   └── AchievementDAO.java
 ├── util/
 │   ├── HealthCalculator.java     # BMI, sleep duration, MET calories, streaks
 │   ├── ValidationUtil.java       # Email, password, positive value checks
@@ -157,6 +151,7 @@ src/main/java/com/personaltracker/
     ├── MainFrame.java            # Root container with Sidebar & CardLayout
     ├── SidebarPanel.java         # Fixed navigation sidebar
     ├── AuthDialog.java           # Login, Sign Up & Password Reset dialog
+    ├── OnboardingDialog.java     # Interactive profile setup wizard for new users
     ├── DashboardPanel.java       # Overview dashboard with charts
     ├── WorkoutPanel.java         # Workouts list, filters, dialog
     ├── GoalPanel.java            # Fitness goals tracking
@@ -165,7 +160,6 @@ src/main/java/com/personaltracker/
     ├── WaterSleepPanel.java      # Hydration & sleep recovery
     ├── AnalyticsPanel.java       # JFreeChart trends & CSV export
     ├── ReminderBadgePanel.java   # Reminders & trophies
-    ├── PhotoPanel.java           # Progress photos gallery
     └── SettingsPanel.java        # Profile editor & Supabase settings
 ```
 
@@ -207,7 +201,7 @@ If `JAVA_HOME` is not set on your machine:
 4. Copy and paste the entire contents into the SQL Editor and click **Run**.
 
 The script automatically sets up:
-- The 12 tables (`profiles`, `workouts`, `workout_exercises`, `goals`, `body_measurements`, `nutrition_entries`, `water_intake`, `sleep_records`, `reminders`, `achievements`, `user_achievements`, `progress_photos`).
+- The 11 tables (`profiles`, `workouts`, `workout_exercises`, `goals`, `body_measurements`, `nutrition_entries`, `water_intake`, `sleep_records`, `reminders`, `achievements`, `user_achievements`).
 - Check constraints and foreign keys with cascading deletes.
 - Performance indexes on `(user_id, date)`.
 - **Row Level Security (RLS)** on every table, strictly limiting row access to `auth.uid() = user_id`.
