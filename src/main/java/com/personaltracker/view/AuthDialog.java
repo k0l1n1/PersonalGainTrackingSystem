@@ -33,6 +33,14 @@ public class AuthDialog extends JDialog {
     private final JButton btnRoleMember = new JButton("Normal Member");
     private final JButton btnRoleTrainer = new JButton("Trainer / Coach");
 
+    private final JLabel lblNameTag = new JLabel("Full Name");
+    private final JLabel lblPassTag = new JLabel("Password");
+
+    private final JPanel pnlRoleRow = new JPanel();
+    private final JPanel pnlNameRow = new JPanel();
+    private final JPanel pnlEmailRow = new JPanel();
+    private final JPanel pnlPassRow = new JPanel();
+
     private final JLabel lblError = new JLabel("");
     private final JLabel lblStatus = new JLabel("");
     private final ModernButton btnPrimary = new ModernButton("Sign In", ModernButton.ButtonStyle.PRIMARY);
@@ -92,19 +100,20 @@ public class AuthDialog extends JDialog {
 
         mainPanel.add(Box.createVerticalStrut(8));
 
-        // Form Fields
+        // Form Fields Container
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setOpaque(false);
 
-        // Account Role selection (only in Register mode)
+        // Account Role selection row (only in Register mode)
+        pnlRoleRow.setLayout(new BoxLayout(pnlRoleRow, BoxLayout.Y_AXIS));
+        pnlRoleRow.setOpaque(false);
         lblRoleTag.setFont(ThemeConfig.FONT_SMALL);
         lblRoleTag.setForeground(ThemeConfig.TEXT_SECONDARY);
-        lblRoleTag.setVisible(false);
+        pnlRoleRow.add(lblRoleTag);
+        pnlRoleRow.add(Box.createVerticalStrut(4));
 
         pnlRoleSelector.setOpaque(false);
-        pnlRoleSelector.setVisible(false);
-
         btnRoleMember.setFont(ThemeConfig.FONT_SMALL);
         btnRoleMember.setFocusPainted(false);
         btnRoleMember.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -126,40 +135,44 @@ public class AuthDialog extends JDialog {
         pnlRoleSelector.add(btnRoleMember);
         pnlRoleSelector.add(btnRoleTrainer);
         updateRoleButtonStyles();
+        pnlRoleRow.add(pnlRoleSelector);
+        pnlRoleRow.add(Box.createVerticalStrut(10));
+        pnlRoleRow.setVisible(false);
+        formPanel.add(pnlRoleRow);
 
-        // Full Name (only in Register mode)
-        JLabel lblNameTag = new JLabel("Full Name");
+        // Full Name row (only in Register mode)
+        pnlNameRow.setLayout(new BoxLayout(pnlNameRow, BoxLayout.Y_AXIS));
+        pnlNameRow.setOpaque(false);
         lblNameTag.setFont(ThemeConfig.FONT_SMALL);
         lblNameTag.setForeground(ThemeConfig.TEXT_SECONDARY);
-        lblNameTag.setVisible(false);
-        txtFullName.setVisible(false);
+        pnlNameRow.add(lblNameTag);
+        pnlNameRow.add(Box.createVerticalStrut(4));
+        pnlNameRow.add(txtFullName);
+        pnlNameRow.add(Box.createVerticalStrut(10));
+        pnlNameRow.setVisible(false);
+        formPanel.add(pnlNameRow);
 
+        // Email row
+        pnlEmailRow.setLayout(new BoxLayout(pnlEmailRow, BoxLayout.Y_AXIS));
+        pnlEmailRow.setOpaque(false);
         JLabel lblEmailTag = new JLabel("Email Address");
         lblEmailTag.setFont(ThemeConfig.FONT_SMALL);
         lblEmailTag.setForeground(ThemeConfig.TEXT_SECONDARY);
+        pnlEmailRow.add(lblEmailTag);
+        pnlEmailRow.add(Box.createVerticalStrut(4));
+        pnlEmailRow.add(txtEmail);
+        pnlEmailRow.add(Box.createVerticalStrut(10));
+        formPanel.add(pnlEmailRow);
 
-        JLabel lblPassTag = new JLabel("Password");
+        // Password row
+        pnlPassRow.setLayout(new BoxLayout(pnlPassRow, BoxLayout.Y_AXIS));
+        pnlPassRow.setOpaque(false);
         lblPassTag.setFont(ThemeConfig.FONT_SMALL);
         lblPassTag.setForeground(ThemeConfig.TEXT_SECONDARY);
-
-        formPanel.add(lblRoleTag);
-        formPanel.add(Box.createVerticalStrut(4));
-        formPanel.add(pnlRoleSelector);
-        formPanel.add(Box.createVerticalStrut(10));
-
-        formPanel.add(lblNameTag);
-        formPanel.add(Box.createVerticalStrut(4));
-        formPanel.add(txtFullName);
-        formPanel.add(Box.createVerticalStrut(10));
-
-        formPanel.add(lblEmailTag);
-        formPanel.add(Box.createVerticalStrut(4));
-        formPanel.add(txtEmail);
-        formPanel.add(Box.createVerticalStrut(10));
-
-        formPanel.add(lblPassTag);
-        formPanel.add(Box.createVerticalStrut(4));
-        formPanel.add(txtPassword);
+        pnlPassRow.add(lblPassTag);
+        pnlPassRow.add(Box.createVerticalStrut(4));
+        pnlPassRow.add(txtPassword);
+        formPanel.add(pnlPassRow);
 
         mainPanel.add(formPanel);
 
@@ -219,6 +232,17 @@ public class AuthDialog extends JDialog {
         mainPanel.add(lblSwitchMode);
 
         setContentPane(mainPanel);
+
+        // Pressing Enter in text fields triggers primary action
+        txtEmail.addActionListener(e -> executePrimaryAction());
+        txtFullName.addActionListener(e -> executePrimaryAction());
+        txtPassword.addActionListener(e -> executePrimaryAction());
+        getRootPane().setDefaultButton(btnPrimary);
+
+        // Escape key closes dialog
+        getRootPane().registerKeyboardAction(e -> dispose(),
+                KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
     private void updateRoleButtonStyles() {
@@ -244,14 +268,14 @@ public class AuthDialog extends JDialog {
         isRegisterMode = false;
         isResetMode = false;
         setTitle("Sign In - Personal Gain Tracking System");
-        lblRoleTag.setVisible(false);
-        pnlRoleSelector.setVisible(false);
-        txtFullName.setVisible(false);
-        txtPassword.setVisible(true);
+        pnlRoleRow.setVisible(false);
+        pnlNameRow.setVisible(false);
+        pnlPassRow.setVisible(true);
         lblForgotPwd.setVisible(true);
         btnPrimary.setText("Sign In");
         lblSwitchMode.setText("Don't have an account? Sign Up");
         setSize(420, 520);
+        setLocationRelativeTo(getOwner());
         clearMessages();
         revalidate();
         repaint();
@@ -261,14 +285,14 @@ public class AuthDialog extends JDialog {
         isRegisterMode = true;
         isResetMode = false;
         setTitle("Sign Up - Personal Gain Tracking System");
-        lblRoleTag.setVisible(true);
-        pnlRoleSelector.setVisible(true);
-        txtFullName.setVisible(true);
-        txtPassword.setVisible(true);
+        pnlRoleRow.setVisible(true);
+        pnlNameRow.setVisible(true);
+        pnlPassRow.setVisible(true);
         lblForgotPwd.setVisible(false);
         btnPrimary.setText("Create Account");
         lblSwitchMode.setText("Already have an account? Sign In");
-        setSize(430, 580);
+        setSize(430, 600);
+        setLocationRelativeTo(getOwner());
         clearMessages();
         revalidate();
         repaint();
@@ -278,14 +302,14 @@ public class AuthDialog extends JDialog {
         isResetMode = true;
         isRegisterMode = false;
         setTitle("Reset Password - Personal Gain Tracking System");
-        lblRoleTag.setVisible(false);
-        pnlRoleSelector.setVisible(false);
-        txtFullName.setVisible(false);
-        txtPassword.setVisible(false);
+        pnlRoleRow.setVisible(false);
+        pnlNameRow.setVisible(false);
+        pnlPassRow.setVisible(false);
         lblForgotPwd.setVisible(false);
         btnPrimary.setText("Send Reset Link");
         lblSwitchMode.setText("Back to Sign In");
         setSize(420, 440);
+        setLocationRelativeTo(getOwner());
         clearMessages();
         revalidate();
         repaint();
@@ -333,6 +357,10 @@ public class AuthDialog extends JDialog {
             worker.execute();
 
         } else if (isRegisterMode) {
+            if (fullName.isEmpty()) {
+                showError("Please enter your full name.");
+                return;
+            }
             if (!ValidationUtil.isValidEmail(email)) {
                 showError("Please enter a valid email address.");
                 return;
