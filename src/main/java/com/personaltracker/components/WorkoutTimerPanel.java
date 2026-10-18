@@ -90,6 +90,12 @@ public class WorkoutTimerPanel extends ModernCard {
         this.onLogCallback = callback;
     }
 
+    public void startTimer() {
+        if (!isRunning) {
+            toggleStartPause();
+        }
+    }
+
     private void toggleStartPause() {
         if (!isRunning) {
             swingTimer.start();
