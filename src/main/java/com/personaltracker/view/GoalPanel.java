@@ -326,6 +326,7 @@ public class GoalPanel extends JPanel {
 
         private final ModernTextField txtTitle = new ModernTextField("Bench Press 100kg");
         private final JComboBox<String> cmbCat = new JComboBox<>(new String[]{"Weight", "Workout Frequency", "Strength", "Endurance", "Nutrition", "Habit"});
+        private final JComboBox<String> cmbStatus = new JComboBox<>(new String[]{"IN_PROGRESS", "COMPLETED", "OVERDUE", "CANCELLED"});
         private final ModernTextField txtTarget = new ModernTextField("100.0");
         private final ModernTextField txtCurrent = new ModernTextField("80.0");
         private final ModernTextField txtUnit = new ModernTextField("kg");
@@ -336,7 +337,7 @@ public class GoalPanel extends JPanel {
         public GoalDialog(Window owner, Goal goal) {
             super(owner, goal == null ? "Create Fitness Goal" : "Edit Goal", ModalityType.APPLICATION_MODAL);
             this.editing = goal;
-            setSize(490, 620);
+            setSize(490, 640);
             setLocationRelativeTo(owner);
             setResizable(false);
             getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -368,11 +369,12 @@ public class GoalPanel extends JPanel {
             main.add(createFieldRow("Goal Title *", txtTitle));
             main.add(Box.createVerticalStrut(10));
 
-            // Category & Unit
-            JPanel r2 = new JPanel(new GridLayout(1, 2, 10, 0));
+            // Category, Unit & Status
+            JPanel r2 = new JPanel(new GridLayout(1, 3, 10, 0));
             r2.setOpaque(false);
             r2.add(createFieldRow("Category", cmbCat));
-            r2.add(createFieldRow("Unit (kg, workouts, etc)", txtUnit));
+            r2.add(createFieldRow("Unit", txtUnit));
+            r2.add(createFieldRow("Status", cmbStatus));
             main.add(r2);
             main.add(Box.createVerticalStrut(10));
 
@@ -455,7 +457,6 @@ public class GoalPanel extends JPanel {
             };
             txtTarget.getDocument().addDocumentListener(prgListener);
             txtCurrent.getDocument().addDocumentListener(prgListener);
-            updateProgressPreview();
 
             // Shortcuts
             txtTitle.addActionListener(e -> saveGoalData());
@@ -475,6 +476,9 @@ public class GoalPanel extends JPanel {
                 txtCurrent.setText(String.valueOf(goal.getCurrentValue()));
                 txtUnit.setText(goal.getUnit());
                 txtTargetDate.setText(goal.getTargetDate() != null ? goal.getTargetDate().toString() : "");
+                cmbStatus.setSelectedItem(goal.getStatus());
+                updateProgressPreview();
+            } else {
                 updateProgressPreview();
             }
 
@@ -523,7 +527,15 @@ public class GoalPanel extends JPanel {
                 if (target > 0) {
                     int pct = (int) Math.min(100, Math.max(0, (current / target) * 100));
                     prgPreview.setValue(pct);
-                    lblLiveProgress.setText(String.format("Starting at %.1f%% complete (%.1f / %.1f %s)", (current / target) * 100, current, target, txtUnit.getText().trim()));
+                    if (current >= target) {
+                        lblLiveProgress.setText(String.format("Goal Reached! 100%% complete (%.1f / %.1f %s)", current, target, txtUnit.getText().trim()));
+                        cmbStatus.setSelectedItem("COMPLETED");
+                    } else {
+                        lblLiveProgress.setText(String.format("%.1f%% complete (%.1f / %.1f %s)", (current / target) * 100, current, target, txtUnit.getText().trim()));
+                        if ("COMPLETED".equals(cmbStatus.getSelectedItem())) {
+                            cmbStatus.setSelectedItem("IN_PROGRESS");
+                        }
+                    }
                     return;
                 }
             } catch (Exception ignored) {}
@@ -575,6 +587,9 @@ public class GoalPanel extends JPanel {
             g.setCurrentValue(currentVal);
             g.setUnit(txtUnit.getText().trim());
             g.setTargetDate(deadline);
+            String selectedSt = (String) cmbStatus.getSelectedItem();
+            g.setStatus(selectedSt != null ? selectedSt : "IN_PROGRESS");
+            g.checkStatus();
 
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override

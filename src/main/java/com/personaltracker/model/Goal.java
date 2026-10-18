@@ -70,7 +70,10 @@ public class Goal {
     public void setCategory(String category) { this.category = category; }
 
     public double getTargetValue() { return targetValue; }
-    public void setTargetValue(double targetValue) { this.targetValue = targetValue; }
+    public void setTargetValue(double targetValue) {
+        this.targetValue = targetValue;
+        checkStatus();
+    }
 
     public double getCurrentValue() { return currentValue; }
     public void setCurrentValue(double currentValue) {
@@ -112,22 +115,24 @@ public class Goal {
         return Math.min(100, Math.max(0, pct));
     }
 
-    private void checkStatus() {
+    public void checkStatus() {
         if ("CANCELLED".equals(status)) return;
         if (targetValue > 0 && currentValue >= targetValue) {
             status = "COMPLETED";
-        } else if (targetDate != null && LocalDate.now().isAfter(targetDate) && !"COMPLETED".equals(status)) {
+        } else if (targetDate != null && LocalDate.now().isAfter(targetDate)) {
             status = "OVERDUE";
-        } else if (!"COMPLETED".equals(status)) {
+        } else {
             status = "IN_PROGRESS";
         }
     }
 
     public boolean isCompleted() {
-        return "COMPLETED".equals(status) || (targetValue > 0 && currentValue >= targetValue);
+        checkStatus();
+        return "COMPLETED".equals(status);
     }
 
     public boolean isOverdue() {
-        return targetDate != null && LocalDate.now().isAfter(targetDate) && !isCompleted();
+        checkStatus();
+        return "OVERDUE".equals(status);
     }
 }

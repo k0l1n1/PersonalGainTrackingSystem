@@ -36,4 +36,25 @@ public class GoalCalculationTest {
         assertTrue(pastGoal.isOverdue());
         assertEquals("OVERDUE", pastGoal.getStatus());
     }
+
+    @Test
+    @DisplayName("Should transition from COMPLETED back to IN_PROGRESS when edited to increase target or decrease current")
+    void testEditCompletedGoalTransitionsBackToInProgress() {
+        // Goal starts at 100/100 (completed)
+        Goal goal = new Goal("Deadlift 200kg", "Strength", 100.0, 100.0, "kg", LocalDate.now().plusMonths(2));
+        assertTrue(goal.isCompleted());
+        assertEquals("COMPLETED", goal.getStatus());
+
+        // User edits the goal: sets a new higher target of 120kg
+        goal.setTargetValue(120.0);
+        assertFalse(goal.isCompleted(), "Goal should no longer be completed after increasing target beyond current");
+        assertEquals("IN_PROGRESS", goal.getStatus());
+        assertEquals(83, goal.getProgressPercentage());
+
+        // Reaching the new target completes it again
+        goal.setCurrentValue(120.0);
+        assertTrue(goal.isCompleted());
+        assertEquals("COMPLETED", goal.getStatus());
+        assertEquals(100, goal.getProgressPercentage());
+    }
 }
