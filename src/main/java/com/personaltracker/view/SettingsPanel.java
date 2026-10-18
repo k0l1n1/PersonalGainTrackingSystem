@@ -72,9 +72,9 @@ public class SettingsPanel extends JPanel {
     private final JLabel valTdee = new JLabel("-- kcal / day");
     private final JLabel valIdealRange = new JLabel("-- kg");
 
-    // Cloud Connection Info
-    private final JLabel lblConnectionStatus = new JLabel("● Checking status...");
-    private final JLabel lblProjectUrl = new JLabel("https://xyz.supabase.co");
+    // Account & Sync Info
+    private final JLabel lblConnectionStatus = new JLabel("Cloud Synced • Active Session");
+    private final JLabel lblAccountEmail = new JLabel("--");
 
     private Runnable onProfileUpdatedCallback;
 
@@ -110,7 +110,7 @@ public class SettingsPanel extends JPanel {
         rightCol.setOpaque(false);
         rightCol.add(createMetabolicHealthCard());
         rightCol.add(Box.createVerticalStrut(16));
-        rightCol.add(createCloudInfrastructureCard());
+        rightCol.add(createAccountSecurityCard());
         grid.add(rightCol);
 
         content.add(grid);
@@ -337,50 +337,50 @@ public class SettingsPanel extends JPanel {
         return card;
     }
 
-    private JPanel createCloudInfrastructureCard() {
+    private JPanel createAccountSecurityCard() {
         ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        JLabel title = new JLabel("Cloud Backend & Account Security");
+        JLabel title = new JLabel("Account & Security");
         title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         card.add(title);
         card.add(Box.createVerticalStrut(12));
 
-        // Connection status
+        // Account status & email strip
+        JPanel statusStrip = new JPanel(new BorderLayout(8, 0));
+        statusStrip.setOpaque(false);
+
         lblConnectionStatus.setFont(ThemeConfig.FONT_BODY_BOLD);
-        card.add(lblConnectionStatus);
+        statusStrip.add(lblConnectionStatus, BorderLayout.WEST);
+
+        lblAccountEmail.setFont(ThemeConfig.FONT_SMALL);
+        lblAccountEmail.setForeground(ThemeConfig.TEXT_SECONDARY);
+        statusStrip.add(lblAccountEmail, BorderLayout.EAST);
+        card.add(statusStrip);
         card.add(Box.createVerticalStrut(8));
 
-        JPanel urlRow = new JPanel(new BorderLayout());
-        urlRow.setOpaque(false);
-        JLabel lblUrlTag = new JLabel("Project URL: ");
-        lblUrlTag.setFont(ThemeConfig.FONT_SMALL);
-        lblUrlTag.setForeground(ThemeConfig.TEXT_MUTED);
-        urlRow.add(lblUrlTag, BorderLayout.WEST);
-
-        lblProjectUrl.setFont(ThemeConfig.FONT_SMALL);
-        lblProjectUrl.setForeground(ThemeConfig.TEXT_SECONDARY);
-        urlRow.add(lblProjectUrl, BorderLayout.CENTER);
-        card.add(urlRow);
+        JLabel lblSecurityHint = new JLabel("Your personal health metrics and training history are safely synchronized.");
+        lblSecurityHint.setFont(ThemeConfig.FONT_SMALL);
+        lblSecurityHint.setForeground(ThemeConfig.TEXT_MUTED);
+        card.add(lblSecurityHint);
         card.add(Box.createVerticalStrut(16));
 
-        // Actions
-        JPanel btnRow = new JPanel(new GridLayout(1, 3, 8, 0));
+        // Actions: Reset Password & Setup Wizard
+        JPanel btnRow = new JPanel(new GridLayout(1, 2, 10, 0));
         btnRow.setOpaque(false);
 
-        ModernButton btnConfig = new ModernButton("⚙️ Cloud Config", ModernButton.ButtonStyle.SECONDARY);
-        btnConfig.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnConfig.addActionListener(e -> openCredentialsDialog());
-        btnRow.add(btnConfig);
-
-        ModernButton btnReset = new ModernButton("🔑 Reset Password", ModernButton.ButtonStyle.SECONDARY);
-        btnReset.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        ModernButton btnReset = new ModernButton("Reset Password", ModernButton.ButtonStyle.SECONDARY);
+        btnReset.setFont(ThemeConfig.FONT_SMALL);
+        btnReset.setIcon(IconFactory.createIcon(IconFactory.IconType.USER, 13, ThemeConfig.TEXT_SECONDARY));
+        btnReset.setIconTextGap(6);
         btnReset.addActionListener(e -> sendPasswordReset());
         btnRow.add(btnReset);
 
-        ModernButton btnWizard = new ModernButton("✨ Setup Wizard", ModernButton.ButtonStyle.SECONDARY);
-        btnWizard.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        ModernButton btnWizard = new ModernButton("Setup Wizard", ModernButton.ButtonStyle.SECONDARY);
+        btnWizard.setFont(ThemeConfig.FONT_SMALL);
+        btnWizard.setIcon(IconFactory.createIcon(IconFactory.IconType.REFRESH, 13, ThemeConfig.TEXT_SECONDARY));
+        btnWizard.setIconTextGap(6);
         btnWizard.addActionListener(e -> launchOnboardingWizard());
         btnRow.add(btnWizard);
 
@@ -574,16 +574,21 @@ public class SettingsPanel extends JPanel {
         };
         worker.execute();
 
-        // Cloud status
-        if (config.isMockMode()) {
-            lblConnectionStatus.setText("● Local In-Memory Demo Mode (Offline)");
-            lblConnectionStatus.setForeground(ThemeConfig.WARNING_AMBER);
-            lblProjectUrl.setText("Built-in Offline Data Store");
-        } else {
-            lblConnectionStatus.setText("● Connected to Supabase Cloud PostgreSQL & Auth");
-            lblConnectionStatus.setForeground(ThemeConfig.SUCCESS_EMERALD);
-            lblProjectUrl.setText(config.getSupabaseUrl());
+        // Account Sync status
+        UserSession session = SupabaseClient.getInstance().getCurrentSession();
+        if (session != null && session.getEmail() != null) {
+            lblAccountEmail.setText(session.getEmail());
         }
+        if (config.isMockMode()) {
+            lblConnectionStatus.setText("Demo Mode (Offline)");
+            lblConnectionStatus.setForeground(ThemeConfig.WARNING_AMBER);
+            lblConnectionStatus.setIcon(IconFactory.createIcon(IconFactory.IconType.INFO, 12, ThemeConfig.WARNING_AMBER));
+        } else {
+            lblConnectionStatus.setText("Cloud Synced • Active Session");
+            lblConnectionStatus.setForeground(ThemeConfig.SUCCESS_EMERALD);
+            lblConnectionStatus.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 12, ThemeConfig.SUCCESS_EMERALD));
+        }
+        lblConnectionStatus.setIconTextGap(6);
     }
 
     private String getInitials(String name) {
@@ -716,52 +721,7 @@ public class SettingsPanel extends JPanel {
         dlg.setVisible(true);
     }
 
-    private void openCredentialsDialog() {
-        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Configure Cloud Connection", Dialog.ModalityType.APPLICATION_MODAL);
-        dlg.setSize(460, 320);
-        dlg.setLocationRelativeTo(this);
-        dlg.setResizable(false);
-        dlg.getContentPane().setBackground(ThemeConfig.BG_DARK);
 
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setOpaque(false);
-        p.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
-
-        JLabel title = new JLabel("Supabase Cloud Credentials");
-        title.setFont(ThemeConfig.FONT_TITLE);
-        title.setForeground(ThemeConfig.TEXT_PRIMARY);
-        p.add(title);
-        p.add(Box.createVerticalStrut(14));
-
-        ModernTextField txtUrl = new ModernTextField(config.getSupabaseUrl());
-        ModernPasswordField txtKey = new ModernPasswordField(config.getSupabaseAnonKey());
-
-        p.add(createFieldRow("Project URL (https://xyz.supabase.co)", txtUrl));
-        p.add(Box.createVerticalStrut(10));
-        p.add(createFieldRow("Anon / Public API Key", txtKey));
-        p.add(Box.createVerticalStrut(20));
-
-        JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        btnBar.setOpaque(false);
-
-        ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.SECONDARY);
-        btnCancel.addActionListener(e -> dlg.dispose());
-        btnBar.add(btnCancel);
-
-        ModernButton btnApply = new ModernButton("Apply Credentials", ModernButton.ButtonStyle.PRIMARY);
-        btnApply.addActionListener(e -> {
-            config.saveRuntimeCredentials(txtUrl.getText().trim(), new String(txtKey.getPassword()).trim());
-            dlg.dispose();
-            loadSettings();
-            ToastNotification.showToast(SettingsPanel.this, "Supabase connection updated! ⚡", ToastNotification.ToastType.INFO);
-        });
-        btnBar.add(btnApply);
-
-        p.add(btnBar);
-        dlg.setContentPane(p);
-        dlg.setVisible(true);
-    }
 
     private JPanel createFieldRow(String label, JComponent comp) {
         JPanel p = new JPanel();
