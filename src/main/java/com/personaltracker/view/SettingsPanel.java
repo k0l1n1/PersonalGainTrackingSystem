@@ -9,12 +9,17 @@ import com.personaltracker.components.ToastNotification;
 import com.personaltracker.config.AppConfig;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.MeasurementDAO;
+import com.personaltracker.dao.NutritionDAO;
 import com.personaltracker.dao.ProfileDAO;
+import com.personaltracker.dao.WorkoutDAO;
 import com.personaltracker.model.BodyMeasurement;
+import com.personaltracker.model.NutritionEntry;
 import com.personaltracker.model.UserProfile;
 import com.personaltracker.model.UserSession;
+import com.personaltracker.model.Workout;
 import com.personaltracker.service.SupabaseAuthService;
 import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.CsvExporter;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
@@ -38,6 +43,8 @@ public class SettingsPanel extends JPanel {
 
     private final ProfileDAO profileDAO = new ProfileDAO();
     private final MeasurementDAO measurementDAO = new MeasurementDAO();
+    private final WorkoutDAO workoutDAO = new WorkoutDAO();
+    private final NutritionDAO nutritionDAO = new NutritionDAO();
     private final SupabaseAuthService authService = SupabaseAuthService.getInstance();
     private final AppConfig config = AppConfig.getInstance();
 
@@ -112,6 +119,8 @@ public class SettingsPanel extends JPanel {
         rightCol.add(createMetabolicHealthCard());
         rightCol.add(Box.createVerticalStrut(16));
         rightCol.add(createAccountSecurityCard());
+        rightCol.add(Box.createVerticalStrut(16));
+        rightCol.add(createDataReportsCard());
         grid.add(rightCol);
 
         content.add(grid);
@@ -191,7 +200,7 @@ public class SettingsPanel extends JPanel {
         nameRow.add(lblHeroName);
 
         lblStatusBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        lblStatusBadge.setForeground(ThemeConfig.SUCCESS_EMERALD);
+        lblStatusBadge.setForeground(ThemeConfig.SUCCESS);
         lblStatusBadge.setText("● ACTIVE SESSION");
         lblStatusBadge.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 120), 1, true),
@@ -222,9 +231,16 @@ public class SettingsPanel extends JPanel {
 
         banner.add(namePanel, BorderLayout.CENTER);
 
-        // Right: Edit Profile Action Button
-        JPanel actionBox = new JPanel(new GridBagLayout());
+        // Right: Export Report & Edit Profile Action Buttons
+        JPanel actionBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionBox.setOpaque(false);
+
+        ModernButton btnExportReport = new ModernButton("Export Report", ModernButton.ButtonStyle.SECONDARY);
+        btnExportReport.setIcon(IconFactory.createIcon(IconFactory.IconType.ANALYTICS, 13, ThemeConfig.TEXT_SECONDARY));
+        btnExportReport.setIconTextGap(6);
+        btnExportReport.setPreferredSize(new Dimension(145, 42));
+        btnExportReport.addActionListener(e -> promptExportReport());
+        actionBox.add(btnExportReport);
 
         ModernButton btnEditProfile = new ModernButton("Edit Profile Info", ModernButton.ButtonStyle.PRIMARY);
         btnEditProfile.setIcon(IconFactory.createIcon(IconFactory.IconType.EDIT, 13, Color.WHITE));
@@ -304,11 +320,11 @@ public class SettingsPanel extends JPanel {
         grid.setOpaque(false);
 
         grid.add(createInfoTile("FULL NAME", valFullName, ThemeConfig.TEXT_PRIMARY));
-        grid.add(createInfoTile("ACCOUNT ROLE", valRole, ThemeConfig.PRIMARY_BLUE));
+        grid.add(createInfoTile("ACCOUNT ROLE", valRole, ThemeConfig.PRIMARY_ACCENT));
         grid.add(createInfoTile("GENDER", valGender, ThemeConfig.TEXT_PRIMARY));
         grid.add(createInfoTile("DATE OF BIRTH", valBirthDate, ThemeConfig.TEXT_SECONDARY));
         grid.add(createInfoTile("CURRENT AGE", valAge, ThemeConfig.PRIMARY_ACCENT));
-        grid.add(createInfoTile("RECORDED HEIGHT", valHeight, ThemeConfig.SUCCESS_EMERALD));
+        grid.add(createInfoTile("RECORDED HEIGHT", valHeight, ThemeConfig.SUCCESS));
 
         card.add(grid);
         return card;
@@ -330,7 +346,7 @@ public class SettingsPanel extends JPanel {
 
         milestoneGrid.add(createMetricBox("STARTING WEIGHT", valStartingWeight, ThemeConfig.TEXT_SECONDARY));
         milestoneGrid.add(createMetricBox("CURRENT WEIGHT", valCurrentWeight, ThemeConfig.PRIMARY_ACCENT));
-        milestoneGrid.add(createMetricBox("TARGET GOAL", valTargetWeight, ThemeConfig.SUCCESS_EMERALD));
+        milestoneGrid.add(createMetricBox("TARGET GOAL", valTargetWeight, ThemeConfig.SUCCESS));
         card.add(milestoneGrid);
         card.add(Box.createVerticalStrut(16));
 
@@ -374,9 +390,9 @@ public class SettingsPanel extends JPanel {
         grid.setOpaque(false);
 
         grid.add(createMetricBox("BODY MASS INDEX", valBmi, ThemeConfig.PRIMARY_ACCENT));
-        grid.add(createMetricBox("BASAL METABOLIC RATE", valBmr, ThemeConfig.PRIMARY_BLUE));
-        grid.add(createMetricBox("ESTIMATED TDEE", valTdee, ThemeConfig.SUCCESS_EMERALD));
-        grid.add(createMetricBox("HEALTHY WEIGHT RANGE", valIdealRange, ThemeConfig.WARNING_AMBER));
+        grid.add(createMetricBox("BASAL METABOLIC RATE", valBmr, ThemeConfig.PRIMARY_ACCENT));
+        grid.add(createMetricBox("ESTIMATED TDEE", valTdee, ThemeConfig.SUCCESS));
+        grid.add(createMetricBox("HEALTHY WEIGHT RANGE", valIdealRange, ThemeConfig.WARNING));
 
         card.add(grid);
         return card;
@@ -628,12 +644,12 @@ public class SettingsPanel extends JPanel {
         }
         if (config.isMockMode()) {
             lblConnectionStatus.setText("Demo Mode (Offline)");
-            lblConnectionStatus.setForeground(ThemeConfig.WARNING_AMBER);
-            lblConnectionStatus.setIcon(IconFactory.createIcon(IconFactory.IconType.INFO, 12, ThemeConfig.WARNING_AMBER));
+            lblConnectionStatus.setForeground(ThemeConfig.WARNING);
+            lblConnectionStatus.setIcon(IconFactory.createIcon(IconFactory.IconType.INFO, 12, ThemeConfig.WARNING));
         } else {
             lblConnectionStatus.setText("Cloud Synced • Active Session");
-            lblConnectionStatus.setForeground(ThemeConfig.SUCCESS_EMERALD);
-            lblConnectionStatus.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 12, ThemeConfig.SUCCESS_EMERALD));
+            lblConnectionStatus.setForeground(ThemeConfig.SUCCESS);
+            lblConnectionStatus.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 12, ThemeConfig.SUCCESS));
         }
         lblConnectionStatus.setIconTextGap(6);
     }
@@ -688,9 +704,9 @@ public class SettingsPanel extends JPanel {
         JComboBox<String> cmbGen = new JComboBox<>(new String[]{"Male", "Female", "Non-Binary", "Other", "Prefer not to say"});
         if (profile.getGender() != null) cmbGen.setSelectedItem(profile.getGender());
 
-        ModernTextField txtDob = new ModernTextField(profile.getDateOfBirth() != null ? profile.getDateOfBirth().toString() : "2000-01-01");
-        ModernTextField txtH = new ModernTextField(profile.getHeightCm() != null ? String.format(Locale.US, "%.1f", profile.getHeightCm()) : "175.0");
-        ModernTextField txtW = new ModernTextField(profile.getTargetWeightKg() != null ? String.format(Locale.US, "%.1f", profile.getTargetWeightKg()) : "70.0");
+        ModernTextField txtDob = new ModernTextField(profile.getDateOfBirth() != null ? profile.getDateOfBirth().toString() : "", "YYYY-MM-DD");
+        ModernTextField txtH = new ModernTextField(profile.getHeightCm() != null && profile.getHeightCm() > 0 ? String.format(Locale.US, "%.1f", profile.getHeightCm()) : "", "e.g. 175.0");
+        ModernTextField txtW = new ModernTextField(profile.getTargetWeightKg() != null && profile.getTargetWeightKg() > 0 ? String.format(Locale.US, "%.1f", profile.getTargetWeightKg()) : "", "e.g. 70.0");
 
         pnl.add(createFieldRow("Full Name", txtName));
         pnl.add(Box.createVerticalStrut(10));
@@ -809,6 +825,201 @@ public class SettingsPanel extends JPanel {
             dialog.setVisible(true);
             loadSettings();
             if (onProfileUpdatedCallback != null) onProfileUpdatedCallback.run();
+        }
+    }
+
+    private JPanel createDataReportsCard() {
+        ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+
+        JLabel title = new JLabel("Fitness & Health Reports");
+        title.setFont(ThemeConfig.FONT_TITLE);
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        header.add(title, BorderLayout.WEST);
+
+        JLabel badge = new JLabel("CSV EXPORT");
+        badge.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        badge.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        badge.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xF0, 0x44, 0x44, 120), 1, true),
+                BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        ));
+        header.add(badge, BorderLayout.EAST);
+        card.add(header);
+        card.add(Box.createVerticalStrut(6));
+
+        JLabel desc = new JLabel("Export your historical workout sessions, body measurements, and nutrition logs.");
+        desc.setFont(ThemeConfig.FONT_SMALL);
+        desc.setForeground(ThemeConfig.TEXT_MUTED);
+        card.add(desc);
+        card.add(Box.createVerticalStrut(14));
+
+        // Quick Export Buttons Grid
+        JPanel btnGrid = new JPanel(new GridLayout(1, 3, 10, 0));
+        btnGrid.setOpaque(false);
+
+        ModernButton btnWorkoutsReport = new ModernButton("Workouts", ModernButton.ButtonStyle.SECONDARY);
+        btnWorkoutsReport.setIcon(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 12, ThemeConfig.TEXT_SECONDARY));
+        btnWorkoutsReport.setIconTextGap(5);
+        btnWorkoutsReport.setFont(ThemeConfig.FONT_SMALL);
+        btnWorkoutsReport.addActionListener(e -> exportReport("Workouts"));
+
+        ModernButton btnBodyReport = new ModernButton("Measurements", ModernButton.ButtonStyle.SECONDARY);
+        btnBodyReport.setIcon(IconFactory.createIcon(IconFactory.IconType.MEASUREMENT, 12, ThemeConfig.TEXT_SECONDARY));
+        btnBodyReport.setIconTextGap(5);
+        btnBodyReport.setFont(ThemeConfig.FONT_SMALL);
+        btnBodyReport.addActionListener(e -> exportReport("Measurements"));
+
+        ModernButton btnNutritionReport = new ModernButton("Nutrition", ModernButton.ButtonStyle.SECONDARY);
+        btnNutritionReport.setIcon(IconFactory.createIcon(IconFactory.IconType.NUTRITION, 12, ThemeConfig.TEXT_SECONDARY));
+        btnNutritionReport.setIconTextGap(5);
+        btnNutritionReport.setFont(ThemeConfig.FONT_SMALL);
+        btnNutritionReport.addActionListener(e -> exportReport("Nutrition"));
+
+        btnGrid.add(btnWorkoutsReport);
+        btnGrid.add(btnBodyReport);
+        btnGrid.add(btnNutritionReport);
+        card.add(btnGrid);
+        card.add(Box.createVerticalStrut(12));
+
+        // Full Comprehensive Export Button
+        ModernButton btnFullExport = new ModernButton("📥 Export Complete Fitness Archive (All Data)", ModernButton.ButtonStyle.PRIMARY);
+        btnFullExport.setFont(ThemeConfig.FONT_SMALL);
+        btnFullExport.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        btnFullExport.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btnFullExport.addActionListener(e -> exportFullPackage());
+        card.add(btnFullExport);
+
+        return card;
+    }
+
+    private void promptExportReport() {
+        String[] reportOptions = {"Workouts Report", "Body Measurements Report", "Nutrition Entries Report", "All Data (Combined Archive)"};
+        String selected = (String) JOptionPane.showInputDialog(
+                this,
+                "Select data report to export as CSV:",
+                "Export Fitness Report",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                reportOptions,
+                reportOptions[0]
+        );
+        if (selected == null) return;
+
+        if ("Workouts Report".equals(selected)) {
+            exportReport("Workouts");
+        } else if ("Body Measurements Report".equals(selected)) {
+            exportReport("Measurements");
+        } else if ("Nutrition Entries Report".equals(selected)) {
+            exportReport("Nutrition");
+        } else {
+            exportFullPackage();
+        }
+    }
+
+    private void exportReport(String type) {
+        JFileChooser fileChooser = new JFileChooser();
+        String defaultFileName;
+        if ("Measurements".equalsIgnoreCase(type)) {
+            defaultFileName = "PersonalTracker_Measurements_" + LocalDate.now() + ".csv";
+            fileChooser.setDialogTitle("Export Body Measurements Report to CSV");
+        } else if ("Nutrition".equalsIgnoreCase(type)) {
+            defaultFileName = "PersonalTracker_Nutrition_" + LocalDate.now() + ".csv";
+            fileChooser.setDialogTitle("Export Nutrition Report to CSV");
+        } else {
+            defaultFileName = "PersonalTracker_Workouts_" + LocalDate.now() + ".csv";
+            fileChooser.setDialogTitle("Export Workouts Report to CSV");
+        }
+        fileChooser.setSelectedFile(new java.io.File(defaultFileName));
+
+        int res = fileChooser.showSaveDialog(this);
+        if (res == JFileChooser.APPROVE_OPTION) {
+            java.io.File file = fileChooser.getSelectedFile();
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    if ("Measurements".equalsIgnoreCase(type)) {
+                        List<BodyMeasurement> list = measurementDAO.getAllMeasurements();
+                        CsvExporter.exportMeasurements(list, file);
+                    } else if ("Nutrition".equalsIgnoreCase(type)) {
+                        List<NutritionEntry> list = nutritionDAO.getAllEntries();
+                        CsvExporter.exportNutrition(list, file);
+                    } else {
+                        List<Workout> list = workoutDAO.getAllWorkouts();
+                        CsvExporter.exportWorkouts(list, file);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        ToastNotification.showToast(SettingsPanel.this, "Report saved: " + file.getName(), ToastNotification.ToastType.SUCCESS);
+                        JOptionPane.showMessageDialog(SettingsPanel.this,
+                                type + " report exported successfully to:\n" + file.getAbsolutePath(),
+                                "Export Complete",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(SettingsPanel.this,
+                                "Failed to export report: " + ex.getMessage(),
+                                "Export Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }.execute();
+        }
+    }
+
+    private void exportFullPackage() {
+        JFileChooser dirChooser = new JFileChooser();
+        dirChooser.setDialogTitle("Select Folder to Save All Fitness Reports");
+        dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int res = dirChooser.showSaveDialog(this);
+        if (res == JFileChooser.APPROVE_OPTION) {
+            java.io.File dir = dirChooser.getSelectedFile();
+            new SwingWorker<Integer, Void>() {
+                @Override
+                protected Integer doInBackground() throws Exception {
+                    String dateStr = LocalDate.now().toString();
+                    java.io.File fWorkouts = new java.io.File(dir, "PersonalTracker_Workouts_" + dateStr + ".csv");
+                    java.io.File fMeasurements = new java.io.File(dir, "PersonalTracker_Measurements_" + dateStr + ".csv");
+                    java.io.File fNutrition = new java.io.File(dir, "PersonalTracker_Nutrition_" + dateStr + ".csv");
+
+                    List<Workout> workouts = workoutDAO.getAllWorkouts();
+                    List<BodyMeasurement> measurements = measurementDAO.getAllMeasurements();
+                    List<NutritionEntry> nutrition = nutritionDAO.getAllEntries();
+
+                    CsvExporter.exportWorkouts(workouts, fWorkouts);
+                    CsvExporter.exportMeasurements(measurements, fMeasurements);
+                    CsvExporter.exportNutrition(nutrition, fNutrition);
+                    return 3;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        ToastNotification.showToast(SettingsPanel.this, "All 3 reports exported successfully!", ToastNotification.ToastType.SUCCESS);
+                        JOptionPane.showMessageDialog(SettingsPanel.this,
+                                "All 3 fitness reports exported successfully to folder:\n" + dir.getAbsolutePath() +
+                                "\n• PersonalTracker_Workouts_" + LocalDate.now() + ".csv" +
+                                "\n• PersonalTracker_Measurements_" + LocalDate.now() + ".csv" +
+                                "\n• PersonalTracker_Nutrition_" + LocalDate.now() + ".csv",
+                                "Comprehensive Export Complete",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(SettingsPanel.this,
+                                "Failed to export data package: " + ex.getMessage(),
+                                "Export Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }.execute();
         }
     }
 }

@@ -23,9 +23,9 @@ public class AuthDialog extends JDialog {
     private final SupabaseAuthService authService = SupabaseAuthService.getInstance();
     private boolean authenticated = false;
 
-    private final ModernTextField txtEmail = new ModernTextField("alex@example.com");
-    private final ModernPasswordField txtPassword = new ModernPasswordField("password123", "••••••••");
-    private final ModernTextField txtFullName = new ModernTextField("Alex Hunter");
+    private final ModernTextField txtEmail = new ModernTextField("", "e.g. name@example.com");
+    private final ModernPasswordField txtPassword = new ModernPasswordField("", "Enter your password");
+    private final ModernTextField txtFullName = new ModernTextField("", "e.g. Alex Hunter");
 
     private String selectedRole = com.personaltracker.model.UserProfile.ROLE_MEMBER;
     private final JLabel lblRoleTag = new JLabel("Account Type");
@@ -178,7 +178,7 @@ public class AuthDialog extends JDialog {
 
         // Forgot Password link
         lblForgotPwd.setFont(ThemeConfig.FONT_SMALL);
-        lblForgotPwd.setForeground(ThemeConfig.PRIMARY_BLUE);
+        lblForgotPwd.setForeground(ThemeConfig.PRIMARY_ACCENT);
         lblForgotPwd.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         lblForgotPwd.setAlignmentX(Component.RIGHT_ALIGNMENT);
         lblForgotPwd.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -291,7 +291,7 @@ public class AuthDialog extends JDialog {
         lblForgotPwd.setVisible(false);
         btnPrimary.setText("Create Account");
         lblSwitchMode.setText("Already have an account? Sign In");
-        setSize(430, 600);
+        setSize(430, 620);
         setLocationRelativeTo(getOwner());
         clearMessages();
         revalidate();

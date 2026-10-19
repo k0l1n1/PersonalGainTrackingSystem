@@ -26,13 +26,24 @@ public class WorkoutDAO {
 
     public Workout saveWorkout(Workout workout) throws Exception {
         workout.setUserId(client.getCurrentUserId());
+        if (workout.getId() == null || workout.getId().isBlank()) {
+            workout.setId(java.util.UUID.randomUUID().toString());
+        }
         Workout saved = client.executePost("workouts", workout, Workout.class);
-        if (saved != null && workout.getExercises() != null && !workout.getExercises().isEmpty()) {
+        String finalWorkoutId = (saved != null && saved.getId() != null) ? saved.getId() : workout.getId();
+        if (workout.getExercises() != null && !workout.getExercises().isEmpty()) {
+            int order = 0;
             for (WorkoutExercise ex : workout.getExercises()) {
-                ex.setWorkoutId(saved.getId());
+                ex.setWorkoutId(finalWorkoutId);
+                if (ex.getId() == null || ex.getId().isBlank()) {
+                    ex.setId(java.util.UUID.randomUUID().toString());
+                }
+                ex.setOrderIndex(order++);
                 client.executePost("workout_exercises", ex, WorkoutExercise.class);
             }
-            saved.setExercises(workout.getExercises());
+            if (saved != null) {
+                saved.setExercises(workout.getExercises());
+            }
         }
         return saved != null ? saved : workout;
     }
@@ -42,8 +53,13 @@ public class WorkoutDAO {
         client.executePatch("workouts", "id=eq." + workout.getId(), workout);
         if (workout.getExercises() != null && !com.personaltracker.config.AppConfig.getInstance().isMockMode()) {
             client.executeDelete("workout_exercises", "workout_id=eq." + workout.getId());
+            int order = 0;
             for (WorkoutExercise ex : workout.getExercises()) {
                 ex.setWorkoutId(workout.getId());
+                if (ex.getId() == null || ex.getId().isBlank()) {
+                    ex.setId(java.util.UUID.randomUUID().toString());
+                }
+                ex.setOrderIndex(order++);
                 client.executePost("workout_exercises", ex, WorkoutExercise.class);
             }
         }

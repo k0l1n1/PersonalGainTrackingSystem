@@ -25,7 +25,7 @@ public class WorkoutTimerPanel extends ModernCard {
     private Consumer<Integer> onLogCallback;
 
     public WorkoutTimerPanel() {
-        super(14, new Insets(16, 20, 16, 20));
+        super(12, new Insets(8, 16, 8, 16));
 
         setLayout(new BorderLayout(16, 0));
         setBackgroundColor(ThemeConfig.BG_CARD);
@@ -33,31 +33,39 @@ public class WorkoutTimerPanel extends ModernCard {
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         leftPanel.setOpaque(false);
 
-        JLabel iconLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.TIMER, 24, ThemeConfig.PRIMARY_ACCENT));
+        JLabel iconLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.TIMER, 22, ThemeConfig.PRIMARY_ACCENT));
         leftPanel.add(iconLbl);
 
-        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 1));
         textPanel.setOpaque(false);
         JLabel lblTitle = new JLabel("Workout Stopwatch");
-        lblTitle.setFont(ThemeConfig.FONT_SUBTITLE);
-        lblTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
         textPanel.add(lblTitle);
 
         lblTime = new JLabel("00:00");
-        lblTime.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblTime.setForeground(ThemeConfig.PRIMARY_BLUE);
+        lblTime.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTime.setForeground(ThemeConfig.PRIMARY_ACCENT);
         textPanel.add(lblTime);
 
         leftPanel.add(textPanel);
         add(leftPanel, BorderLayout.WEST);
 
         // Right side buttons
-        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 4));
+        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actionsPanel.setOpaque(false);
 
         btnStartPause = new ModernButton("Start Timer", ModernButton.ButtonStyle.PRIMARY);
         btnReset = new ModernButton("Reset", ModernButton.ButtonStyle.SECONDARY);
-        btnLogWorkout = new ModernButton("Record As Workout", ModernButton.ButtonStyle.SUCCESS);
+        btnLogWorkout = new ModernButton("Record Workout", ModernButton.ButtonStyle.SUCCESS);
+
+        btnStartPause.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnReset.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnLogWorkout.setFont(new Font("Segoe UI", Font.BOLD, 12));
+
+        btnStartPause.setPreferredSize(new Dimension(115, 32));
+        btnReset.setPreferredSize(new Dimension(75, 32));
+        btnLogWorkout.setPreferredSize(new Dimension(145, 32));
 
         btnReset.setEnabled(false);
         btnLogWorkout.setEnabled(false);

@@ -106,7 +106,7 @@ public class MeasurementPanel extends JPanel {
         bTitle.setFont(ThemeConfig.FONT_SMALL);
         bTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
         lblCurrentBmi.setFont(ThemeConfig.FONT_STAT_NUM);
-        lblCurrentBmi.setForeground(ThemeConfig.PRIMARY_BLUE);
+        lblCurrentBmi.setForeground(ThemeConfig.PRIMARY_ACCENT);
         cardBmi.add(bTitle, BorderLayout.NORTH);
         cardBmi.add(lblCurrentBmi, BorderLayout.CENTER);
         topGrid.add(cardBmi);
@@ -116,7 +116,7 @@ public class MeasurementPanel extends JPanel {
         sTitle.setFont(ThemeConfig.FONT_SMALL);
         sTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
         lblBmiCategory.setFont(ThemeConfig.FONT_SUBTITLE);
-        lblBmiCategory.setForeground(ThemeConfig.SUCCESS_EMERALD);
+        lblBmiCategory.setForeground(ThemeConfig.SUCCESS);
         JLabel disclaimer = new JLabel("*BMI is an informational indicator");
         disclaimer.setFont(new Font("Segoe UI", Font.ITALIC, 10));
         disclaimer.setForeground(ThemeConfig.TEXT_MUTED);

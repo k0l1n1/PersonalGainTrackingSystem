@@ -79,9 +79,12 @@ public class ModernTextField extends JTextField {
 
         super.paintComponent(g);
 
-        // Placeholder
-        if (getText().isEmpty() && !isFocused && placeholder != null && !placeholder.isEmpty()) {
-            g2.setColor(ThemeConfig.TEXT_MUTED);
+        // Translucent placeholder guide (visible when text is empty)
+        if (getText().isEmpty() && placeholder != null && !placeholder.isEmpty()) {
+            Color placeholderColor = isFocused
+                    ? new Color(0x8A, 0x8A, 0x8A, 130)
+                    : new Color(0x8A, 0x8A, 0x8A, 180);
+            g2.setColor(placeholderColor);
             g2.setFont(getFont());
             FontMetrics fm = g2.getFontMetrics();
             int y = (h - fm.getHeight()) / 2 + fm.getAscent();

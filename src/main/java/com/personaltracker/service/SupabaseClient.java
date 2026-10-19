@@ -1,5 +1,6 @@
 package com.personaltracker.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,6 +65,7 @@ public class SupabaseClient {
         this.objectMapper.registerModule(new JavaTimeModule());
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
         initMockDemoData();
         if (!config.isMockMode()) {
@@ -151,6 +153,8 @@ public class SupabaseClient {
             return saveMock(table, body, clazz);
         }
 
+        ensureEntityId(body);
+
         String url = config.getSupabaseUrl() + "/rest/v1/" + table;
         String jsonBody = objectMapper.writeValueAsString(body);
 
@@ -171,6 +175,21 @@ public class SupabaseClient {
             return list.isEmpty() ? null : list.get(0);
         } else {
             throw new IOException("Supabase insert error (" + response.statusCode() + "): " + response.body());
+        }
+    }
+
+    private void ensureEntityId(Object body) {
+        if (body == null) return;
+        try {
+            java.lang.reflect.Method getId = body.getClass().getMethod("getId");
+            java.lang.reflect.Method setId = body.getClass().getMethod("setId", String.class);
+            Object currentId = getId.invoke(body);
+            if (currentId == null || currentId.toString().isBlank()) {
+                setId.invoke(body, UUID.randomUUID().toString());
+            }
+        } catch (NoSuchMethodException ignored) {
+            // Body doesn't have standard getId/setId(String)
+        } catch (Exception ignored) {
         }
     }
 

@@ -15,7 +15,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.List;
 import java.util.Locale;
 
@@ -135,11 +134,11 @@ public class StudentDetailDialog extends JDialog {
         double h = p != null && p.getHeightCm() != null ? p.getHeightCm() : 175.0;
 
         vitalsStrip.add(createQuickVital("CURRENT WEIGHT", String.format(Locale.US, "%.1f kg", curW), ThemeConfig.PRIMARY_ACCENT));
-        vitalsStrip.add(createQuickVital("TARGET GOAL", String.format(Locale.US, "%.1f kg", tgtW), ThemeConfig.SUCCESS_EMERALD));
+        vitalsStrip.add(createQuickVital("TARGET GOAL", String.format(Locale.US, "%.1f kg", tgtW), ThemeConfig.SUCCESS));
 
         double bmi = HealthCalculator.calculateBmi(curW, h);
         String bmiCat = HealthCalculator.getBmiCategory(bmi);
-        vitalsStrip.add(createQuickVital("BMI", String.format(Locale.US, "%.1f (%s)", bmi, bmiCat), ThemeConfig.PRIMARY_BLUE));
+        vitalsStrip.add(createQuickVital("BMI", String.format(Locale.US, "%.1f (%s)", bmi, bmiCat), ThemeConfig.PRIMARY_ACCENT));
 
         header.add(vitalsStrip, BorderLayout.EAST);
         return header;
@@ -226,7 +225,7 @@ public class StudentDetailDialog extends JDialog {
             title.setForeground(ThemeConfig.TEXT_PRIMARY);
             top.add(title, BorderLayout.WEST);
 
-            Color statusColor = "COMPLETED".equalsIgnoreCase(g.getStatus()) ? ThemeConfig.SUCCESS_EMERALD : ThemeConfig.PRIMARY_BLUE;
+            Color statusColor = "COMPLETED".equalsIgnoreCase(g.getStatus()) ? ThemeConfig.SUCCESS : ThemeConfig.PRIMARY_ACCENT;
             JLabel badge = createBadge(g.getStatus(), statusColor);
             top.add(badge, BorderLayout.EAST);
             card.add(top);

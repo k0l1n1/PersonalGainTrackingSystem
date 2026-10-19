@@ -72,7 +72,7 @@ public class ModernCard extends JPanel {
         g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, cornerRadius, cornerRadius));
 
         // Border outline
-        Color border = (hoverEffect && isHovered) ? ThemeConfig.PRIMARY_BLUE : borderColor;
+        Color border = (hoverEffect && isHovered) ? ThemeConfig.PRIMARY_ACCENT : borderColor;
         g2.setColor(border);
         g2.setStroke(new BasicStroke(1.2f));
         g2.draw(new RoundRectangle2D.Float(0.6f, 0.6f, w - 1.2f, h - 1.2f, cornerRadius, cornerRadius));

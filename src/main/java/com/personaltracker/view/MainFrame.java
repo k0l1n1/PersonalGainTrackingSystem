@@ -2,7 +2,6 @@ package com.personaltracker.view;
 
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.service.SupabaseAuthService;
-import com.personaltracker.service.SupabaseClient;
 
 import javax.swing.*;
 import java.awt.*;

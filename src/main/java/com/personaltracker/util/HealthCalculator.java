@@ -1,6 +1,5 @@
 package com.personaltracker.util;
 
-import com.personaltracker.model.Goal;
 import com.personaltracker.model.Workout;
 
 import java.time.Duration;

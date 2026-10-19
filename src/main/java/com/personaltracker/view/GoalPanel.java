@@ -31,7 +31,6 @@ public class GoalPanel extends JPanel {
 
     private final JPanel pnlActiveGoals = new JPanel();
     private final JPanel pnlCompletedGoals = new JPanel();
-    private final JLabel lblStatsSummary = new JLabel("Tracking goals...");
 
     private List<Goal> currentGoals = new ArrayList<>();
 
@@ -241,7 +240,7 @@ public class GoalPanel extends JPanel {
 
         ModernButton btnDel = new ModernButton("Delete", ModernButton.ButtonStyle.GHOST);
         btnDel.setFont(ThemeConfig.FONT_SMALL);
-        btnDel.setForeground(ThemeConfig.DANGER_ROSE);
+        btnDel.setForeground(ThemeConfig.ERROR);
         btnDel.addActionListener(e -> deleteGoal(goal));
 
         bottom.add(btnUpdate);
@@ -434,7 +433,7 @@ public class GoalPanel extends JPanel {
             lblPrgTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
             lblPrgTag.setForeground(ThemeConfig.TEXT_SECONDARY);
             lblLiveProgress.setFont(ThemeConfig.FONT_SMALL);
-            lblLiveProgress.setForeground(ThemeConfig.SUCCESS_EMERALD);
+            lblLiveProgress.setForeground(ThemeConfig.SUCCESS);
             progressBox.add(lblPrgTag, BorderLayout.NORTH);
             progressBox.add(prgPreview, BorderLayout.CENTER);
             progressBox.add(lblLiveProgress, BorderLayout.SOUTH);

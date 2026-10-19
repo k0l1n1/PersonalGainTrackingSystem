@@ -176,9 +176,9 @@ public class NutritionPanel extends JPanel {
 
         JPanel macStats = new JPanel(new GridLayout(3, 1, 0, 6));
         macStats.setOpaque(false);
-        macStats.add(createMacroIndicator("Protein", lblProtein, ThemeConfig.PRIMARY_BLUE));
-        macStats.add(createMacroIndicator("Carbohydrates", lblCarbs, ThemeConfig.WARNING_AMBER));
-        macStats.add(createMacroIndicator("Healthy Fats", lblFat, ThemeConfig.DANGER_ROSE));
+        macStats.add(createMacroIndicator("Protein", lblProtein, ThemeConfig.PRIMARY_ACCENT));
+        macStats.add(createMacroIndicator("Carbohydrates", lblCarbs, ThemeConfig.WARNING));
+        macStats.add(createMacroIndicator("Healthy Fats", lblFat, ThemeConfig.ERROR));
         macCenter.add(macStats, BorderLayout.CENTER);
 
         cardMacros.add(macCenter, BorderLayout.CENTER);
@@ -412,7 +412,7 @@ public class NutritionPanel extends JPanel {
 
         JLabel cal = new JLabel(entry.getCalories() + " kcal");
         cal.setFont(ThemeConfig.FONT_BODY_BOLD);
-        cal.setForeground(ThemeConfig.WARNING_AMBER);
+        cal.setForeground(ThemeConfig.WARNING);
         right.add(cal);
 
         JButton btnEdit = new JButton("✎");
@@ -586,7 +586,7 @@ public class NutritionPanel extends JPanel {
             macroTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
             macroTag.setForeground(ThemeConfig.TEXT_SECONDARY);
             lblMacroLive.setFont(ThemeConfig.FONT_SMALL);
-            lblMacroLive.setForeground(ThemeConfig.PRIMARY_BLUE);
+            lblMacroLive.setForeground(ThemeConfig.PRIMARY_ACCENT);
             macroBox.add(macroTag, BorderLayout.NORTH);
             macroBox.add(lblMacroLive, BorderLayout.CENTER);
             main.add(macroBox);

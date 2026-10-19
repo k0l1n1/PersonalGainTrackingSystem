@@ -34,7 +34,6 @@ public class TrainerPanel extends JPanel {
 
     // Summary Metric Labels
     private final JLabel lblTotalStudents = new JLabel("0");
-    private final JLabel lblTotalWorkouts = new JLabel("0");
     private final JLabel lblActiveGoals = new JLabel("0");
 
     private List<TrainerStudent> currentStudents = new ArrayList<>();
@@ -106,7 +105,9 @@ public class TrainerPanel extends JPanel {
         JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 4));
         btnBar.setOpaque(false);
 
-        ModernButton btnRefresh = new ModernButton("🔄 Refresh", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton btnRefresh = new ModernButton("Refresh", ModernButton.ButtonStyle.SECONDARY);
+        btnRefresh.setIcon(IconFactory.createIcon(IconFactory.IconType.REFRESH, 13, ThemeConfig.TEXT_PRIMARY));
+        btnRefresh.setIconTextGap(6);
         btnRefresh.setPreferredSize(new Dimension(110, 38));
         btnRefresh.addActionListener(e -> loadData());
         btnBar.add(btnRefresh);
@@ -124,35 +125,45 @@ public class TrainerPanel extends JPanel {
     }
 
     private JPanel createSummaryKpiStrip() {
-        JPanel strip = new JPanel(new GridLayout(1, 3, 16, 0));
+        JPanel strip = new JPanel(new GridLayout(1, 2, 16, 0));
         strip.setOpaque(false);
+        strip.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
 
-        strip.add(createKpiCard("ACTIVE STUDENTS", lblTotalStudents, "Athletes under coaching", ThemeConfig.PRIMARY_ACCENT));
-        strip.add(createKpiCard("TOTAL WORKOUTS TRACKED", lblTotalWorkouts, "Logged by your roster", ThemeConfig.PRIMARY_BLUE));
-        strip.add(createKpiCard("GOALS IN PROGRESS", lblActiveGoals, "Active fitness targets", ThemeConfig.SUCCESS_EMERALD));
+        strip.add(createKpiCard("ACTIVE ATHLETES", lblTotalStudents, "Athletes enrolled under coaching", ThemeConfig.PRIMARY_ACCENT, IconFactory.IconType.STUDENTS));
+        strip.add(createKpiCard("GOALS IN PROGRESS", lblActiveGoals, "Active fitness targets being tracked", ThemeConfig.SUCCESS, IconFactory.IconType.GOAL));
 
         return strip;
     }
 
-    private JPanel createKpiCard(String header, JLabel valueLbl, String sub, Color accent) {
-        ModernCard card = new ModernCard(14, new Insets(14, 18, 14, 18));
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+    private JPanel createKpiCard(String header, JLabel valueLbl, String sub, Color accent, IconFactory.IconType iconType) {
+        ModernCard card = new ModernCard(14, new Insets(14, 20, 14, 20));
+        card.setLayout(new BorderLayout(14, 0));
+
+        JPanel left = new JPanel();
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        left.setOpaque(false);
 
         JLabel hLbl = new JLabel(header);
         hLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         hLbl.setForeground(ThemeConfig.TEXT_MUTED);
-        card.add(hLbl);
-        card.add(Box.createVerticalStrut(6));
+        left.add(hLbl);
+        left.add(Box.createVerticalStrut(4));
 
-        valueLbl.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        valueLbl.setFont(new Font("Segoe UI", Font.BOLD, 28));
         valueLbl.setForeground(accent);
-        card.add(valueLbl);
-        card.add(Box.createVerticalStrut(4));
+        left.add(valueLbl);
+        left.add(Box.createVerticalStrut(2));
 
         JLabel sLbl = new JLabel(sub);
         sLbl.setFont(ThemeConfig.FONT_SMALL);
         sLbl.setForeground(ThemeConfig.TEXT_SECONDARY);
-        card.add(sLbl);
+        left.add(sLbl);
+
+        card.add(left, BorderLayout.CENTER);
+
+        JLabel iconLbl = new JLabel(IconFactory.createIcon(iconType, 30, accent));
+        iconLbl.setVerticalAlignment(SwingConstants.CENTER);
+        card.add(iconLbl, BorderLayout.EAST);
 
         return card;
     }
@@ -185,16 +196,12 @@ public class TrainerPanel extends JPanel {
     private void renderRoster(List<TrainerStudent> students) {
         rosterContainer.removeAll();
 
-        int totalWorkouts = 0;
         int totalGoals = 0;
-
         for (TrainerStudent ts : students) {
-            totalWorkouts += ts.getTotalWorkouts();
             totalGoals += ts.getActiveGoals();
         }
 
         lblTotalStudents.setText(String.valueOf(students.size()));
-        lblTotalWorkouts.setText(String.valueOf(totalWorkouts));
         lblActiveGoals.setText(String.valueOf(totalGoals));
 
         if (students.isEmpty()) {
@@ -218,23 +225,27 @@ public class TrainerPanel extends JPanel {
             desc.setForeground(ThemeConfig.TEXT_MUTED);
             desc.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyCard.add(desc);
-            emptyCard.add(Box.createVerticalStrut(10));
+            emptyCard.add(Box.createVerticalStrut(12));
 
-            JLabel hint = new JLabel("Quick Demo: You can enroll pre-seeded students using code PG-SARAH7 or PG-MARCUS.");
-            hint.setIcon(IconFactory.createIcon(IconFactory.IconType.INFO, 12, ThemeConfig.PRIMARY_ACCENT));
-            hint.setIconTextGap(6);
-            hint.setFont(ThemeConfig.FONT_SMALL);
-            hint.setForeground(ThemeConfig.PRIMARY_ACCENT);
-            hint.setAlignmentX(Component.CENTER_ALIGNMENT);
-            emptyCard.add(hint);
+            // Interactive demo enroll chips
+            JPanel demoRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
+            demoRow.setOpaque(false);
+            JLabel demoLabel = new JLabel("Quick Demo:");
+            demoLabel.setFont(ThemeConfig.FONT_SMALL);
+            demoLabel.setForeground(ThemeConfig.TEXT_MUTED);
+            demoRow.add(demoLabel);
+
+            demoRow.add(createDemoEnrollChip("PG-SARAH7", "Sarah Connor"));
+            demoRow.add(createDemoEnrollChip("PG-MARCUS", "Marcus Wright"));
+            emptyCard.add(demoRow);
             emptyCard.add(Box.createVerticalStrut(16));
 
-            ModernButton btnAddNow = new ModernButton("Enroll Student Now", ModernButton.ButtonStyle.PRIMARY);
+            ModernButton btnAddNow = new ModernButton("Enroll Student by Code", ModernButton.ButtonStyle.PRIMARY);
             btnAddNow.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 13, Color.WHITE));
             btnAddNow.setIconTextGap(6);
             btnAddNow.setAlignmentX(Component.CENTER_ALIGNMENT);
-            btnAddNow.setPreferredSize(new Dimension(180, 36));
-            btnAddNow.addActionListener(e -> openEnrollStudentDialog());
+            btnAddNow.setPreferredSize(new Dimension(210, 38));
+            btnAddNow.addActionListener(e -> openEnrollStudentDialog(""));
             emptyCard.add(btnAddNow);
 
             rosterContainer.add(emptyCard);
@@ -247,6 +258,21 @@ public class TrainerPanel extends JPanel {
 
         rosterContainer.revalidate();
         rosterContainer.repaint();
+    }
+
+    private JButton createDemoEnrollChip(String code, String name) {
+        JButton btn = new JButton("+ " + code + " (" + name + ")");
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btn.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        btn.setBackground(ThemeConfig.BG_CARD);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
+                BorderFactory.createEmptyBorder(4, 10, 4, 10)
+        ));
+        btn.addActionListener(e -> openEnrollStudentDialog(code));
+        return btn;
     }
 
     private JPanel createStudentCard(TrainerStudent ts) {
@@ -328,10 +354,10 @@ public class TrainerPanel extends JPanel {
         double h = p != null && p.getHeightCm() != null ? p.getHeightCm() : 175.0;
 
         vitals.add(createMiniTile("CURRENT WEIGHT", String.format(Locale.US, "%.1f kg", curW), ThemeConfig.PRIMARY_ACCENT));
-        vitals.add(createMiniTile("TARGET GOAL", String.format(Locale.US, "%.1f kg", tgtW), ThemeConfig.SUCCESS_EMERALD));
+        vitals.add(createMiniTile("TARGET GOAL", String.format(Locale.US, "%.1f kg", tgtW), ThemeConfig.SUCCESS));
 
         double bmi = HealthCalculator.calculateBmi(curW, h);
-        vitals.add(createMiniTile("BMI", String.format(Locale.US, "%.1f", bmi), ThemeConfig.PRIMARY_BLUE));
+        vitals.add(createMiniTile("BMI", String.format(Locale.US, "%.1f", bmi), ThemeConfig.PRIMARY_ACCENT));
         vitals.add(createMiniTile("WORKOUTS", ts.getTotalWorkouts() + " logged", ThemeConfig.TEXT_PRIMARY));
 
         center.add(vitals);
@@ -341,8 +367,10 @@ public class TrainerPanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 16));
         actions.setOpaque(false);
 
-        ModernButton btnView = new ModernButton("📊 View Full Progress", ModernButton.ButtonStyle.PRIMARY);
-        btnView.setPreferredSize(new Dimension(170, 38));
+        ModernButton btnView = new ModernButton("View Full Progress", ModernButton.ButtonStyle.PRIMARY);
+        btnView.setIcon(IconFactory.createIcon(IconFactory.IconType.ANALYTICS, 13, Color.WHITE));
+        btnView.setIconTextGap(6);
+        btnView.setPreferredSize(new Dimension(175, 38));
         btnView.addActionListener(e -> openStudentProgressInspector(ts.getStudentId()));
         actions.add(btnView);
 
@@ -384,6 +412,10 @@ public class TrainerPanel extends JPanel {
     }
 
     private void openEnrollStudentDialog() {
+        openEnrollStudentDialog("");
+    }
+
+    private void openEnrollStudentDialog(String prefillCode) {
         UserSession session = SupabaseClient.getInstance().getCurrentSession();
         if (session == null) return;
 
@@ -410,7 +442,8 @@ public class TrainerPanel extends JPanel {
         p.add(sub);
         p.add(Box.createVerticalStrut(14));
 
-        ModernTextField txtCode = new ModernTextField("PG-SARAH7");
+        String defaultCode = (prefillCode != null && !prefillCode.isBlank()) ? prefillCode : "PG-SARAH7";
+        ModernTextField txtCode = new ModernTextField(defaultCode);
         p.add(txtCode);
         p.add(Box.createVerticalStrut(8));
 

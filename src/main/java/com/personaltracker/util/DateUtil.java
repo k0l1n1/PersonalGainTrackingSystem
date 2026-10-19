@@ -34,6 +34,11 @@ public class DateUtil {
         return time.format(TIME_FORMAT);
     }
 
+    public static String formatTime(OffsetDateTime dt) {
+        if (dt == null) return "";
+        return dt.format(TIME_FORMAT);
+    }
+
     public static String formatDateTime(OffsetDateTime dt) {
         if (dt == null) return "";
         return dt.format(DATE_TIME_FORMAT);

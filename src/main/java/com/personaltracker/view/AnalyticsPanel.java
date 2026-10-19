@@ -41,7 +41,7 @@ public class AnalyticsPanel extends JPanel {
     private final StatCard cardWorkouts = new StatCard("WORKOUT SESSIONS", "0", "0 mins total", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_ACCENT);
     private final StatCard cardCalories = new StatCard("CALORIES BURNED", "0 kcal", "Estimated total", IconFactory.IconType.FIRE, ThemeConfig.WARNING);
     private final StatCard cardAvgSleep = new StatCard("AVG SLEEP DURATION", "-- hrs", "Recovery index", IconFactory.IconType.SLEEP, ThemeConfig.PRIMARY_ACCENT);
-    private final StatCard cardAvgWater = new StatCard("AVG DAILY WATER", "-- ml", "Hydration level", IconFactory.IconType.WATER, ThemeConfig.ACCENT_HOVER);
+    private final StatCard cardAvgWater = new StatCard("AVG DAILY WATER", "-- ml", "Hydration level", IconFactory.IconType.WATER, ThemeConfig.PRIMARY_ACCENT);
 
     // Chart panels
     private final JPanel pnlWorkoutVolumeChart = new JPanel(new BorderLayout());
@@ -358,7 +358,7 @@ public class AnalyticsPanel extends JPanel {
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         DashboardPanel.applyDarkChartTheme(chart);
         BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
-        r.setSeriesPaint(0, ThemeConfig.ACCENT_HOVER);
+        r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
         r.setMaximumBarWidth(0.12);
 
         ChartPanel cp = new ChartPanel(chart);

@@ -65,10 +65,6 @@ public class ThemeConfig {
     public static final Color ERROR = Color.decode("#F04444");
     public static final Color DANGER_ROSE = ERROR; // Backward compatibility alias
 
-    // Harmonious crimson accents replacing secondary colored highlights
-    public static final Color ACCENT_CYAN = Color.decode("#D93636");
-    public static final Color PURPLE_ACCENT = Color.decode("#F04444");
-
     // =========================================================================
     // TYPOGRAPHY (PRESERVED UNCHANGED)
     // =========================================================================
