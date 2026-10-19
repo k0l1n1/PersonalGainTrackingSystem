@@ -36,7 +36,8 @@ public class IconFactory {
         TIMER,
         COPY,
         CLOSE,
-        INFO
+        INFO,
+        STAR
     }
 
     public static Icon createIcon(IconType type, int size, Color color) {
@@ -279,6 +280,24 @@ public class IconFactory {
                     g2.draw(new Ellipse2D.Float(s * 0.15f, s * 0.15f, s * 0.7f, s * 0.7f));
                     g2.fill(new Ellipse2D.Float(s * 0.45f, s * 0.28f, s * 0.1f, s * 0.1f));
                     g2.drawLine((int)(s * 0.5f), (int)(s * 0.45f), (int)(s * 0.5f), (int)(s * 0.7f));
+                    break;
+
+                case STAR:
+                    Path2D star = new Path2D.Float();
+                    float cx = s * 0.5f;
+                    float cy = s * 0.52f;
+                    float rOuter = s * 0.42f;
+                    float rInner = s * 0.18f;
+                    for (int i = 0; i < 10; i++) {
+                        double angle = i * Math.PI / 5.0 - Math.PI / 2.0;
+                        float r = (i % 2 == 0) ? rOuter : rInner;
+                        float x = (float) (cx + Math.cos(angle) * r);
+                        float y = (float) (cy + Math.sin(angle) * r);
+                        if (i == 0) star.moveTo(x, y);
+                        else star.lineTo(x, y);
+                    }
+                    star.closePath();
+                    g2.fill(star);
                     break;
             }
 

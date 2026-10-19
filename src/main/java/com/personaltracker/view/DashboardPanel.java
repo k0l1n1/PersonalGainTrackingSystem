@@ -688,11 +688,15 @@ public class DashboardPanel extends JPanel {
                 lblSleepSchedule.setText(latestSleep.getSleepDate() != null ? DateUtil.formatDate(latestSleep.getSleepDate()) : "Recorded");
             }
             int score = latestSleep.getQualityScore() != null ? latestSleep.getQualityScore() : 3;
-            lblSleepQualityScore.setText("⭐ " + score + "/5");
+            lblSleepQualityScore.setIcon(IconFactory.createIcon(IconFactory.IconType.STAR, 11, ThemeConfig.WARNING));
+            lblSleepQualityScore.setText(score + "/5");
+            lblSleepQualityScore.setVisible(true);
         } else {
             lblSleepDurationVal.setText("No sleep logged");
             lblSleepSchedule.setText("Tap Details → to log");
+            lblSleepQualityScore.setIcon(null);
             lblSleepQualityScore.setText("");
+            lblSleepQualityScore.setVisible(false);
         }
 
         // 10. Reminders

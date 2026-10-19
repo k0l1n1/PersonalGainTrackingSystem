@@ -65,9 +65,12 @@ public class WaterSleepPanel extends JPanel {
 
     // Sleep state
     private final JLabel lblSleepDuration = new JLabel("No sleep logged");
+    private final JLabel lblSleepSub = new JLabel("Recommended: 7.0 - 9.0 hrs");
     private final JLabel lblSleepTag = new JLabel("Target: 8.0 hrs");
-    private final JLabel lblSleepTimes = new JLabel("Bed: -- | Wake: --");
-    private final JLabel lblSleepQuality = new JLabel("Quality: --");
+    private final JLabel lblSleepTimes = new JLabel("-- → --");
+    private final JLabel lblSleepQuality = new JLabel("-- / 5");
+    private final JLabel lblSleepNotes = new JLabel("");
+    private final JPanel pnlSleepNotes = new JPanel(new BorderLayout());
     private final JLabel lblSleepAvgAnnotation = new JLabel("Week Avg: --");
     private final JPanel pnlSleepChart = new JPanel(new BorderLayout());
     private final JPanel pnlSleepLogs = new JPanel();
@@ -310,43 +313,129 @@ public class WaterSleepPanel extends JPanel {
         center.setOpaque(false);
         center.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 0));
 
-        // Latest summary card
-        ModernCard innerSummary = new ModernCard(10, new Insets(12, 16, 12, 16));
+        // Latest summary card with modern segmented layout
+        ModernCard innerSummary = new ModernCard(12, new Insets(14, 18, 14, 18));
         innerSummary.setBackgroundColor(ThemeConfig.BG_INPUT);
-        innerSummary.setMaximumSize(new Dimension(Integer.MAX_VALUE, 105));
+        innerSummary.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+        innerSummary.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel sumBox = new JPanel();
         sumBox.setLayout(new BoxLayout(sumBox, BoxLayout.Y_AXIS));
         sumBox.setOpaque(false);
 
+        // 1. Header row
         JPanel sumTopRow = new JPanel(new BorderLayout());
         sumTopRow.setOpaque(false);
-        JLabel lblSumTitle = new JLabel("LAST NIGHT'S SLEEP");
-        lblSumTitle.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        lblSumTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
-        sumTopRow.add(lblSumTitle, BorderLayout.WEST);
 
-        lblSleepTag.setFont(ThemeConfig.FONT_SMALL);
+        JPanel titleBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 7, 0));
+        titleBox.setOpaque(false);
+        titleBox.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.SLEEP, 14, ThemeConfig.PRIMARY_ACCENT)));
+        JLabel lblSumTitle = new JLabel("LAST NIGHT'S SLEEP");
+        lblSumTitle.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblSumTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
+        titleBox.add(lblSumTitle);
+        sumTopRow.add(titleBox, BorderLayout.WEST);
+
+        lblSleepTag.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblSleepTag.setForeground(ThemeConfig.SUCCESS);
+        lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 140), 1, true),
+                BorderFactory.createEmptyBorder(2, 9, 2, 9)
+        ));
         sumTopRow.add(lblSleepTag, BorderLayout.EAST);
         sumBox.add(sumTopRow);
-        sumBox.add(Box.createVerticalStrut(4));
+        sumBox.add(Box.createVerticalStrut(10));
 
-        lblSleepDuration.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        lblSleepDuration.setForeground(ThemeConfig.PRIMARY_ACCENT);
-        sumBox.add(lblSleepDuration);
-        sumBox.add(Box.createVerticalStrut(4));
+        // 2. Metrics & Micro-Cards Row
+        JPanel metricsRow = new JPanel(new BorderLayout(16, 0));
+        metricsRow.setOpaque(false);
 
-        JPanel subRow = new JPanel(new BorderLayout());
-        subRow.setOpaque(false);
-        lblSleepTimes.setFont(ThemeConfig.FONT_BODY);
+        // Left: Hero Duration display
+        JPanel heroDurationBox = new JPanel();
+        heroDurationBox.setLayout(new BoxLayout(heroDurationBox, BoxLayout.Y_AXIS));
+        heroDurationBox.setOpaque(false);
+
+        lblSleepDuration.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblSleepDuration.setForeground(ThemeConfig.TEXT_PRIMARY);
+        heroDurationBox.add(lblSleepDuration);
+        heroDurationBox.add(Box.createVerticalStrut(2));
+
+        lblSleepSub.setFont(ThemeConfig.FONT_SMALL);
+        lblSleepSub.setForeground(ThemeConfig.TEXT_MUTED);
+        heroDurationBox.add(lblSleepSub);
+        metricsRow.add(heroDurationBox, BorderLayout.WEST);
+
+        // Right: Schedule and Quality Pill Cards
+        JPanel pillsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        pillsPanel.setOpaque(false);
+
+        // Pill 1: Schedule
+        ModernCard pillSchedule = new ModernCard(8, new Insets(6, 12, 6, 12));
+        pillSchedule.setBackgroundColor(ThemeConfig.BG_DARK);
+        JPanel pSched = new JPanel();
+        pSched.setLayout(new BoxLayout(pSched, BoxLayout.Y_AXIS));
+        pSched.setOpaque(false);
+
+        JPanel schedHead = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        schedHead.setOpaque(false);
+        schedHead.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.TIMER, 10, ThemeConfig.TEXT_MUTED)));
+        JLabel lblSchedTitle = new JLabel("SCHEDULE");
+        lblSchedTitle.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        lblSchedTitle.setForeground(ThemeConfig.TEXT_MUTED);
+        schedHead.add(lblSchedTitle);
+        pSched.add(schedHead);
+        pSched.add(Box.createVerticalStrut(2));
+
+        lblSleepTimes.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblSleepTimes.setForeground(ThemeConfig.TEXT_PRIMARY);
-        subRow.add(lblSleepTimes, BorderLayout.WEST);
+        pSched.add(lblSleepTimes);
+        pillSchedule.add(pSched);
+        pillsPanel.add(pillSchedule);
 
-        lblSleepQuality.setFont(ThemeConfig.FONT_SMALL);
-        lblSleepQuality.setForeground(ThemeConfig.SUCCESS);
-        subRow.add(lblSleepQuality, BorderLayout.EAST);
-        sumBox.add(subRow);
+        // Pill 2: Quality
+        ModernCard pillQuality = new ModernCard(8, new Insets(6, 12, 6, 12));
+        pillQuality.setBackgroundColor(ThemeConfig.BG_DARK);
+        JPanel pQual = new JPanel();
+        pQual.setLayout(new BoxLayout(pQual, BoxLayout.Y_AXIS));
+        pQual.setOpaque(false);
+
+        JPanel qualHead = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        qualHead.setOpaque(false);
+        qualHead.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.STAR, 10, ThemeConfig.WARNING)));
+        JLabel lblQualTitle = new JLabel("QUALITY");
+        lblQualTitle.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        lblQualTitle.setForeground(ThemeConfig.TEXT_MUTED);
+        qualHead.add(lblQualTitle);
+        pQual.add(qualHead);
+        pQual.add(Box.createVerticalStrut(2));
+
+        lblSleepQuality.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblSleepQuality.setForeground(ThemeConfig.TEXT_PRIMARY);
+        pQual.add(lblSleepQuality);
+        pillQuality.add(pQual);
+        pillsPanel.add(pillQuality);
+
+        metricsRow.add(pillsPanel, BorderLayout.EAST);
+        sumBox.add(metricsRow);
+
+        // 3. Optional Sleep Note strip
+        pnlSleepNotes.setOpaque(false);
+        pnlSleepNotes.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0x35, 0x35, 0x35, 120)),
+                BorderFactory.createEmptyBorder(8, 2, 0, 2)
+        ));
+        pnlSleepNotes.setVisible(false);
+
+        JPanel notesInner = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        notesInner.setOpaque(false);
+        notesInner.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.INFO, 11, ThemeConfig.PRIMARY_ACCENT)));
+        lblSleepNotes.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblSleepNotes.setForeground(ThemeConfig.TEXT_SECONDARY);
+        notesInner.add(lblSleepNotes);
+        pnlSleepNotes.add(notesInner, BorderLayout.WEST);
+
+        sumBox.add(Box.createVerticalStrut(8));
+        sumBox.add(pnlSleepNotes);
 
         innerSummary.add(sumBox, BorderLayout.CENTER);
         center.add(innerSummary);
@@ -517,12 +606,61 @@ public class WaterSleepPanel extends JPanel {
         if (!sleepRecords.isEmpty()) {
             SleepRecord latest = sleepRecords.get(0);
             lblSleepDuration.setText(String.format(Locale.US, "%.1f Hours", latest.getDurationHours()));
-            lblSleepTimes.setText("Bed: " + DateUtil.formatDateTime(latest.getBedtime()) + " | Wake: " + DateUtil.formatDateTime(latest.getWakeTime()));
-            lblSleepQuality.setText("Quality: " + latest.getQualityScore() + "/5 ★ " + (latest.getNotes() != null && !latest.getNotes().isBlank() ? "- " + latest.getNotes() : ""));
-            lblSleepTag.setText(latest.getDurationHours() >= 7.0 && latest.getDurationHours() <= 9.0 ? "Optimal Recovery" : "Recovery Logged");
+
+            if (latest.getBedtime() != null && latest.getWakeTime() != null) {
+                lblSleepTimes.setText(DateUtil.formatTime(latest.getBedtime()) + " → " + DateUtil.formatTime(latest.getWakeTime()));
+            } else if (latest.getSleepDate() != null) {
+                lblSleepTimes.setText(DateUtil.formatDate(latest.getSleepDate()));
+            } else {
+                lblSleepTimes.setText("-- → --");
+            }
+
+            int score = latest.getQualityScore() != null ? latest.getQualityScore() : 3;
+            String scoreDesc;
+            switch (score) {
+                case 5: scoreDesc = "Excellent"; break;
+                case 4: scoreDesc = "Restful"; break;
+                case 3: scoreDesc = "Moderate"; break;
+                case 2: scoreDesc = "Light"; break;
+                default: scoreDesc = "Poor"; break;
+            }
+            lblSleepQuality.setText(score + " / 5 (" + scoreDesc + ")");
+
+            if (latest.getDurationHours() >= 7.0 && latest.getDurationHours() <= 9.0) {
+                lblSleepTag.setText("Optimal Recovery");
+                lblSleepTag.setForeground(ThemeConfig.SUCCESS);
+                lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 140), 1, true),
+                        BorderFactory.createEmptyBorder(2, 9, 2, 9)
+                ));
+                lblSleepSub.setText("Within recommended 7.0 - 9.0 hr window");
+            } else if (latest.getDurationHours() < 7.0) {
+                lblSleepTag.setText(String.format(Locale.US, "Short Sleep (%.1fh)", latest.getDurationHours()));
+                lblSleepTag.setForeground(ThemeConfig.WARNING);
+                lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(0xF5, 0x9E, 0x0B, 140), 1, true),
+                        BorderFactory.createEmptyBorder(2, 9, 2, 9)
+                ));
+                lblSleepSub.setText(String.format(Locale.US, "%.1f hrs below 8.0 hr target", 8.0 - latest.getDurationHours()));
+            } else {
+                lblSleepTag.setText("Extended Rest");
+                lblSleepTag.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(0xF0, 0x44, 0x44, 140), 1, true),
+                        BorderFactory.createEmptyBorder(2, 9, 2, 9)
+                ));
+                lblSleepSub.setText("Above 9.0 hr standard target");
+            }
+
+            if (latest.getNotes() != null && !latest.getNotes().isBlank()) {
+                lblSleepNotes.setText("\"" + latest.getNotes().trim() + "\"");
+                pnlSleepNotes.setVisible(true);
+            } else {
+                pnlSleepNotes.setVisible(false);
+            }
 
             cardLastNightSleep.setValue(String.format(Locale.US, "%.1f hrs", latest.getDurationHours()));
-            cardLastNightSleep.setSubtitle("Quality: " + latest.getQualityScore() + "/5 ★ · " + (latest.getDurationHours() >= 7.0 ? "Restful" : "Short Sleep"));
+            cardLastNightSleep.setSubtitle("Score: " + score + "/5 · " + scoreDesc);
 
             // Calculate 7-day average
             double sum7 = 0.0;
@@ -539,9 +677,16 @@ public class WaterSleepPanel extends JPanel {
             cardAvgSleep.setSubtitle(avg7 >= 7.0 && avg7 <= 9.0 ? "Optimal recovery range" : "Target: 7.0 - 9.0 hrs");
         } else {
             lblSleepDuration.setText("No sleep logged");
-            lblSleepTimes.setText("Bedtime: -- | Wake: --");
-            lblSleepQuality.setText("Quality: --");
+            lblSleepTimes.setText("-- → --");
+            lblSleepQuality.setText("-- / 5");
             lblSleepTag.setText("Target: 8.0 hrs");
+            lblSleepTag.setForeground(ThemeConfig.TEXT_MUTED);
+            lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                    BorderFactory.createEmptyBorder(2, 9, 2, 9)
+            ));
+            lblSleepSub.setText("Log your sleep session to track recovery");
+            pnlSleepNotes.setVisible(false);
             cardLastNightSleep.setValue("-- hrs");
             cardLastNightSleep.setSubtitle("No sleep logged yet");
             cardAvgSleep.setValue("-- hrs");
@@ -646,9 +791,10 @@ public class WaterSleepPanel extends JPanel {
                 left.add(lblInterval);
             }
 
-            JLabel lblScore = new JLabel("⭐ " + s.getQualityScore() + "/5");
+            left.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.STAR, 11, ThemeConfig.WARNING)));
+            JLabel lblScore = new JLabel(s.getQualityScore() + "/5");
             lblScore.setFont(ThemeConfig.FONT_SMALL);
-            lblScore.setForeground(ThemeConfig.WARNING);
+            lblScore.setForeground(ThemeConfig.TEXT_SECONDARY);
             left.add(lblScore);
 
             row.add(left, BorderLayout.WEST);
