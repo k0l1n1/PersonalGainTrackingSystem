@@ -731,11 +731,11 @@ public class WaterSleepPanel extends JPanel {
 
         // 8h Target guideline line
         ValueMarker targetMarker = new ValueMarker(8.0);
-        targetMarker.setPaint(new Color(240, 68, 68, 160));
-        targetMarker.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f, 4.0f}, 0.0f));
+        targetMarker.setPaint(new Color(240, 68, 68, 210));
+        targetMarker.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f, 4.0f}, 0.0f));
         targetMarker.setLabel("8h Target");
-        targetMarker.setLabelFont(new Font("Segoe UI", Font.BOLD, 10));
-        targetMarker.setLabelPaint(new Color(240, 100, 100, 220));
+        targetMarker.setLabelFont(new Font("Segoe UI", Font.BOLD, 11));
+        targetMarker.setLabelPaint(new Color(255, 120, 120));
         targetMarker.setLabelAnchor(org.jfree.chart.ui.RectangleAnchor.TOP_RIGHT);
         targetMarker.setLabelTextAnchor(org.jfree.chart.ui.TextAnchor.BOTTOM_RIGHT);
         plot.addRangeMarker(targetMarker);

@@ -323,9 +323,17 @@ public class AnalyticsPanel extends JPanel {
 
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         DashboardPanel.applyDarkChartTheme(chart);
-        BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
+        org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
+        BarRenderer r = (BarRenderer) plot.getRenderer();
         r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
-        r.setMaximumBarWidth(0.12);
+        r.setBarPainter(new DashboardPanel.ModernRoundedBarPainter());
+        r.setMaximumBarWidth(0.13);
+        r.setShadowVisible(false);
+        r.setDrawBarOutline(false);
+
+        org.jfree.chart.axis.NumberAxis range = (org.jfree.chart.axis.NumberAxis) plot.getRangeAxis();
+        range.setStandardTickUnits(org.jfree.chart.axis.NumberAxis.createIntegerTickUnits());
+        range.setRange(0.0, 12.0);
 
         ChartPanel cp = new ChartPanel(chart);
         cp.setOpaque(false);

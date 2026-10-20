@@ -20,6 +20,7 @@ import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.category.BarPainter;
 import org.jfree.chart.renderer.category.BarRenderer;
@@ -993,24 +994,24 @@ public class DashboardPanel extends JPanel {
             CategoryPlot plot = chart.getCategoryPlot();
             plot.setBackgroundPaint(new Color(0, 0, 0, 0));
             plot.setOutlinePaint(null);
-            plot.setRangeGridlinePaint(new Color(0x35, 0x35, 0x35, 120));
-            plot.setRangeGridlineStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
-            plot.setDomainGridlinesVisible(false);
+            plot.setRangeGridlinePaint(new Color(0x66, 0x66, 0x66, 230));
+            plot.setRangeGridlineStroke(new BasicStroke(1.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
+            plot.setRangeGridlinesVisible(true);
 
             CategoryAxis domain = plot.getDomainAxis();
             if (domain != null) {
                 domain.setAxisLineVisible(false);
                 domain.setTickMarksVisible(false);
-                domain.setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
-                domain.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 11));
+                domain.setTickLabelPaint(new Color(0xDD, 0xDD, 0xDD));
+                domain.setTickLabelFont(new Font("Segoe UI", Font.BOLD, 11));
             }
 
             NumberAxis range = (NumberAxis) plot.getRangeAxis();
             if (range != null) {
                 range.setAxisLineVisible(false);
                 range.setTickMarksVisible(false);
-                range.setTickLabelPaint(ThemeConfig.TEXT_MUTED);
-                range.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+                range.setTickLabelPaint(new Color(0xCC, 0xCC, 0xCC));
+                range.setTickLabelFont(new Font("Segoe UI", Font.BOLD, 10));
             }
 
             if (plot.getRenderer() instanceof BarRenderer) {
@@ -1023,21 +1024,21 @@ public class DashboardPanel extends JPanel {
             XYPlot plot = chart.getXYPlot();
             plot.setBackgroundPaint(new Color(0, 0, 0, 0));
             plot.setOutlinePaint(null);
-            plot.setRangeGridlinePaint(new Color(0x35, 0x35, 0x35, 120));
-            plot.setRangeGridlineStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
-            plot.setDomainGridlinesVisible(false);
+            plot.setRangeGridlinePaint(new Color(0x66, 0x66, 0x66, 230));
+            plot.setRangeGridlineStroke(new BasicStroke(1.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
+            plot.setRangeGridlinesVisible(true);
 
             if (plot.getDomainAxis() != null) {
                 plot.getDomainAxis().setAxisLineVisible(false);
                 plot.getDomainAxis().setTickMarksVisible(false);
-                plot.getDomainAxis().setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
-                plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 11));
+                plot.getDomainAxis().setTickLabelPaint(new Color(0xDD, 0xDD, 0xDD));
+                plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.BOLD, 11));
             }
             if (plot.getRangeAxis() != null) {
                 plot.getRangeAxis().setAxisLineVisible(false);
                 plot.getRangeAxis().setTickMarksVisible(false);
-                plot.getRangeAxis().setTickLabelPaint(ThemeConfig.TEXT_MUTED);
-                plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+                plot.getRangeAxis().setTickLabelPaint(new Color(0xCC, 0xCC, 0xCC));
+                plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.BOLD, 10));
             }
 
             if (plot.getRenderer() instanceof XYLineAndShapeRenderer) {
@@ -1304,9 +1305,28 @@ public class DashboardPanel extends JPanel {
 
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         applyDarkChartTheme(chart);
-        BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
+        CategoryPlot plot = chart.getCategoryPlot();
+        BarRenderer r = (BarRenderer) plot.getRenderer();
         r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
-        r.setMaximumBarWidth(0.12);
+        r.setBarPainter(new ModernRoundedBarPainter());
+        r.setMaximumBarWidth(0.13);
+        r.setShadowVisible(false);
+        r.setDrawBarOutline(false);
+
+        // 8h Target guideline line
+        ValueMarker targetMarker = new ValueMarker(8.0);
+        targetMarker.setPaint(new Color(240, 68, 68, 190));
+        targetMarker.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f, 4.0f}, 0.0f));
+        targetMarker.setLabel("8h Target");
+        targetMarker.setLabelFont(new Font("Segoe UI", Font.BOLD, 10));
+        targetMarker.setLabelPaint(new Color(240, 100, 100, 230));
+        targetMarker.setLabelAnchor(org.jfree.chart.ui.RectangleAnchor.TOP_RIGHT);
+        targetMarker.setLabelTextAnchor(org.jfree.chart.ui.TextAnchor.BOTTOM_RIGHT);
+        plot.addRangeMarker(targetMarker);
+
+        NumberAxis range = (NumberAxis) plot.getRangeAxis();
+        range.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+        range.setRange(0.0, 12.0);
 
         ChartPanel cp = new ChartPanel(chart);
         cp.setOpaque(false);
