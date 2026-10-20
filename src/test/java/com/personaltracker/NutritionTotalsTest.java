@@ -35,4 +35,29 @@ public class NutritionTotalsTest {
         assertEquals(161.0, totalCarbs, 0.01);
         assertEquals(53.0, totalFat, 0.01);
     }
+
+    @Test
+    @DisplayName("Should retrieve distinct meals for Today and Yesterday via DAO")
+    void testDateSpecificNutritionEntries() throws Exception {
+        com.personaltracker.config.AppConfig.getInstance().setMockMode(true);
+        com.personaltracker.service.SupabaseClient.getInstance().enableDemoMode();
+        com.personaltracker.dao.NutritionDAO dao = new com.personaltracker.dao.NutritionDAO();
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+
+        List<NutritionEntry> todayEntries = dao.getEntriesForDate(today);
+        List<NutritionEntry> yesterdayEntries = dao.getEntriesForDate(yesterday);
+        List<NutritionEntry> futureEntries = dao.getEntriesForDate(today.plusDays(10));
+
+        assertNotNull(todayEntries, "Today entries should not be null");
+        assertFalse(todayEntries.isEmpty(), "Today entries should contain seeded demo meals");
+        assertTrue(todayEntries.stream().allMatch(e -> today.equals(e.getEntryDate())), "All today entries must have today's date");
+
+        assertNotNull(yesterdayEntries, "Yesterday entries should not be null");
+        assertFalse(yesterdayEntries.isEmpty(), "Yesterday entries should contain seeded demo meals");
+        assertTrue(yesterdayEntries.stream().allMatch(e -> yesterday.equals(e.getEntryDate())), "All yesterday entries must have yesterday's date");
+
+        assertNotNull(futureEntries);
+        assertTrue(futureEntries.isEmpty(), "Future date without logs should return an empty list");
+    }
 }

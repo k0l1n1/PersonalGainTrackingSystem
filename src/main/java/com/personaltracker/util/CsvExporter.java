@@ -2,6 +2,8 @@ package com.personaltracker.util;
 
 import com.personaltracker.model.BodyMeasurement;
 import com.personaltracker.model.NutritionEntry;
+import com.personaltracker.model.SleepRecord;
+import com.personaltracker.model.WaterIntake;
 import com.personaltracker.model.Workout;
 
 import java.io.BufferedWriter;
@@ -85,6 +87,42 @@ public final class CsvExporter {
                             n.getCarbsG(),
                             n.getFatG(),
                             escape(n.getNotes())
+                    );
+                }
+            }
+        }
+    }
+
+    public static void exportWater(List<WaterIntake> intakes, File targetFile) throws IOException {
+        try (BufferedWriter bw = Files.newBufferedWriter(targetFile.toPath(), StandardCharsets.UTF_8);
+             PrintWriter writer = new PrintWriter(bw)) {
+            writer.println("Date,Time,Amount (ml)");
+            if (intakes != null) {
+                for (WaterIntake w : intakes) {
+                    writer.printf(Locale.US, "\"%s\",\"%s\",%d%n",
+                            w.getRecordedDate() != null ? w.getRecordedDate().toString() : "",
+                            w.getRecordedTime() != null ? w.getRecordedTime().toString() : "",
+                            w.getAmountMl()
+                    );
+                }
+            }
+        }
+    }
+
+    public static void exportSleep(List<SleepRecord> records, File targetFile) throws IOException {
+        try (BufferedWriter bw = Files.newBufferedWriter(targetFile.toPath(), StandardCharsets.UTF_8);
+             PrintWriter writer = new PrintWriter(bw)) {
+            writer.println("Date,Bedtime,Wake Time,Duration (Mins),Duration (Hours),Quality Score (1-5),Notes");
+            if (records != null) {
+                for (SleepRecord s : records) {
+                    writer.printf(Locale.US, "\"%s\",\"%s\",\"%s\",%d,%.2f,%d,\"%s\"%n",
+                            s.getSleepDate() != null ? s.getSleepDate().toString() : "",
+                            s.getBedtime() != null ? s.getBedtime().toString() : "",
+                            s.getWakeTime() != null ? s.getWakeTime().toString() : "",
+                            s.getDurationMinutes(),
+                            s.getDurationHours(),
+                            s.getQualityScore() != null ? s.getQualityScore() : 0,
+                            escape(s.getNotes())
                     );
                 }
             }

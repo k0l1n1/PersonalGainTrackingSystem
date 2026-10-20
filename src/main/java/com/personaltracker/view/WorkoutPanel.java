@@ -163,7 +163,8 @@ public class WorkoutPanel extends JPanel {
 
         // 2. Interactive Stopwatch Timer (Full width with generous breathing room)
         timerPanel.setOnLogCallback(mins -> openAddWorkoutDialog(mins));
-        timerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        timerPanel.setPreferredSize(new Dimension(0, 64));
+        timerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 68));
         topSection.add(timerPanel);
         topSection.add(Box.createVerticalStrut(8));
 
@@ -250,12 +251,64 @@ public class WorkoutPanel extends JPanel {
         btn.setBackground(ThemeConfig.BG_CARD);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setToolTipText("Click to review & log, or Shift+Click to instantly save");
         btn.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
                 BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
-        btn.addActionListener(e -> openAddWorkoutDialogWithPreset(title, type, duration, calories, exercises));
+        btn.addActionListener(e -> {
+            boolean isShift = (e.getModifiers() & java.awt.event.ActionEvent.SHIFT_MASK) != 0;
+            if (isShift) {
+                quickSavePresetDirectly(title, type, duration, calories, exercises);
+            } else {
+                openAddWorkoutDialogWithPreset(title, type, duration, calories, exercises);
+            }
+        });
         return btn;
+    }
+
+    private void quickSavePresetDirectly(String title, String type, int durationMinutes, int calories, String[][] exercises) {
+        Workout w = new Workout();
+        w.setTitle(title);
+        w.setWorkoutType(type);
+        w.setDurationMinutes(durationMinutes);
+        w.setCaloriesBurned(calories);
+        w.setWorkoutDate(LocalDate.now());
+        w.setStatus("COMPLETED");
+
+        if (exercises != null) {
+            List<WorkoutExercise> exList = new ArrayList<>();
+            for (String[] row : exercises) {
+                WorkoutExercise we = new WorkoutExercise();
+                we.setExerciseName(row[0]);
+                we.setSets(Integer.parseInt(row[1]));
+                we.setReps(Integer.parseInt(row[2]));
+                we.setWeightKg(Double.parseDouble(row[3]));
+                exList.add(we);
+            }
+            w.setExercises(exList);
+        }
+
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                workoutDAO.saveWorkout(w);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    ToastNotification.showToast(WorkoutPanel.this, "Quick logged: " + title + " (" + durationMinutes + "m)", ToastNotification.ToastType.SUCCESS);
+                    loadWorkouts();
+                    checkWorkoutAchievements();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(WorkoutPanel.this, "Quick log failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
     }
 
     private void openAddWorkoutDialogWithPreset(String title, String type, int durationMinutes, int calories, String[][] exercises) {
@@ -616,8 +669,8 @@ public class WorkoutPanel extends JPanel {
         private final ModernTable exercisesTable;
 
         public WorkoutDialog(Window owner, Workout workout, int prefillDurationMinutes) {
-            super(owner, workout == null ? "Log New Workout" : "Edit Workout", ModalityType.APPLICATION_MODAL);
-            this.editingWorkout = workout;
+            super(owner, (workout == null || workout.getId() == null || workout.getId().isBlank()) ? "Log New Workout" : "Edit Workout", ModalityType.APPLICATION_MODAL);
+            this.editingWorkout = (workout != null && workout.getId() != null && !workout.getId().isBlank()) ? workout : null;
             setSize(590, 720);
             setLocationRelativeTo(owner);
             setResizable(false);
@@ -629,7 +682,7 @@ public class WorkoutPanel extends JPanel {
             main.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
             // Section 1: Quick Workout Template Chips
-            if (workout == null) {
+            if (workout == null || workout.getId() == null || workout.getId().isBlank()) {
                 JLabel lblTpl = new JLabel("Quick Workout Presets");
                 lblTpl.setFont(ThemeConfig.FONT_SMALL);
                 lblTpl.setForeground(ThemeConfig.TEXT_SECONDARY);
@@ -1169,7 +1222,7 @@ public class WorkoutPanel extends JPanel {
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    if (editingWorkout == null) {
+                    if (editingWorkout == null || editingWorkout.getId() == null || editingWorkout.getId().isBlank()) {
                         workoutDAO.saveWorkout(target);
                     } else {
                         workoutDAO.updateWorkout(target);

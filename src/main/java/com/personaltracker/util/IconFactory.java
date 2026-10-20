@@ -291,10 +291,10 @@ public class IconFactory {
                     for (int i = 0; i < 10; i++) {
                         double angle = i * Math.PI / 5.0 - Math.PI / 2.0;
                         float r = (i % 2 == 0) ? rOuter : rInner;
-                        float x = (float) (cx + Math.cos(angle) * r);
-                        float y = (float) (cy + Math.sin(angle) * r);
-                        if (i == 0) star.moveTo(x, y);
-                        else star.lineTo(x, y);
+                        float px = (float) (cx + Math.cos(angle) * r);
+                        float py = (float) (cy + Math.sin(angle) * r);
+                        if (i == 0) star.moveTo(px, py);
+                        else star.lineTo(px, py);
                     }
                     star.closePath();
                     g2.fill(star);

@@ -24,7 +24,6 @@ public class MainFrame extends JFrame {
     private final MeasurementPanel measurementPanel = new MeasurementPanel();
     private final NutritionPanel nutritionPanel = new NutritionPanel();
     private final WaterSleepPanel waterSleepPanel = new WaterSleepPanel();
-    private final AnalyticsPanel analyticsPanel = new AnalyticsPanel();
     private final SettingsPanel settingsPanel = new SettingsPanel();
 
     public MainFrame() {
@@ -50,7 +49,6 @@ public class MainFrame extends JFrame {
         contentCards.add(measurementPanel, SidebarPanel.NavItem.MEASUREMENTS.name());
         contentCards.add(nutritionPanel, SidebarPanel.NavItem.NUTRITION.name());
         contentCards.add(waterSleepPanel, SidebarPanel.NavItem.WATER_SLEEP.name());
-        contentCards.add(analyticsPanel, SidebarPanel.NavItem.ANALYTICS.name());
         contentCards.add(settingsPanel, SidebarPanel.NavItem.SETTINGS.name());
 
         add(contentCards, BorderLayout.CENTER);
@@ -100,9 +98,6 @@ public class MainFrame extends JFrame {
                 break;
             case WATER_SLEEP:
                 waterSleepPanel.loadData();
-                break;
-            case ANALYTICS:
-                analyticsPanel.loadAnalytics();
                 break;
             case SETTINGS:
                 settingsPanel.loadSettings();

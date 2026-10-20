@@ -122,7 +122,7 @@ public class SupabaseClient {
 
     public <T> List<T> executeGetList(String table, String queryParams, Class<T> clazz) throws Exception {
         if (config.isMockMode() || (!"achievements".equals(table) && (currentSession == null || !isValidJwt(currentSession.getAccessToken())))) {
-            return getMockList(table, clazz);
+            return getMockList(table, queryParams, clazz);
         }
 
         String url = config.getSupabaseUrl() + "/rest/v1/" + table;
@@ -341,6 +341,28 @@ public class SupabaseClient {
         n3.setUserId(demoUserId);
         nutrition.add(n3);
 
+        // Yesterday's demo nutrition (allows immediate interactive verification of Prev/Yesterday view)
+        LocalDate yesterday = today.minusDays(1);
+        NutritionEntry ny1 = new NutritionEntry("3 Scrambled Eggs & Sourdough Toast", "BREAKFAST", 390, 24.0, 32.0, 18.0, yesterday);
+        ny1.setId(UUID.randomUUID().toString());
+        ny1.setUserId(demoUserId);
+        nutrition.add(ny1);
+
+        NutritionEntry ny2 = new NutritionEntry("Turkey Breast & Avocado Wrap", "LUNCH", 580, 44.0, 46.0, 22.0, yesterday);
+        ny2.setId(UUID.randomUUID().toString());
+        ny2.setUserId(demoUserId);
+        nutrition.add(ny2);
+
+        NutritionEntry ny3 = new NutritionEntry("Grilled Salmon & Sweet Potato", "DINNER", 640, 48.0, 45.0, 20.0, yesterday);
+        ny3.setId(UUID.randomUUID().toString());
+        ny3.setUserId(demoUserId);
+        nutrition.add(ny3);
+
+        NutritionEntry ny4 = new NutritionEntry("Whey Protein Shake & Banana", "SNACK", 280, 30.0, 32.0, 3.0, yesterday);
+        ny4.setId(UUID.randomUUID().toString());
+        ny4.setUserId(demoUserId);
+        nutrition.add(ny4);
+
         mockNutrition.put(demoUserId, nutrition);
 
         // Demo water
@@ -348,20 +370,66 @@ public class SupabaseClient {
         water.add(new WaterIntake(500, today, LocalTime.of(8, 30)));
         water.add(new WaterIntake(500, today, LocalTime.of(11, 0)));
         water.add(new WaterIntake(750, today, LocalTime.of(14, 15)));
+        water.add(new WaterIntake(500, yesterday, LocalTime.of(9, 0)));
+        water.add(new WaterIntake(750, yesterday, LocalTime.of(13, 30)));
+        water.add(new WaterIntake(500, yesterday, LocalTime.of(17, 45)));
         for (WaterIntake wi : water) {
             wi.setId(UUID.randomUUID().toString());
             wi.setUserId(demoUserId);
         }
         mockWater.put(demoUserId, water);
 
-        // Demo sleep
+        // Demo sleep - full 7-day recovery history for rich chart and stat visualization
         List<SleepRecord> sleep = new ArrayList<>();
-        OffsetDateTime bed = OffsetDateTime.now().minusDays(1).withHour(23).withMinute(15);
-        OffsetDateTime wake = OffsetDateTime.now().withHour(7).withMinute(0);
-        SleepRecord s1 = new SleepRecord(today, bed, wake, 4, "Woke up feeling energized");
+        OffsetDateTime bed0 = OffsetDateTime.now().minusDays(1).withHour(23).withMinute(15);
+        OffsetDateTime wake0 = OffsetDateTime.now().withHour(7).withMinute(0);
+        SleepRecord s0 = new SleepRecord(today, bed0, wake0, 4, "Woke up feeling energized");
+        s0.setId(UUID.randomUUID().toString());
+        s0.setUserId(demoUserId);
+        sleep.add(s0);
+
+        OffsetDateTime bed1 = OffsetDateTime.now().minusDays(2).withHour(23).withMinute(30);
+        OffsetDateTime wake1 = OffsetDateTime.now().minusDays(1).withHour(7).withMinute(0);
+        SleepRecord s1 = new SleepRecord(today.minusDays(1), bed1, wake1, 4, "Solid restful sleep");
         s1.setId(UUID.randomUUID().toString());
         s1.setUserId(demoUserId);
         sleep.add(s1);
+
+        OffsetDateTime bed2 = OffsetDateTime.now().minusDays(3).withHour(22).withMinute(45);
+        OffsetDateTime wake2 = OffsetDateTime.now().minusDays(2).withHour(7).withMinute(0);
+        SleepRecord s2 = new SleepRecord(today.minusDays(2), bed2, wake2, 5, "Deep restorative rest");
+        s2.setId(UUID.randomUUID().toString());
+        s2.setUserId(demoUserId);
+        sleep.add(s2);
+
+        OffsetDateTime bed3 = OffsetDateTime.now().minusDays(4).withHour(0).withMinute(15);
+        OffsetDateTime wake3 = OffsetDateTime.now().minusDays(3).withHour(7).withMinute(0);
+        SleepRecord s3 = new SleepRecord(today.minusDays(3), bed3, wake3, 3, "Slightly interrupted sleep");
+        s3.setId(UUID.randomUUID().toString());
+        s3.setUserId(demoUserId);
+        sleep.add(s3);
+
+        OffsetDateTime bed4 = OffsetDateTime.now().minusDays(5).withHour(23).withMinute(0);
+        OffsetDateTime wake4 = OffsetDateTime.now().minusDays(4).withHour(7).withMinute(0);
+        SleepRecord s4 = new SleepRecord(today.minusDays(4), bed4, wake4, 5, "Hit 8-hour target perfectly");
+        s4.setId(UUID.randomUUID().toString());
+        s4.setUserId(demoUserId);
+        sleep.add(s4);
+
+        OffsetDateTime bed5 = OffsetDateTime.now().minusDays(6).withHour(23).withMinute(45);
+        OffsetDateTime wake5 = OffsetDateTime.now().minusDays(5).withHour(7).withMinute(0);
+        SleepRecord s5 = new SleepRecord(today.minusDays(5), bed5, wake5, 4, "Felt refreshed after morning run");
+        s5.setId(UUID.randomUUID().toString());
+        s5.setUserId(demoUserId);
+        sleep.add(s5);
+
+        OffsetDateTime bed6 = OffsetDateTime.now().minusDays(7).withHour(23).withMinute(20);
+        OffsetDateTime wake6 = OffsetDateTime.now().minusDays(6).withHour(7).withMinute(0);
+        SleepRecord s6 = new SleepRecord(today.minusDays(6), bed6, wake6, 4, "Consistent pre-workout sleep");
+        s6.setId(UUID.randomUUID().toString());
+        s6.setUserId(demoUserId);
+        sleep.add(s6);
+
         mockSleep.put(demoUserId, sleep);
 
         // Demo reminders
@@ -499,29 +567,76 @@ public class SupabaseClient {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> List<T> getMockList(String table, Class<T> clazz) {
-        String uid = getCurrentUserId() != null ? getCurrentUserId() : "demo-user-123";
+    private <T> List<T> getMockList(String table, String queryParams, Class<T> clazz) {
+        String uid = extractParamValue(queryParams, "user_id");
+        if (uid == null) {
+            uid = getCurrentUserId() != null ? getCurrentUserId() : "demo-user-123";
+        }
         switch (table) {
-            case "workouts":
-                return (List<T>) new ArrayList<>(mockWorkouts.computeIfAbsent(uid, k -> new ArrayList<>()));
+            case "workouts": {
+                List<Workout> list = new ArrayList<>(mockWorkouts.computeIfAbsent(uid, k -> new ArrayList<>()));
+                String date = extractParamValue(queryParams, "workout_date");
+                if (date != null) {
+                    list.removeIf(w -> w.getWorkoutDate() == null || !w.getWorkoutDate().toString().equals(date));
+                }
+                return (List<T>) list;
+            }
             case "goals":
                 return (List<T>) new ArrayList<>(mockGoals.computeIfAbsent(uid, k -> new ArrayList<>()));
-            case "body_measurements":
-                return (List<T>) new ArrayList<>(mockMeasurements.computeIfAbsent(uid, k -> new ArrayList<>()));
-            case "nutrition_entries":
-                return (List<T>) new ArrayList<>(mockNutrition.computeIfAbsent(uid, k -> new ArrayList<>()));
-            case "water_intake":
-                return (List<T>) new ArrayList<>(mockWater.computeIfAbsent(uid, k -> new ArrayList<>()));
-            case "sleep_records":
-                return (List<T>) new ArrayList<>(mockSleep.computeIfAbsent(uid, k -> new ArrayList<>()));
+            case "body_measurements": {
+                List<BodyMeasurement> list = new ArrayList<>(mockMeasurements.computeIfAbsent(uid, k -> new ArrayList<>()));
+                String date = extractParamValue(queryParams, "recorded_date");
+                if (date != null) {
+                    list.removeIf(m -> m.getRecordedDate() == null || !m.getRecordedDate().toString().equals(date));
+                }
+                return (List<T>) list;
+            }
+            case "nutrition_entries": {
+                List<NutritionEntry> list = new ArrayList<>(mockNutrition.computeIfAbsent(uid, k -> new ArrayList<>()));
+                String date = extractParamValue(queryParams, "entry_date");
+                if (date != null) {
+                    list.removeIf(n -> n.getEntryDate() == null || !n.getEntryDate().toString().equals(date));
+                }
+                return (List<T>) list;
+            }
+            case "water_intake": {
+                List<WaterIntake> list = new ArrayList<>(mockWater.computeIfAbsent(uid, k -> new ArrayList<>()));
+                String date = extractParamValue(queryParams, "recorded_date");
+                if (date != null) {
+                    list.removeIf(w -> w.getRecordedDate() == null || !w.getRecordedDate().toString().equals(date));
+                }
+                return (List<T>) list;
+            }
+            case "sleep_records": {
+                List<SleepRecord> list = new ArrayList<>(mockSleep.computeIfAbsent(uid, k -> new ArrayList<>()));
+                String date = extractParamValue(queryParams, "sleep_date");
+                if (date != null) {
+                    list.removeIf(s -> s.getSleepDate() == null || !s.getSleepDate().toString().equals(date));
+                }
+                return (List<T>) list;
+            }
             case "reminders":
                 return (List<T>) new ArrayList<>(mockReminders.computeIfAbsent(uid, k -> new ArrayList<>()));
-            case "profiles":
+            case "profiles": {
+                String code = extractParamValue(queryParams, "user_code");
+                if (code != null) {
+                    UserProfile p = findProfileByCode(code);
+                    return p != null ? (List<T>) Collections.singletonList(p) : new ArrayList<>();
+                }
+                String profId = extractParamValue(queryParams, "id");
+                if (profId != null) {
+                    UserProfile p = mockProfiles.get(profId);
+                    return p != null ? (List<T>) Collections.singletonList(p) : new ArrayList<>();
+                }
                 UserProfile p = mockProfiles.get(uid);
                 return p != null ? (List<T>) Collections.singletonList(p) : new ArrayList<>();
-            case "trainer_students":
-                return (List<T>) new ArrayList<>(mockTrainerStudents.computeIfAbsent(uid, k -> new ArrayList<>()));
-            case "user_achievements":
+            }
+            case "trainer_students": {
+                String trainerId = extractParamValue(queryParams, "trainer_id");
+                String tid = trainerId != null ? trainerId : uid;
+                return (List<T>) new ArrayList<>(mockTrainerStudents.computeIfAbsent(tid, k -> new ArrayList<>()));
+            }
+            case "user_achievements": {
                 Set<String> unlocked = mockUserAchievements.get(uid);
                 List<UserAchievement> uasList = new ArrayList<>();
                 if (unlocked != null) {
@@ -532,23 +647,42 @@ public class SupabaseClient {
                     }
                 }
                 return (List<T>) uasList;
-            case "workout_exercises":
+            }
+            case "workout_exercises": {
+                String wId = extractParamValue(queryParams, "workout_id");
                 List<Workout> userWks = mockWorkouts.get(uid);
                 List<WorkoutExercise> exList = new ArrayList<>();
                 if (userWks != null) {
                     for (Workout w : userWks) {
-                        if (w.getExercises() != null) {
-                            for (WorkoutExercise ex : w.getExercises()) {
-                                if (ex.getWorkoutId() == null) ex.setWorkoutId(w.getId());
-                                exList.add(ex);
+                        if (wId == null || Objects.equals(w.getId(), wId)) {
+                            if (w.getExercises() != null) {
+                                for (WorkoutExercise ex : w.getExercises()) {
+                                    if (ex.getWorkoutId() == null) ex.setWorkoutId(w.getId());
+                                    exList.add(ex);
+                                }
                             }
                         }
                     }
                 }
                 return (List<T>) exList;
+            }
             default:
                 return new ArrayList<>();
         }
+    }
+
+    private String extractParamValue(String query, String param) {
+        if (query == null || query.isBlank() || param == null) return null;
+        for (String part : query.split("&")) {
+            if (part.startsWith(param + "=eq.")) {
+                return part.substring((param + "=eq.").length());
+            } else if (part.startsWith(param + "=ilike.")) {
+                return part.substring((param + "=ilike.").length());
+            } else if (part.startsWith(param + "=")) {
+                return part.substring((param + "=").length());
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")

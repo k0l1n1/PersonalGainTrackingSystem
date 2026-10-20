@@ -81,6 +81,24 @@ public class DashboardPanel extends JPanel {
     private final JPanel pnlRecentActivity = new JPanel();
     private final JPanel pnlReminders = new JPanel();
 
+    // Analytics & Trends components
+    private final JComboBox<String> cmbAnalyticsDateRange = new JComboBox<>(new String[]{"Last 7 Days", "Last 30 Days", "Last 90 Days", "All Time"});
+    private final StatCard cardAnalyticsWorkouts = new StatCard("WORKOUT SESSIONS", "0", "0 mins total", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_ACCENT);
+    private final StatCard cardAnalyticsCalories = new StatCard("CALORIES BURNED", "0 kcal", "Estimated total", IconFactory.IconType.FIRE, ThemeConfig.WARNING);
+    private final StatCard cardAnalyticsSleep = new StatCard("AVG SLEEP DURATION", "-- hrs", "Recovery index", IconFactory.IconType.SLEEP, ThemeConfig.PRIMARY_ACCENT);
+    private final StatCard cardAnalyticsWater = new StatCard("AVG DAILY WATER", "-- ml", "Hydration level", IconFactory.IconType.WATER, ThemeConfig.PRIMARY_ACCENT);
+
+    private final JPanel pnlWorkoutVolumeChart = new JPanel(new BorderLayout());
+    private final JPanel pnlCalorieTrendChart = new JPanel(new BorderLayout());
+    private final JPanel pnlSleepTrendChart = new JPanel(new BorderLayout());
+    private final JPanel pnlWaterTrendChart = new JPanel(new BorderLayout());
+
+    private List<Workout> cachedWorkouts;
+    private List<BodyMeasurement> cachedMeasurements;
+    private List<NutritionEntry> cachedNutrition;
+    private List<WaterIntake> cachedWater;
+    private List<SleepRecord> cachedSleep;
+
     // Navigation callbacks
     private Consumer<SidebarPanel.NavItem> navigationConsumer;
     private Runnable onOpenRemindersCallback;
@@ -120,6 +138,10 @@ public class DashboardPanel extends JPanel {
 
         // 4. Bottom Section: Goals, Hydration/Sleep, & Reminders
         contentPanel.add(createBottomGrid());
+        contentPanel.add(Box.createVerticalStrut(24));
+
+        // 5. Dedicated Long-Term Analytics & Trends Section
+        contentPanel.add(createAnalyticsSection());
 
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.setBorder(null);
@@ -545,8 +567,8 @@ public class DashboardPanel extends JPanel {
             private List<Workout> workouts;
             private List<Goal> goals;
             private List<BodyMeasurement> measurements;
-            private List<NutritionEntry> nutritionEntries;
-            private List<WaterIntake> waterIntakes;
+            private List<NutritionEntry> allNutrition;
+            private List<WaterIntake> allWater;
             private List<SleepRecord> sleepRecords;
             private List<Reminder> reminders;
 
@@ -563,8 +585,8 @@ public class DashboardPanel extends JPanel {
                 workouts = workoutDAO.getAllWorkouts();
                 goals = goalDAO.getAllGoals();
                 measurements = measurementDAO.getAllMeasurements();
-                nutritionEntries = nutritionDAO.getEntriesForDate(LocalDate.now());
-                waterIntakes = waterDAO.getEntriesForDate(LocalDate.now());
+                allNutrition = nutritionDAO.getAllEntries();
+                allWater = waterDAO.getAllEntries();
                 sleepRecords = sleepDAO.getAllRecords();
                 reminders = reminderDAO.getAllReminders();
 
@@ -575,7 +597,23 @@ public class DashboardPanel extends JPanel {
             protected void done() {
                 try {
                     get();
-                    updateMetrics(workouts, goals, measurements, nutritionEntries, waterIntakes, sleepRecords, reminders);
+                    cachedWorkouts = workouts;
+                    cachedMeasurements = measurements;
+                    cachedNutrition = allNutrition;
+                    cachedWater = allWater;
+                    cachedSleep = sleepRecords;
+
+                    // Filter today's nutrition and water for dashboard quick snapshots
+                    LocalDate today = LocalDate.now();
+                    List<NutritionEntry> todayNutrition = allNutrition != null
+                            ? allNutrition.stream().filter(n -> n.getEntryDate() != null && n.getEntryDate().isEqual(today)).toList()
+                            : List.of();
+                    List<WaterIntake> todayWater = allWater != null
+                            ? allWater.stream().filter(w -> w.getRecordedDate() != null && w.getRecordedDate().isEqual(today)).toList()
+                            : List.of();
+
+                    updateMetrics(workouts, goals, measurements, todayNutrition, todayWater, sleepRecords, reminders);
+                    updateAnalyticsSection();
                 } catch (Exception e) {
                     System.err.println("Dashboard refresh error: " + e.getMessage());
                 }
@@ -907,6 +945,303 @@ public class DashboardPanel extends JPanel {
             plot.getRangeAxis().setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
             plot.getRangeAxis().setTickLabelFont(ThemeConfig.FONT_SMALL);
         }
+    }
+
+    // ==========================================
+    // Analytics & Long-Term Trends Section
+    // ==========================================
+
+    private JPanel createAnalyticsSection() {
+        JPanel section = new JPanel();
+        section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
+        section.setOpaque(false);
+
+        // Section Header Row
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setOpaque(false);
+
+        JPanel titlePanel = new JPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setOpaque(false);
+
+        JPanel headingWithIcon = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        headingWithIcon.setOpaque(false);
+        headingWithIcon.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.ANALYTICS, 20, ThemeConfig.PRIMARY_ACCENT)));
+
+        JLabel lblTitle = new JLabel("Performance Analytics & Long-Term Trends");
+        lblTitle.setFont(ThemeConfig.FONT_TITLE_LARGE);
+        lblTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
+        headingWithIcon.add(lblTitle);
+        titlePanel.add(headingWithIcon);
+        titlePanel.add(Box.createVerticalStrut(4));
+
+        JLabel lblSubtitle = new JLabel("Comprehensive historical trends across workouts, calorie intake, sleep recovery & hydration");
+        lblSubtitle.setFont(ThemeConfig.FONT_BODY);
+        lblSubtitle.setForeground(ThemeConfig.TEXT_SECONDARY);
+        titlePanel.add(lblSubtitle);
+
+        headerRow.add(titlePanel, BorderLayout.WEST);
+
+        // Date Range Selector
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        filterPanel.setOpaque(false);
+
+        JLabel lblRange = new JLabel("Time Period:");
+        lblRange.setFont(ThemeConfig.FONT_BODY);
+        lblRange.setForeground(ThemeConfig.TEXT_SECONDARY);
+        filterPanel.add(lblRange);
+
+        cmbAnalyticsDateRange.setPreferredSize(new Dimension(140, 36));
+        cmbAnalyticsDateRange.addActionListener(e -> updateAnalyticsSection());
+        filterPanel.add(cmbAnalyticsDateRange);
+
+        headerRow.add(filterPanel, BorderLayout.EAST);
+        section.add(headerRow);
+        section.add(Box.createVerticalStrut(16));
+
+        // Analytics Stat Cards Row (4 cards)
+        JPanel statsGrid = new JPanel(new GridLayout(1, 4, 16, 0));
+        statsGrid.setOpaque(false);
+        statsGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        statsGrid.add(cardAnalyticsWorkouts);
+        statsGrid.add(cardAnalyticsCalories);
+        statsGrid.add(cardAnalyticsSleep);
+        statsGrid.add(cardAnalyticsWater);
+        section.add(statsGrid);
+        section.add(Box.createVerticalStrut(18));
+
+        // Charts Grid 1: Workout Duration & Daily Calorie Trends
+        JPanel chartGrid1 = new JPanel(new GridLayout(1, 2, 16, 0));
+        chartGrid1.setOpaque(false);
+        chartGrid1.setPreferredSize(new Dimension(0, 260));
+        chartGrid1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
+        chartGrid1.add(createChartCard("Workout Duration Trends (Minutes)", pnlWorkoutVolumeChart));
+        chartGrid1.add(createChartCard("Daily Calorie Intake (kcal)", pnlCalorieTrendChart));
+        section.add(chartGrid1);
+        section.add(Box.createVerticalStrut(18));
+
+        // Charts Grid 2: Sleep Duration & Water Intake Progression
+        JPanel chartGrid2 = new JPanel(new GridLayout(1, 2, 16, 0));
+        chartGrid2.setOpaque(false);
+        chartGrid2.setPreferredSize(new Dimension(0, 260));
+        chartGrid2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
+        chartGrid2.add(createChartCard("Sleep Duration Trends (Hours)", pnlSleepTrendChart));
+        chartGrid2.add(createChartCard("Daily Water Intake Progression (ml)", pnlWaterTrendChart));
+        section.add(chartGrid2);
+
+        return section;
+    }
+
+    private ModernCard createChartCard(String title, JPanel chartContainer) {
+        ModernCard card = new ModernCard(14, new Insets(14, 16, 14, 16));
+        JLabel lbl = new JLabel(title);
+        lbl.setFont(ThemeConfig.FONT_SUBTITLE);
+        lbl.setForeground(ThemeConfig.TEXT_PRIMARY);
+        card.add(lbl, BorderLayout.NORTH);
+
+        chartContainer.setOpaque(false);
+        card.add(chartContainer, BorderLayout.CENTER);
+        return card;
+    }
+
+    public void updateAnalyticsSection() {
+        if (cachedWorkouts == null) return;
+
+        int days = 30;
+        String range = (String) cmbAnalyticsDateRange.getSelectedItem();
+        if ("Last 7 Days".equals(range)) days = 7;
+        else if ("Last 30 Days".equals(range)) days = 30;
+        else if ("Last 90 Days".equals(range)) days = 90;
+        else days = 365;
+
+        LocalDate cutoff = LocalDate.now().minusDays(days);
+
+        // Filter workouts
+        int workoutCount = 0;
+        int workoutMins = 0;
+        int caloriesBurned = 0;
+        for (Workout w : cachedWorkouts) {
+            if (w.getWorkoutDate() != null && !w.getWorkoutDate().isBefore(cutoff)) {
+                workoutCount++;
+                workoutMins += w.getDurationMinutes();
+                caloriesBurned += w.getCaloriesBurned();
+            }
+        }
+        cardAnalyticsWorkouts.setValue(String.valueOf(workoutCount));
+        cardAnalyticsWorkouts.setSubtitle(workoutMins + " mins total");
+        cardAnalyticsCalories.setValue(caloriesBurned + " kcal");
+        cardAnalyticsCalories.setSubtitle(String.format("Avg %d kcal / session", workoutCount > 0 ? caloriesBurned / workoutCount : 0));
+
+        // Sleep average
+        double sleepTotal = 0;
+        int sleepCount = 0;
+        if (cachedSleep != null) {
+            for (SleepRecord s : cachedSleep) {
+                if (s.getSleepDate() != null && !s.getSleepDate().isBefore(cutoff)) {
+                    sleepTotal += s.getDurationHours();
+                    sleepCount++;
+                }
+            }
+        }
+        cardAnalyticsSleep.setValue(sleepCount > 0 ? String.format(Locale.US, "%.1f hrs", sleepTotal / sleepCount) : "-- hrs");
+        cardAnalyticsSleep.setSubtitle(sleepCount + " nights tracked");
+
+        // Water average
+        int waterTotal = 0;
+        int waterCount = 0;
+        if (cachedWater != null) {
+            for (WaterIntake wi : cachedWater) {
+                if (wi.getRecordedDate() != null && !wi.getRecordedDate().isBefore(cutoff)) {
+                    waterTotal += wi.getAmountMl();
+                    waterCount++;
+                }
+            }
+        }
+        cardAnalyticsWater.setValue(waterCount > 0 ? String.format("%d ml", waterTotal / Math.max(1, days)) : "-- ml");
+        cardAnalyticsWater.setSubtitle(waterCount + " entries recorded");
+
+        // Build 4 charts
+        buildAnalyticsWorkoutVolumeChart(days);
+        buildAnalyticsCalorieTrendChart(days);
+        buildAnalyticsSleepTrendChart(days);
+        buildAnalyticsWaterTrendChart(days);
+    }
+
+    private void buildAnalyticsWorkoutVolumeChart(int days) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        LocalDate today = LocalDate.now();
+        int step = Math.max(1, days / 7);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/dd");
+
+        for (int i = days - 1; i >= 0; i -= step) {
+            LocalDate d = today.minusDays(i);
+            int mins = 0;
+            if (cachedWorkouts != null) {
+                for (Workout w : cachedWorkouts) {
+                    if (w.getWorkoutDate() != null && w.getWorkoutDate().isEqual(d)) {
+                        mins += w.getDurationMinutes();
+                    }
+                }
+            }
+            dataset.addValue(mins, "Minutes", d.format(fmt));
+        }
+
+        JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
+        applyDarkChartTheme(chart);
+        BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
+        r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        r.setMaximumBarWidth(0.12);
+
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setOpaque(false);
+        cp.setBackground(new Color(0, 0, 0, 0));
+        pnlWorkoutVolumeChart.removeAll();
+        pnlWorkoutVolumeChart.add(cp, BorderLayout.CENTER);
+        pnlWorkoutVolumeChart.revalidate();
+        pnlWorkoutVolumeChart.repaint();
+    }
+
+    private void buildAnalyticsCalorieTrendChart(int days) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        LocalDate today = LocalDate.now();
+        int step = Math.max(1, days / 7);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/dd");
+
+        for (int i = days - 1; i >= 0; i -= step) {
+            LocalDate d = today.minusDays(i);
+            int cal = 0;
+            if (cachedNutrition != null) {
+                for (NutritionEntry n : cachedNutrition) {
+                    if (n.getEntryDate() != null && n.getEntryDate().isEqual(d)) {
+                        cal += n.getCalories();
+                    }
+                }
+            }
+            dataset.addValue(cal, "Calories", d.format(fmt));
+        }
+
+        JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
+        applyDarkChartTheme(chart);
+        BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
+        r.setSeriesPaint(0, ThemeConfig.WARNING);
+        r.setMaximumBarWidth(0.12);
+
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setOpaque(false);
+        cp.setBackground(new Color(0, 0, 0, 0));
+        pnlCalorieTrendChart.removeAll();
+        pnlCalorieTrendChart.add(cp, BorderLayout.CENTER);
+        pnlCalorieTrendChart.revalidate();
+        pnlCalorieTrendChart.repaint();
+    }
+
+    private void buildAnalyticsSleepTrendChart(int days) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        LocalDate today = LocalDate.now();
+        int step = Math.max(1, days / 7);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/dd");
+
+        for (int i = days - 1; i >= 0; i -= step) {
+            LocalDate d = today.minusDays(i);
+            double hrs = 0;
+            if (cachedSleep != null) {
+                for (SleepRecord s : cachedSleep) {
+                    if (s.getSleepDate() != null && s.getSleepDate().isEqual(d)) {
+                        hrs = s.getDurationHours();
+                        break;
+                    }
+                }
+            }
+            dataset.addValue(hrs, "Hours", d.format(fmt));
+        }
+
+        JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
+        applyDarkChartTheme(chart);
+        BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
+        r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        r.setMaximumBarWidth(0.12);
+
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setOpaque(false);
+        cp.setBackground(new Color(0, 0, 0, 0));
+        pnlSleepTrendChart.removeAll();
+        pnlSleepTrendChart.add(cp, BorderLayout.CENTER);
+        pnlSleepTrendChart.revalidate();
+        pnlSleepTrendChart.repaint();
+    }
+
+    private void buildAnalyticsWaterTrendChart(int days) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        LocalDate today = LocalDate.now();
+        int step = Math.max(1, days / 7);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/dd");
+
+        for (int i = days - 1; i >= 0; i -= step) {
+            LocalDate d = today.minusDays(i);
+            int ml = 0;
+            if (cachedWater != null) {
+                for (WaterIntake wi : cachedWater) {
+                    if (wi.getRecordedDate() != null && wi.getRecordedDate().isEqual(d)) {
+                        ml += wi.getAmountMl();
+                    }
+                }
+            }
+            dataset.addValue(ml, "Water", d.format(fmt));
+        }
+
+        JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
+        applyDarkChartTheme(chart);
+        BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
+        r.setSeriesPaint(0, new Color(0x06, 0xB6, 0xD4));
+        r.setMaximumBarWidth(0.12);
+
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setOpaque(false);
+        cp.setBackground(new Color(0, 0, 0, 0));
+        pnlWaterTrendChart.removeAll();
+        pnlWaterTrendChart.add(cp, BorderLayout.CENTER);
+        pnlWaterTrendChart.revalidate();
+        pnlWaterTrendChart.repaint();
     }
 
     private void quickAddWater(int ml) {

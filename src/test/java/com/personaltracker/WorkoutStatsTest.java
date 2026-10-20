@@ -37,4 +37,27 @@ public class WorkoutStatsTest {
         Workout w = new Workout("Morning Jog", "Cardio", LocalDate.now(), 30, 280);
         assertEquals(0.0, w.getTotalWeightLiftedKg());
     }
+
+    @Test
+    @DisplayName("Should verify that quick-log preset workout saves properly even with initially null ID")
+    void testQuickLogPresetSaveAndFallback() throws Exception {
+        com.personaltracker.dao.WorkoutDAO dao = new com.personaltracker.dao.WorkoutDAO();
+        Workout preset = new Workout();
+        preset.setTitle("Quick Push Day");
+        preset.setWorkoutType("Strength");
+        preset.setDurationMinutes(45);
+        preset.setCaloriesBurned(380);
+        preset.setWorkoutDate(LocalDate.now());
+
+        assertNull(preset.getId());
+        // Verify saveWorkout generates an ID and saves
+        Workout saved = dao.saveWorkout(preset);
+        assertNotNull(saved.getId());
+
+        // Verify updateWorkout delegates to save if ID was null/blank
+        Workout unpersisted = new Workout();
+        unpersisted.setTitle("Quick Pull Day");
+        dao.updateWorkout(unpersisted);
+        assertNotNull(unpersisted.getId());
+    }
 }

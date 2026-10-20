@@ -37,6 +37,7 @@ public class NutritionPanel extends JPanel {
 
     private LocalDate selectedDate = LocalDate.now();
     private final JLabel lblSelectedDate = new JLabel(DateUtil.formatDate(LocalDate.now()));
+    private final JLabel lblMealsHead = new JLabel("Meals for " + DateUtil.formatDate(LocalDate.now()));
 
     // Calorie stats
     private final JLabel lblTotalCalories = new JLabel("0 kcal");
@@ -188,7 +189,6 @@ public class NutritionPanel extends JPanel {
         content.add(Box.createVerticalStrut(20));
 
         // Meal Categories Grid
-        JLabel lblMealsHead = new JLabel("Meals for " + DateUtil.formatDate(selectedDate));
         lblMealsHead.setFont(ThemeConfig.FONT_SUBTITLE);
         lblMealsHead.setForeground(ThemeConfig.TEXT_PRIMARY);
         content.add(lblMealsHead);
@@ -213,7 +213,9 @@ public class NutritionPanel extends JPanel {
     }
 
     private void updateDateLabel() {
-        lblSelectedDate.setText(DateUtil.formatDate(selectedDate));
+        String formatted = DateUtil.formatDate(selectedDate);
+        lblSelectedDate.setText(formatted);
+        lblMealsHead.setText("Meals for " + formatted);
     }
 
     private JPanel createMacroIndicator(String label, JLabel valLbl, Color color) {
@@ -295,6 +297,7 @@ public class NutritionPanel extends JPanel {
     }
 
     private void updateView() {
+        lblMealsHead.setText("Meals for " + DateUtil.formatDate(selectedDate));
         pnlBreakfast.removeAll();
         pnlLunch.removeAll();
         pnlDinner.removeAll();
@@ -517,7 +520,7 @@ public class NutritionPanel extends JPanel {
         private final ModernTextField txtFat = new ModernTextField("18.0");
 
         public FoodDialog(Window owner, NutritionEntry entry, String defaultMeal) {
-            super(owner, entry == null ? "Log Food / Meal Item" : "Edit Meal", ModalityType.APPLICATION_MODAL);
+            super(owner, entry == null ? "Log Food / Meal Item (" + DateUtil.formatDate(selectedDate) + ")" : "Edit Meal", ModalityType.APPLICATION_MODAL);
             this.editing = entry;
             setSize(490, 620);
             setLocationRelativeTo(owner);

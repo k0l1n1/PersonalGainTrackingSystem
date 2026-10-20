@@ -11,11 +11,15 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.MeasurementDAO;
 import com.personaltracker.dao.NutritionDAO;
 import com.personaltracker.dao.ProfileDAO;
+import com.personaltracker.dao.SleepDAO;
+import com.personaltracker.dao.WaterDAO;
 import com.personaltracker.dao.WorkoutDAO;
 import com.personaltracker.model.BodyMeasurement;
 import com.personaltracker.model.NutritionEntry;
+import com.personaltracker.model.SleepRecord;
 import com.personaltracker.model.UserProfile;
 import com.personaltracker.model.UserSession;
+import com.personaltracker.model.WaterIntake;
 import com.personaltracker.model.Workout;
 import com.personaltracker.service.SupabaseAuthService;
 import com.personaltracker.service.SupabaseClient;
@@ -45,6 +49,8 @@ public class SettingsPanel extends JPanel {
     private final MeasurementDAO measurementDAO = new MeasurementDAO();
     private final WorkoutDAO workoutDAO = new WorkoutDAO();
     private final NutritionDAO nutritionDAO = new NutritionDAO();
+    private final WaterDAO waterDAO = new WaterDAO();
+    private final SleepDAO sleepDAO = new SleepDAO();
     private final SupabaseAuthService authService = SupabaseAuthService.getInstance();
     private final AppConfig config = AppConfig.getInstance();
 
@@ -851,14 +857,14 @@ public class SettingsPanel extends JPanel {
         card.add(header);
         card.add(Box.createVerticalStrut(6));
 
-        JLabel desc = new JLabel("Export your historical workout sessions, body measurements, and nutrition logs.");
+        JLabel desc = new JLabel("Generate and export your historical fitness, nutrition, body measurements, sleep, and hydration reports.");
         desc.setFont(ThemeConfig.FONT_SMALL);
         desc.setForeground(ThemeConfig.TEXT_MUTED);
         card.add(desc);
         card.add(Box.createVerticalStrut(14));
 
-        // Quick Export Buttons Grid
-        JPanel btnGrid = new JPanel(new GridLayout(1, 3, 10, 0));
+        // Quick Export Buttons Grid (5 items)
+        JPanel btnGrid = new JPanel(new GridLayout(1, 5, 8, 0));
         btnGrid.setOpaque(false);
 
         ModernButton btnWorkoutsReport = new ModernButton("Workouts", ModernButton.ButtonStyle.SECONDARY);
@@ -879,14 +885,28 @@ public class SettingsPanel extends JPanel {
         btnNutritionReport.setFont(ThemeConfig.FONT_SMALL);
         btnNutritionReport.addActionListener(e -> exportReport("Nutrition"));
 
+        ModernButton btnWaterReport = new ModernButton("Water Intake", ModernButton.ButtonStyle.SECONDARY);
+        btnWaterReport.setIcon(IconFactory.createIcon(IconFactory.IconType.WATER, 12, ThemeConfig.TEXT_SECONDARY));
+        btnWaterReport.setIconTextGap(5);
+        btnWaterReport.setFont(ThemeConfig.FONT_SMALL);
+        btnWaterReport.addActionListener(e -> exportReport("Water"));
+
+        ModernButton btnSleepReport = new ModernButton("Sleep & Recovery", ModernButton.ButtonStyle.SECONDARY);
+        btnSleepReport.setIcon(IconFactory.createIcon(IconFactory.IconType.SLEEP, 12, ThemeConfig.TEXT_SECONDARY));
+        btnSleepReport.setIconTextGap(5);
+        btnSleepReport.setFont(ThemeConfig.FONT_SMALL);
+        btnSleepReport.addActionListener(e -> exportReport("Sleep"));
+
         btnGrid.add(btnWorkoutsReport);
         btnGrid.add(btnBodyReport);
         btnGrid.add(btnNutritionReport);
+        btnGrid.add(btnWaterReport);
+        btnGrid.add(btnSleepReport);
         card.add(btnGrid);
         card.add(Box.createVerticalStrut(12));
 
         // Full Comprehensive Export Button
-        ModernButton btnFullExport = new ModernButton("📥 Export Complete Fitness Archive (All Data)", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btnFullExport = new ModernButton("📥 Export Complete Fitness Archive (All 5 Reports)", ModernButton.ButtonStyle.PRIMARY);
         btnFullExport.setFont(ThemeConfig.FONT_SMALL);
         btnFullExport.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         btnFullExport.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -897,7 +917,14 @@ public class SettingsPanel extends JPanel {
     }
 
     private void promptExportReport() {
-        String[] reportOptions = {"Workouts Report", "Body Measurements Report", "Nutrition Entries Report", "All Data (Combined Archive)"};
+        String[] reportOptions = {
+                "Workouts Report",
+                "Body Measurements Report",
+                "Nutrition Entries Report",
+                "Water Intake Report",
+                "Sleep & Recovery Report",
+                "All Data (Combined Archive)"
+        };
         String selected = (String) JOptionPane.showInputDialog(
                 this,
                 "Select data report to export as CSV:",
@@ -915,6 +942,10 @@ public class SettingsPanel extends JPanel {
             exportReport("Measurements");
         } else if ("Nutrition Entries Report".equals(selected)) {
             exportReport("Nutrition");
+        } else if ("Water Intake Report".equals(selected)) {
+            exportReport("Water");
+        } else if ("Sleep & Recovery Report".equals(selected)) {
+            exportReport("Sleep");
         } else {
             exportFullPackage();
         }
@@ -929,6 +960,12 @@ public class SettingsPanel extends JPanel {
         } else if ("Nutrition".equalsIgnoreCase(type)) {
             defaultFileName = "PersonalTracker_Nutrition_" + LocalDate.now() + ".csv";
             fileChooser.setDialogTitle("Export Nutrition Report to CSV");
+        } else if ("Water".equalsIgnoreCase(type)) {
+            defaultFileName = "PersonalTracker_Water_" + LocalDate.now() + ".csv";
+            fileChooser.setDialogTitle("Export Water Intake Report to CSV");
+        } else if ("Sleep".equalsIgnoreCase(type)) {
+            defaultFileName = "PersonalTracker_Sleep_" + LocalDate.now() + ".csv";
+            fileChooser.setDialogTitle("Export Sleep & Recovery Report to CSV");
         } else {
             defaultFileName = "PersonalTracker_Workouts_" + LocalDate.now() + ".csv";
             fileChooser.setDialogTitle("Export Workouts Report to CSV");
@@ -947,6 +984,12 @@ public class SettingsPanel extends JPanel {
                     } else if ("Nutrition".equalsIgnoreCase(type)) {
                         List<NutritionEntry> list = nutritionDAO.getAllEntries();
                         CsvExporter.exportNutrition(list, file);
+                    } else if ("Water".equalsIgnoreCase(type)) {
+                        List<WaterIntake> list = waterDAO.getAllEntries();
+                        CsvExporter.exportWater(list, file);
+                    } else if ("Sleep".equalsIgnoreCase(type)) {
+                        List<SleepRecord> list = sleepDAO.getAllRecords();
+                        CsvExporter.exportSleep(list, file);
                     } else {
                         List<Workout> list = workoutDAO.getAllWorkouts();
                         CsvExporter.exportWorkouts(list, file);
@@ -989,27 +1032,35 @@ public class SettingsPanel extends JPanel {
                     java.io.File fWorkouts = new java.io.File(dir, "PersonalTracker_Workouts_" + dateStr + ".csv");
                     java.io.File fMeasurements = new java.io.File(dir, "PersonalTracker_Measurements_" + dateStr + ".csv");
                     java.io.File fNutrition = new java.io.File(dir, "PersonalTracker_Nutrition_" + dateStr + ".csv");
+                    java.io.File fWater = new java.io.File(dir, "PersonalTracker_Water_" + dateStr + ".csv");
+                    java.io.File fSleep = new java.io.File(dir, "PersonalTracker_Sleep_" + dateStr + ".csv");
 
                     List<Workout> workouts = workoutDAO.getAllWorkouts();
                     List<BodyMeasurement> measurements = measurementDAO.getAllMeasurements();
                     List<NutritionEntry> nutrition = nutritionDAO.getAllEntries();
+                    List<WaterIntake> water = waterDAO.getAllEntries();
+                    List<SleepRecord> sleep = sleepDAO.getAllRecords();
 
                     CsvExporter.exportWorkouts(workouts, fWorkouts);
                     CsvExporter.exportMeasurements(measurements, fMeasurements);
                     CsvExporter.exportNutrition(nutrition, fNutrition);
-                    return 3;
+                    CsvExporter.exportWater(water, fWater);
+                    CsvExporter.exportSleep(sleep, fSleep);
+                    return 5;
                 }
 
                 @Override
                 protected void done() {
                     try {
                         get();
-                        ToastNotification.showToast(SettingsPanel.this, "All 3 reports exported successfully!", ToastNotification.ToastType.SUCCESS);
+                        ToastNotification.showToast(SettingsPanel.this, "All 5 reports exported successfully!", ToastNotification.ToastType.SUCCESS);
                         JOptionPane.showMessageDialog(SettingsPanel.this,
-                                "All 3 fitness reports exported successfully to folder:\n" + dir.getAbsolutePath() +
+                                "All 5 fitness reports exported successfully to folder:\n" + dir.getAbsolutePath() +
                                 "\n• PersonalTracker_Workouts_" + LocalDate.now() + ".csv" +
                                 "\n• PersonalTracker_Measurements_" + LocalDate.now() + ".csv" +
-                                "\n• PersonalTracker_Nutrition_" + LocalDate.now() + ".csv",
+                                "\n• PersonalTracker_Nutrition_" + LocalDate.now() + ".csv" +
+                                "\n• PersonalTracker_Water_" + LocalDate.now() + ".csv" +
+                                "\n• PersonalTracker_Sleep_" + LocalDate.now() + ".csv",
                                 "Comprehensive Export Complete",
                                 JOptionPane.INFORMATION_MESSAGE);
                     } catch (Exception ex) {

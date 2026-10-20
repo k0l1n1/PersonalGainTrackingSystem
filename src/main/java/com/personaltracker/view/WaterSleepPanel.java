@@ -63,6 +63,11 @@ public class WaterSleepPanel extends JPanel {
     private final JLabel lblWaterCount = new JLabel("0 entries");
     private final JPanel pnlWaterLogs = new JPanel();
 
+    // Hydration Cadence & Pace indicators
+    private final JLabel lblHydrationPace = new JLabel("On Track 💧");
+    private final JLabel lblAvgIntake = new JLabel("Avg -- ml");
+    private final JLabel lblLastSip = new JLabel("Last: --");
+
     // Sleep state
     private final JLabel lblSleepDuration = new JLabel("No sleep logged");
     private final JLabel lblSleepSub = new JLabel("Recommended: 7.0 - 9.0 hrs");
@@ -223,24 +228,24 @@ public class WaterSleepPanel extends JPanel {
         btnGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 76));
         btnGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        ModernButton b250 = new ModernButton("+ 250 ml (Glass)", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton b250 = new ModernButton("250 ml (Glass)", ModernButton.ButtonStyle.SECONDARY,
+                IconFactory.createIcon(IconFactory.IconType.WATER, 12, ThemeConfig.TEXT_SECONDARY));
         b250.setFont(ThemeConfig.FONT_SMALL);
-        b250.setIcon(IconFactory.createIcon(IconFactory.IconType.WATER, 13, ThemeConfig.TEXT_SECONDARY));
         b250.addActionListener(e -> logWater(250));
 
-        ModernButton b500 = new ModernButton("+ 500 ml (Bottle)", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton b500 = new ModernButton("500 ml (Bottle)", ModernButton.ButtonStyle.SECONDARY,
+                IconFactory.createIcon(IconFactory.IconType.WATER, 12, ThemeConfig.TEXT_SECONDARY));
         b500.setFont(ThemeConfig.FONT_SMALL);
-        b500.setIcon(IconFactory.createIcon(IconFactory.IconType.WATER, 13, ThemeConfig.TEXT_SECONDARY));
         b500.addActionListener(e -> logWater(500));
 
-        ModernButton b750 = new ModernButton("+ 750 ml (Shaker)", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton b750 = new ModernButton("750 ml (Shaker)", ModernButton.ButtonStyle.SECONDARY,
+                IconFactory.createIcon(IconFactory.IconType.WATER, 12, ThemeConfig.TEXT_SECONDARY));
         b750.setFont(ThemeConfig.FONT_SMALL);
-        b750.setIcon(IconFactory.createIcon(IconFactory.IconType.WATER, 13, ThemeConfig.TEXT_SECONDARY));
         b750.addActionListener(e -> logWater(750));
 
-        ModernButton bCustom = new ModernButton("+ Custom Amount", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton bCustom = new ModernButton("Custom Amount", ModernButton.ButtonStyle.PRIMARY,
+                IconFactory.createIcon(IconFactory.IconType.PLUS, 12, Color.WHITE));
         bCustom.setFont(ThemeConfig.FONT_SMALL);
-        bCustom.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 12, Color.WHITE));
         bCustom.addActionListener(e -> promptCustomWater());
 
         btnGrid.add(b250);
@@ -248,7 +253,23 @@ public class WaterSleepPanel extends JPanel {
         btnGrid.add(b750);
         btnGrid.add(bCustom);
         center.add(btnGrid);
-        center.add(Box.createVerticalStrut(16));
+        center.add(Box.createVerticalStrut(14));
+
+        // Hydration Cadence / Micro-Insights Strip (balances height with right column)
+        ModernCard cadenceCard = new ModernCard(8, new Insets(8, 12, 8, 12));
+        cadenceCard.setBackgroundColor(ThemeConfig.BG_INPUT);
+        cadenceCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        cadenceCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel cadenceGrid = new JPanel(new GridLayout(1, 3, 8, 0));
+        cadenceGrid.setOpaque(false);
+        cadenceGrid.add(createCadenceItem("CADENCE", lblHydrationPace, ThemeConfig.PRIMARY_ACCENT));
+        cadenceGrid.add(createCadenceItem("AVG INTAKE", lblAvgIntake, ThemeConfig.TEXT_PRIMARY));
+        cadenceGrid.add(createCadenceItem("LATEST SIP", lblLastSip, ThemeConfig.TEXT_SECONDARY));
+        cadenceCard.add(cadenceGrid, BorderLayout.CENTER);
+
+        center.add(cadenceCard);
+        center.add(Box.createVerticalStrut(14));
 
         // History logs header
         JPanel logHeader = new JPanel(new BorderLayout());
@@ -273,8 +294,8 @@ public class WaterSleepPanel extends JPanel {
         scrollLogs.setOpaque(false);
         scrollLogs.getViewport().setOpaque(false);
         scrollLogs.setBorder(BorderFactory.createLineBorder(new Color(0x35, 0x35, 0x35, 120), 1, true));
-        scrollLogs.setPreferredSize(new Dimension(0, 190));
-        scrollLogs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
+        scrollLogs.setPreferredSize(new Dimension(0, 165));
+        scrollLogs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 185));
         scrollLogs.getVerticalScrollBar().setUnitIncrement(14);
         scrollLogs.setAlignmentX(Component.LEFT_ALIGNMENT);
         center.add(scrollLogs);
@@ -300,10 +321,10 @@ public class WaterSleepPanel extends JPanel {
         titleBox.add(icon);
         top.add(titleBox, BorderLayout.WEST);
 
-        ModernButton btnLogSleep = new ModernButton("+ Log Sleep", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btnLogSleep = new ModernButton("Log Sleep", ModernButton.ButtonStyle.PRIMARY,
+                IconFactory.createIcon(IconFactory.IconType.PLUS, 12, Color.WHITE));
         btnLogSleep.setFont(ThemeConfig.FONT_SMALL);
-        btnLogSleep.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 12, Color.WHITE));
-        btnLogSleep.setPreferredSize(new Dimension(115, 32));
+        btnLogSleep.setMargin(new Insets(6, 14, 6, 14));
         btnLogSleep.addActionListener(e -> openSleepDialog());
         top.add(btnLogSleep, BorderLayout.EAST);
         card.add(top, BorderLayout.NORTH);
@@ -314,7 +335,7 @@ public class WaterSleepPanel extends JPanel {
         center.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 0));
 
         // Latest summary card with modern segmented layout
-        ModernCard innerSummary = new ModernCard(12, new Insets(14, 18, 14, 18));
+        ModernCard innerSummary = new ModernCard(10, new Insets(12, 14, 12, 14));
         innerSummary.setBackgroundColor(ThemeConfig.BG_INPUT);
         innerSummary.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
         innerSummary.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -324,38 +345,42 @@ public class WaterSleepPanel extends JPanel {
         sumBox.setOpaque(false);
 
         // 1. Header row
-        JPanel sumTopRow = new JPanel(new BorderLayout());
+        JPanel sumTopRow = new JPanel(new BorderLayout(8, 0));
         sumTopRow.setOpaque(false);
+        sumTopRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sumTopRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
 
-        JPanel titleBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 7, 0));
-        titleBox.setOpaque(false);
-        titleBox.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.SLEEP, 14, ThemeConfig.PRIMARY_ACCENT)));
+        JPanel sumTitleBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        sumTitleBox.setOpaque(false);
+        sumTitleBox.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.SLEEP, 13, ThemeConfig.PRIMARY_ACCENT)));
         JLabel lblSumTitle = new JLabel("LAST NIGHT'S SLEEP");
         lblSumTitle.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblSumTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
-        titleBox.add(lblSumTitle);
-        sumTopRow.add(titleBox, BorderLayout.WEST);
+        sumTitleBox.add(lblSumTitle);
+        sumTopRow.add(sumTitleBox, BorderLayout.WEST);
 
-        lblSleepTag.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblSleepTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblSleepTag.setForeground(ThemeConfig.SUCCESS);
         lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 140), 1, true),
-                BorderFactory.createEmptyBorder(2, 9, 2, 9)
+                BorderFactory.createEmptyBorder(2, 7, 2, 7)
         ));
         sumTopRow.add(lblSleepTag, BorderLayout.EAST);
         sumBox.add(sumTopRow);
-        sumBox.add(Box.createVerticalStrut(10));
+        sumBox.add(Box.createVerticalStrut(8));
 
         // 2. Metrics & Micro-Cards Row
-        JPanel metricsRow = new JPanel(new BorderLayout(16, 0));
+        JPanel metricsRow = new JPanel(new BorderLayout(10, 0));
         metricsRow.setOpaque(false);
+        metricsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        metricsRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 72));
 
         // Left: Hero Duration display
         JPanel heroDurationBox = new JPanel();
         heroDurationBox.setLayout(new BoxLayout(heroDurationBox, BoxLayout.Y_AXIS));
         heroDurationBox.setOpaque(false);
 
-        lblSleepDuration.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblSleepDuration.setFont(new Font("Segoe UI", Font.BOLD, 26));
         lblSleepDuration.setForeground(ThemeConfig.TEXT_PRIMARY);
         heroDurationBox.add(lblSleepDuration);
         heroDurationBox.add(Box.createVerticalStrut(2));
@@ -366,11 +391,11 @@ public class WaterSleepPanel extends JPanel {
         metricsRow.add(heroDurationBox, BorderLayout.WEST);
 
         // Right: Schedule and Quality Pill Cards
-        JPanel pillsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        JPanel pillsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         pillsPanel.setOpaque(false);
 
         // Pill 1: Schedule
-        ModernCard pillSchedule = new ModernCard(8, new Insets(6, 12, 6, 12));
+        ModernCard pillSchedule = new ModernCard(6, new Insets(4, 8, 4, 8));
         pillSchedule.setBackgroundColor(ThemeConfig.BG_DARK);
         JPanel pSched = new JPanel();
         pSched.setLayout(new BoxLayout(pSched, BoxLayout.Y_AXIS));
@@ -386,14 +411,14 @@ public class WaterSleepPanel extends JPanel {
         pSched.add(schedHead);
         pSched.add(Box.createVerticalStrut(2));
 
-        lblSleepTimes.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblSleepTimes.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblSleepTimes.setForeground(ThemeConfig.TEXT_PRIMARY);
         pSched.add(lblSleepTimes);
         pillSchedule.add(pSched);
         pillsPanel.add(pillSchedule);
 
         // Pill 2: Quality
-        ModernCard pillQuality = new ModernCard(8, new Insets(6, 12, 6, 12));
+        ModernCard pillQuality = new ModernCard(6, new Insets(4, 8, 4, 8));
         pillQuality.setBackgroundColor(ThemeConfig.BG_DARK);
         JPanel pQual = new JPanel();
         pQual.setLayout(new BoxLayout(pQual, BoxLayout.Y_AXIS));
@@ -409,7 +434,7 @@ public class WaterSleepPanel extends JPanel {
         pQual.add(qualHead);
         pQual.add(Box.createVerticalStrut(2));
 
-        lblSleepQuality.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblSleepQuality.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblSleepQuality.setForeground(ThemeConfig.TEXT_PRIMARY);
         pQual.add(lblSleepQuality);
         pillQuality.add(pQual);
@@ -420,9 +445,10 @@ public class WaterSleepPanel extends JPanel {
 
         // 3. Optional Sleep Note strip
         pnlSleepNotes.setOpaque(false);
+        pnlSleepNotes.setAlignmentX(Component.LEFT_ALIGNMENT);
         pnlSleepNotes.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0x35, 0x35, 0x35, 120)),
-                BorderFactory.createEmptyBorder(8, 2, 0, 2)
+                BorderFactory.createEmptyBorder(6, 2, 0, 2)
         ));
         pnlSleepNotes.setVisible(false);
 
@@ -484,14 +510,27 @@ public class WaterSleepPanel extends JPanel {
         scrollSleepLogs.setOpaque(false);
         scrollSleepLogs.getViewport().setOpaque(false);
         scrollSleepLogs.setBorder(BorderFactory.createLineBorder(new Color(0x35, 0x35, 0x35, 120), 1, true));
-        scrollSleepLogs.setPreferredSize(new Dimension(0, 105));
-        scrollSleepLogs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 125));
+        scrollSleepLogs.setPreferredSize(new Dimension(0, 135));
+        scrollSleepLogs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 155));
         scrollSleepLogs.getVerticalScrollBar().setUnitIncrement(14);
         scrollSleepLogs.setAlignmentX(Component.LEFT_ALIGNMENT);
         center.add(scrollSleepLogs);
 
         card.add(center, BorderLayout.CENTER);
         return card;
+    }
+
+    private JPanel createCadenceItem(String label, JLabel valLabel, Color valColor) {
+        JPanel p = new JPanel(new GridLayout(2, 1, 0, 1));
+        p.setOpaque(false);
+        JLabel l = new JLabel(label);
+        l.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        l.setForeground(ThemeConfig.TEXT_MUTED);
+        p.add(l);
+        valLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        valLabel.setForeground(valColor);
+        p.add(valLabel);
+        return p;
     }
 
     public void loadData() {
@@ -590,6 +629,30 @@ public class WaterSleepPanel extends JPanel {
         cardWaterStatus.setValue(pct + "%");
         cardWaterStatus.setSubtitle(remaining > 0 ? String.format("%,d ml to goal", remaining) : "Target achieved! 🎉");
 
+        if (!todayWater.isEmpty()) {
+            int avg = totalMl / todayWater.size();
+            lblAvgIntake.setText("Avg " + avg + " ml");
+
+            WaterIntake latest = todayWater.get(todayWater.size() - 1);
+            lblLastSip.setText(latest.getRecordedTime() != null ? DateUtil.formatTime(latest.getRecordedTime()) : "--");
+
+            if (totalMl >= target) {
+                lblHydrationPace.setText("Goal Met! 🎉");
+                lblHydrationPace.setForeground(ThemeConfig.SUCCESS);
+            } else if (pct >= 50) {
+                lblHydrationPace.setText("On Track 💧");
+                lblHydrationPace.setForeground(ThemeConfig.PRIMARY_ACCENT);
+            } else {
+                lblHydrationPace.setText("Needs Intake ⚠️");
+                lblHydrationPace.setForeground(ThemeConfig.WARNING);
+            }
+        } else {
+            lblAvgIntake.setText("Avg -- ml");
+            lblLastSip.setText("None yet");
+            lblHydrationPace.setText("Start Logging 💧");
+            lblHydrationPace.setForeground(ThemeConfig.TEXT_MUTED);
+        }
+
         pnlWaterLogs.revalidate();
         pnlWaterLogs.repaint();
 
@@ -631,7 +694,7 @@ public class WaterSleepPanel extends JPanel {
                 lblSleepTag.setForeground(ThemeConfig.SUCCESS);
                 lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 140), 1, true),
-                        BorderFactory.createEmptyBorder(2, 9, 2, 9)
+                        BorderFactory.createEmptyBorder(2, 7, 2, 7)
                 ));
                 lblSleepSub.setText("Within recommended 7.0 - 9.0 hr window");
             } else if (latest.getDurationHours() < 7.0) {
@@ -639,7 +702,7 @@ public class WaterSleepPanel extends JPanel {
                 lblSleepTag.setForeground(ThemeConfig.WARNING);
                 lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(new Color(0xF5, 0x9E, 0x0B, 140), 1, true),
-                        BorderFactory.createEmptyBorder(2, 9, 2, 9)
+                        BorderFactory.createEmptyBorder(2, 7, 2, 7)
                 ));
                 lblSleepSub.setText(String.format(Locale.US, "%.1f hrs below 8.0 hr target", 8.0 - latest.getDurationHours()));
             } else {
@@ -647,7 +710,7 @@ public class WaterSleepPanel extends JPanel {
                 lblSleepTag.setForeground(ThemeConfig.PRIMARY_ACCENT);
                 lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(new Color(0xF0, 0x44, 0x44, 140), 1, true),
-                        BorderFactory.createEmptyBorder(2, 9, 2, 9)
+                        BorderFactory.createEmptyBorder(2, 7, 2, 7)
                 ));
                 lblSleepSub.setText("Above 9.0 hr standard target");
             }
@@ -683,7 +746,7 @@ public class WaterSleepPanel extends JPanel {
             lblSleepTag.setForeground(ThemeConfig.TEXT_MUTED);
             lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                    BorderFactory.createEmptyBorder(2, 9, 2, 9)
+                    BorderFactory.createEmptyBorder(2, 7, 2, 7)
             ));
             lblSleepSub.setText("Log your sleep session to track recovery");
             pnlSleepNotes.setVisible(false);
@@ -727,6 +790,9 @@ public class WaterSleepPanel extends JPanel {
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
         renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
         renderer.setMaximumBarWidth(0.18);
+        renderer.setShadowVisible(false);
+        renderer.setDrawBarOutline(false);
+        renderer.setItemMargin(0.04);
 
         // 8h Target guideline line
         ValueMarker targetMarker = new ValueMarker(8.0);

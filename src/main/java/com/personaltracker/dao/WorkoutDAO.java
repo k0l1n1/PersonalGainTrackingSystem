@@ -49,7 +49,10 @@ public class WorkoutDAO {
     }
 
     public void updateWorkout(Workout workout) throws Exception {
-        if (workout.getId() == null) return;
+        if (workout.getId() == null || workout.getId().isBlank()) {
+            saveWorkout(workout);
+            return;
+        }
         client.executePatch("workouts", "id=eq." + workout.getId(), workout);
         if (workout.getExercises() != null && !com.personaltracker.config.AppConfig.getInstance().isMockMode()) {
             client.executeDelete("workout_exercises", "workout_id=eq." + workout.getId());
