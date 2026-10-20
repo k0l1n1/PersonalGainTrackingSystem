@@ -73,7 +73,6 @@ public class WaterSleepPanel extends JPanel {
     private final JLabel lblSleepSub = new JLabel("Recommended: 7.0 - 9.0 hrs");
     private final JLabel lblSleepTag = new JLabel("Target: 8.0 hrs");
     private final JLabel lblSleepTimes = new JLabel("-- → --");
-    private final JLabel lblSleepQuality = new JLabel("-- / 5");
     private final JLabel lblSleepNotes = new JLabel("");
     private final JPanel pnlSleepNotes = new JPanel(new BorderLayout());
     private final JLabel lblSleepAvgAnnotation = new JLabel("Week Avg: --");
@@ -401,12 +400,12 @@ public class WaterSleepPanel extends JPanel {
         heroDurationBox.add(lblSleepSub);
         metricsRow.add(heroDurationBox, BorderLayout.WEST);
 
-        // Right: Schedule and Quality Pill Cards
+        // Right: Schedule Pill Card
         JPanel pillsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         pillsPanel.setOpaque(false);
 
-        // Pill 1: Schedule
-        ModernCard pillSchedule = new ModernCard(6, new Insets(3, 8, 3, 8));
+        // Schedule
+        ModernCard pillSchedule = new ModernCard(6, new Insets(4, 10, 4, 10));
         pillSchedule.setBackgroundColor(ThemeConfig.BG_DARK);
         JPanel pSched = new JPanel();
         pSched.setLayout(new BoxLayout(pSched, BoxLayout.Y_AXIS));
@@ -421,33 +420,11 @@ public class WaterSleepPanel extends JPanel {
         schedHead.add(lblSchedTitle);
         pSched.add(schedHead);
 
-        lblSleepTimes.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblSleepTimes.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblSleepTimes.setForeground(ThemeConfig.TEXT_PRIMARY);
         pSched.add(lblSleepTimes);
         pillSchedule.add(pSched);
         pillsPanel.add(pillSchedule);
-
-        // Pill 2: Quality
-        ModernCard pillQuality = new ModernCard(6, new Insets(3, 8, 3, 8));
-        pillQuality.setBackgroundColor(ThemeConfig.BG_DARK);
-        JPanel pQual = new JPanel();
-        pQual.setLayout(new BoxLayout(pQual, BoxLayout.Y_AXIS));
-        pQual.setOpaque(false);
-
-        JPanel qualHead = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        qualHead.setOpaque(false);
-        qualHead.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.STAR, 10, ThemeConfig.WARNING)));
-        JLabel lblQualTitle = new JLabel("QUALITY");
-        lblQualTitle.setFont(new Font("Segoe UI", Font.BOLD, 9));
-        lblQualTitle.setForeground(ThemeConfig.TEXT_MUTED);
-        qualHead.add(lblQualTitle);
-        pQual.add(qualHead);
-
-        lblSleepQuality.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblSleepQuality.setForeground(ThemeConfig.TEXT_PRIMARY);
-        pQual.add(lblSleepQuality);
-        pillQuality.add(pQual);
-        pillsPanel.add(pillQuality);
 
         metricsRow.add(pillsPanel, BorderLayout.EAST);
         sumBox.add(metricsRow);
@@ -693,17 +670,6 @@ public class WaterSleepPanel extends JPanel {
                 lblSleepTimes.setText("-- → --");
             }
 
-            int score = latest.getQualityScore() != null ? latest.getQualityScore() : 3;
-            String scoreDesc;
-            switch (score) {
-                case 5: scoreDesc = "Excellent"; break;
-                case 4: scoreDesc = "Restful"; break;
-                case 3: scoreDesc = "Moderate"; break;
-                case 2: scoreDesc = "Light"; break;
-                default: scoreDesc = "Poor"; break;
-            }
-            lblSleepQuality.setText(score + " / 5 (" + scoreDesc + ")");
-
             if (latestHours >= 7.0 && latestHours <= 9.0) {
                 lblSleepTag.setText("Optimal Recovery");
                 lblSleepTag.setForeground(ThemeConfig.SUCCESS);
@@ -738,7 +704,11 @@ public class WaterSleepPanel extends JPanel {
             }
 
             cardLastNightSleep.setValue(String.format(Locale.US, "%.1f hrs", latestHours));
-            cardLastNightSleep.setSubtitle("Score: " + score + "/5 · " + scoreDesc);
+            if (latest.getBedtime() != null && latest.getWakeTime() != null) {
+                cardLastNightSleep.setSubtitle(DateUtil.formatTime(latest.getBedtime()) + " → " + DateUtil.formatTime(latest.getWakeTime()));
+            } else {
+                cardLastNightSleep.setSubtitle(latestHours >= 7.0 && latestHours <= 9.0 ? "Target 7-9h met" : "Target: 8.0 hrs/night");
+            }
 
             // Calculate 7-day average
             double sum7 = 0.0;
@@ -758,7 +728,6 @@ public class WaterSleepPanel extends JPanel {
         } else {
             lblSleepDuration.setText("No sleep logged");
             lblSleepTimes.setText("-- → --");
-            lblSleepQuality.setText("-- / 5");
             lblSleepTag.setText("Target: 8.0 hrs");
             lblSleepTag.setForeground(ThemeConfig.TEXT_MUTED);
             lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
@@ -878,12 +847,6 @@ public class WaterSleepPanel extends JPanel {
                 lblInterval.setForeground(ThemeConfig.TEXT_MUTED);
                 left.add(lblInterval);
             }
-
-            left.add(new JLabel(IconFactory.createIcon(IconFactory.IconType.STAR, 11, ThemeConfig.WARNING)));
-            JLabel lblScore = new JLabel(s.getQualityScore() + "/5");
-            lblScore.setFont(ThemeConfig.FONT_SMALL);
-            lblScore.setForeground(ThemeConfig.TEXT_SECONDARY);
-            left.add(lblScore);
 
             row.add(left, BorderLayout.WEST);
 
@@ -1014,16 +977,14 @@ public class WaterSleepPanel extends JPanel {
         private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString(), "YYYY-MM-DD");
         private final ModernTextField txtBedTime = new ModernTextField("", "23:00 (HH:MM)");
         private final ModernTextField txtWakeTime = new ModernTextField("", "07:00 (HH:MM)");
-        private final JComboBox<Integer> cmbQuality = new JComboBox<>(new Integer[]{5, 4, 3, 2, 1});
         private final ModernTextField txtNotes = new ModernTextField("", "e.g. Felt well rested, deep sleep");
 
-        private final List<JButton> qualityChips = new ArrayList<>();
         private final JLabel lblLiveDuration = new JLabel("Calculated Duration: --h --m • Enter times above");
 
         public SleepDialog(Window owner) {
             super(owner, "Log Sleep Session", ModalityType.APPLICATION_MODAL);
-            setSize(520, 660);
-            setMinimumSize(new Dimension(500, 620));
+            setSize(520, 500);
+            setMinimumSize(new Dimension(500, 460));
             setLocationRelativeTo(owner);
             setResizable(false);
             getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -1043,10 +1004,10 @@ public class WaterSleepPanel extends JPanel {
 
             JPanel presetRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
             presetRow.setOpaque(false);
-            presetRow.add(createSleepScheduleChip("23:00 - 07:00 (8h)", "23:00", "07:00", 5, "Felt deeply rested"));
-            presetRow.add(createSleepScheduleChip("23:30 - 07:30 (8h)", "23:30", "07:30", 4, "Good solid sleep"));
-            presetRow.add(createSleepScheduleChip("00:00 - 07:00 (7h)", "00:00", "07:00", 4, "Normal night"));
-            presetRow.add(createSleepScheduleChip("22:30 - 06:30 (8h)", "22:30", "06:30", 5, "Early to bed, high energy"));
+            presetRow.add(createSleepScheduleChip("23:00 - 07:00 (8h)", "23:00", "07:00", "Felt rested"));
+            presetRow.add(createSleepScheduleChip("23:30 - 07:30 (8h)", "23:30", "07:30", "Solid sleep"));
+            presetRow.add(createSleepScheduleChip("00:00 - 07:00 (7h)", "00:00", "07:00", "Normal night"));
+            presetRow.add(createSleepScheduleChip("22:30 - 06:30 (8h)", "22:30", "06:30", "Early to bed"));
             form.add(presetRow);
             form.add(Box.createVerticalStrut(14));
 
@@ -1105,32 +1066,8 @@ public class WaterSleepPanel extends JPanel {
             form.add(durationBox);
             form.add(Box.createVerticalStrut(14));
 
-            // Section 4: Quality Rating with Vector Star Chips
-            JPanel qualitySection = new JPanel();
-            qualitySection.setLayout(new BoxLayout(qualitySection, BoxLayout.Y_AXIS));
-            qualitySection.setOpaque(false);
-            JLabel lblQualTag = new JLabel("Sleep Quality Rating");
-            lblQualTag.setFont(ThemeConfig.FONT_SMALL);
-            lblQualTag.setForeground(ThemeConfig.TEXT_SECONDARY);
-            qualitySection.add(lblQualTag);
-            qualitySection.add(Box.createVerticalStrut(6));
-
-            JPanel starRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-            starRow.setOpaque(false);
-            starRow.add(createQualityChip("1 Poor", 1));
-            starRow.add(createQualityChip("2 Fair", 2));
-            starRow.add(createQualityChip("3 OK", 3));
-            starRow.add(createQualityChip("4 Good", 4));
-            starRow.add(createQualityChip("5 Great", 5));
-            qualitySection.add(starRow);
-            form.add(qualitySection);
-            form.add(Box.createVerticalStrut(14));
-
-            // Default selection: 4 Good
-            selectQuality(4);
-
-            // Section 5: Notes
-            form.add(createFieldRow("Notes / Sleep Quality", txtNotes));
+            // Section 4: Notes (Optional)
+            form.add(createFieldRow("Notes (Optional)", txtNotes));
             form.add(Box.createVerticalStrut(10));
 
             JScrollPane scrollPane = new JScrollPane(form);
@@ -1141,7 +1078,7 @@ public class WaterSleepPanel extends JPanel {
             scrollPane.getVerticalScrollBar().setUnitIncrement(16);
             add(scrollPane, BorderLayout.CENTER);
 
-            // Section 6: Dedicated Non-Clipping Pinned Actions Footer
+            // Dedicated Non-Clipping Pinned Actions Footer
             JPanel actions = new JPanel(new BorderLayout(12, 0));
             actions.setOpaque(true);
             actions.setBackground(ThemeConfig.BG_CARD);
@@ -1188,7 +1125,7 @@ public class WaterSleepPanel extends JPanel {
             SwingUtilities.invokeLater(() -> txtBedTime.requestFocusInWindow());
         }
 
-        private JButton createSleepScheduleChip(String label, String bed, String wake, int quality, String note) {
+        private JButton createSleepScheduleChip(String label, String bed, String wake, String note) {
             JButton btn = new JButton(label);
             btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             btn.setForeground(ThemeConfig.TEXT_PRIMARY);
@@ -1202,39 +1139,10 @@ public class WaterSleepPanel extends JPanel {
             btn.addActionListener(e -> {
                 txtBedTime.setText(bed);
                 txtWakeTime.setText(wake);
-                selectQuality(quality);
                 txtNotes.setText(note);
                 updateLiveDuration();
             });
             return btn;
-        }
-
-        private JButton createQualityChip(String label, int val) {
-            JButton btn = new JButton(label, IconFactory.createIcon(IconFactory.IconType.STAR, 12, ThemeConfig.WARNING));
-            btn.setFont(new Font("Segoe UI", Font.BOLD, 11));
-            btn.putClientProperty("qualityVal", val);
-            btn.setFocusPainted(false);
-            btn.setIconTextGap(6);
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.addActionListener(e -> selectQuality(val));
-            qualityChips.add(btn);
-            return btn;
-        }
-
-        private void selectQuality(int val) {
-            cmbQuality.setSelectedItem(val);
-            for (JButton chip : qualityChips) {
-                Object prop = chip.getClientProperty("qualityVal");
-                if (prop instanceof Integer) {
-                    boolean active = ((Integer) prop) == val;
-                    chip.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
-                    chip.setForeground(active ? Color.WHITE : ThemeConfig.TEXT_PRIMARY);
-                    chip.setBorder(BorderFactory.createCompoundBorder(
-                            BorderFactory.createLineBorder(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
-                            BorderFactory.createEmptyBorder(6, 10, 6, 10)
-                    ));
-                }
-            }
         }
 
         private JButton createQuickPill(String text, boolean active) {
@@ -1271,9 +1179,8 @@ public class WaterSleepPanel extends JPanel {
                 if (totalMins < 0) totalMins += 24 * 60;
                 int hours = totalMins / 60;
                 int mins = totalMins % 60;
-                String qualText = totalMins >= 420 ? "Optimal Recovery" : (totalMins >= 360 ? "Moderate Sleep" : "Sleep Debt Warning");
-                lblLiveDuration.setText(String.format("Calculated Duration: %dh %02dm • %s", hours, mins, qualText));
-                lblLiveDuration.setForeground(totalMins >= 420 ? ThemeConfig.SUCCESS : ThemeConfig.WARNING);
+                lblLiveDuration.setText(String.format("Calculated Duration: %dh %02dm", hours, mins));
+                lblLiveDuration.setForeground(ThemeConfig.TEXT_PRIMARY);
             } catch (Exception ignored) {
                 lblLiveDuration.setText("Enter valid HH:MM times (e.g. 23:00 and 07:00)");
                 lblLiveDuration.setForeground(ThemeConfig.TEXT_MUTED);
@@ -1328,7 +1235,7 @@ public class WaterSleepPanel extends JPanel {
                     wake = wake.plusDays(1);
                 }
 
-                int quality = (Integer) cmbQuality.getSelectedItem();
+                int quality = 3; // Neutral default for DB schema
                 String notes = txtNotes.getText().trim();
 
                 SleepRecord record = new SleepRecord(date, bed, wake, quality, notes);
