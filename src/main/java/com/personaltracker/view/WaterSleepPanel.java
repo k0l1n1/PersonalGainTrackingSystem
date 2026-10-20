@@ -263,7 +263,7 @@ public class WaterSleepPanel extends JPanel {
 
         JPanel cadenceGrid = new JPanel(new GridLayout(1, 3, 8, 0));
         cadenceGrid.setOpaque(false);
-        cadenceGrid.add(createCadenceItem("CADENCE", lblHydrationPace, ThemeConfig.PRIMARY_ACCENT));
+        cadenceGrid.add(createCadenceItem("CADENCE", lblHydrationPace, ThemeConfig.SUCCESS));
         cadenceGrid.add(createCadenceItem("AVG INTAKE", lblAvgIntake, ThemeConfig.TEXT_PRIMARY));
         cadenceGrid.add(createCadenceItem("LATEST SIP", lblLastSip, ThemeConfig.TEXT_SECONDARY));
         cadenceCard.add(cadenceGrid, BorderLayout.CENTER);
@@ -588,6 +588,11 @@ public class WaterSleepPanel extends JPanel {
             btnDel.setBorderPainted(false);
             btnDel.setFocusPainted(false);
             btnDel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btnDel.setToolTipText("Remove entry");
+            btnDel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btnDel.setForeground(ThemeConfig.PRIMARY_ACCENT); }
+                @Override public void mouseExited(java.awt.event.MouseEvent e) { btnDel.setForeground(ThemeConfig.TEXT_MUTED); }
+            });
             btnDel.addActionListener(e -> deleteWater(wi));
             row.add(btnDel, BorderLayout.EAST);
 
@@ -621,13 +626,13 @@ public class WaterSleepPanel extends JPanel {
 
         lblWaterBadge.setText(pct + "% Goal");
         lblWaterTarget.setText("Target: " + String.format("%,d ml", target) + " (" + pct + "%)");
-        lblWaterRemaining.setText(remaining > 0 ? String.format("%,d ml remaining", remaining) : "Daily goal met! 🎉");
+        lblWaterRemaining.setText(remaining > 0 ? String.format("%,d ml remaining", remaining) : "Daily goal met!");
 
         cardTodayWater.setValue(String.format("%,d ml", totalMl));
         cardTodayWater.setSubtitle(pct + "% of " + String.format("%,d ml", target) + " goal");
 
         cardWaterStatus.setValue(pct + "%");
-        cardWaterStatus.setSubtitle(remaining > 0 ? String.format("%,d ml to goal", remaining) : "Target achieved! 🎉");
+        cardWaterStatus.setSubtitle(remaining > 0 ? String.format("%,d ml to goal", remaining) : "Target achieved!");
 
         if (!todayWater.isEmpty()) {
             int avg = totalMl / todayWater.size();
@@ -637,19 +642,19 @@ public class WaterSleepPanel extends JPanel {
             lblLastSip.setText(latest.getRecordedTime() != null ? DateUtil.formatTime(latest.getRecordedTime()) : "--");
 
             if (totalMl >= target) {
-                lblHydrationPace.setText("Goal Met! 🎉");
+                lblHydrationPace.setText("Goal Met");
                 lblHydrationPace.setForeground(ThemeConfig.SUCCESS);
             } else if (pct >= 50) {
-                lblHydrationPace.setText("On Track 💧");
-                lblHydrationPace.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                lblHydrationPace.setText("On Track");
+                lblHydrationPace.setForeground(ThemeConfig.SUCCESS);
             } else {
-                lblHydrationPace.setText("Needs Intake ⚠️");
+                lblHydrationPace.setText("Needs Intake");
                 lblHydrationPace.setForeground(ThemeConfig.WARNING);
             }
         } else {
             lblAvgIntake.setText("Avg -- ml");
             lblLastSip.setText("None yet");
-            lblHydrationPace.setText("Start Logging 💧");
+            lblHydrationPace.setText("Start Logging");
             lblHydrationPace.setForeground(ThemeConfig.TEXT_MUTED);
         }
 

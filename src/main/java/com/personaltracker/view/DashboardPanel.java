@@ -714,7 +714,7 @@ public class DashboardPanel extends JPanel {
 
         lblWaterValue.setText(String.format("%,d / %,d ml", currentWaterMl, waterTarget));
         lblWaterPctBadge.setText(waterPct + "%");
-        lblWaterSub.setText(remaining > 0 ? String.format("%,d ml to goal", remaining) : "Daily goal met! 🎉");
+        lblWaterSub.setText(remaining > 0 ? String.format("%,d ml to goal", remaining) : "Daily goal met!");
 
         // 9. Sleep
         if (sleep != null && !sleep.isEmpty()) {

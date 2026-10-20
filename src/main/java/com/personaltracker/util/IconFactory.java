@@ -118,13 +118,13 @@ public class IconFactory {
                     break;
 
                 case WATER:
-                    // Water drop
+                    // Water drop (solid filled teardrop)
                     Path2D drop = new Path2D.Float();
-                    drop.moveTo(s * 0.5f, s * 0.15f);
-                    drop.curveTo(s * 0.25f, s * 0.52f, s * 0.22f, s * 0.78f, s * 0.5f, s * 0.85f);
-                    drop.curveTo(s * 0.78f, s * 0.78f, s * 0.75f, s * 0.52f, s * 0.5f, s * 0.15f);
+                    drop.moveTo(s * 0.5f, s * 0.10f);
+                    drop.curveTo(s * 0.22f, s * 0.50f, s * 0.20f, s * 0.82f, s * 0.5f, s * 0.88f);
+                    drop.curveTo(s * 0.80f, s * 0.82f, s * 0.78f, s * 0.50f, s * 0.5f, s * 0.10f);
                     drop.closePath();
-                    g2.draw(drop);
+                    g2.fill(drop);
                     break;
 
                 case SLEEP:
