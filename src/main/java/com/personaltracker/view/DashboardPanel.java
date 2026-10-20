@@ -83,7 +83,6 @@ public class DashboardPanel extends JPanel {
     private final JLabel lblWaterSub = new JLabel("2,500 ml remaining");
     private final JLabel lblSleepDurationVal = new JLabel("No sleep logged");
     private final JLabel lblSleepSchedule = new JLabel("Bedtime: -- | Wake: --");
-    private final JLabel lblSleepQualityScore = new JLabel("");
 
     // Recent activity & Reminders
     private final JPanel pnlRecentActivity = new JPanel();
@@ -499,11 +498,7 @@ public class DashboardPanel extends JPanel {
 
         lblSleepSchedule.setFont(ThemeConfig.FONT_SMALL);
         lblSleepSchedule.setForeground(ThemeConfig.TEXT_MUTED);
-        sleepDetailsRow.add(lblSleepSchedule, BorderLayout.WEST);
-
-        lblSleepQualityScore.setFont(ThemeConfig.FONT_SMALL);
-        lblSleepQualityScore.setForeground(ThemeConfig.WARNING);
-        sleepDetailsRow.add(lblSleepQualityScore, BorderLayout.EAST);
+        sleepDetailsRow.add(lblSleepSchedule, BorderLayout.CENTER);
         sleepBox.add(sleepDetailsRow);
 
         podSleep.add(sleepBox, BorderLayout.CENTER);
@@ -733,16 +728,9 @@ public class DashboardPanel extends JPanel {
             } else {
                 lblSleepSchedule.setText(latestSleep.getSleepDate() != null ? DateUtil.formatDate(latestSleep.getSleepDate()) : "Recorded");
             }
-            int score = latestSleep.getQualityScore() != null ? latestSleep.getQualityScore() : 3;
-            lblSleepQualityScore.setIcon(IconFactory.createIcon(IconFactory.IconType.STAR, 11, ThemeConfig.WARNING));
-            lblSleepQualityScore.setText(score + "/5");
-            lblSleepQualityScore.setVisible(true);
         } else {
             lblSleepDurationVal.setText("No sleep logged");
             lblSleepSchedule.setText("Tap Details → to log");
-            lblSleepQualityScore.setIcon(null);
-            lblSleepQualityScore.setText("");
-            lblSleepQualityScore.setVisible(false);
         }
 
         // 10. Reminders
