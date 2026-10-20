@@ -12,11 +12,7 @@ import com.personaltracker.model.NutritionEntry;
 import com.personaltracker.model.UserSession;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.DateUtil;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PiePlot;
-import org.jfree.data.general.DefaultPieDataset;
+import java.awt.geom.Arc2D;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -44,13 +40,18 @@ public class NutritionPanel extends JPanel {
     private final JLabel lblCalorieTarget = new JLabel("Target: 2,000 kcal");
     private final ModernProgressBar barCalories = new ModernProgressBar(0, 2000);
 
-    // Macros stats
-    private final JLabel lblProtein = new JLabel("0.0 g");
-    private final JLabel lblCarbs = new JLabel("0.0 g");
-    private final JLabel lblFat = new JLabel("0.0 g");
+    // Macro Color Palette
+    public static final Color COLOR_PROTEIN = Color.decode("#F04444"); // Crimson Accent
+    public static final Color COLOR_CARBS = Color.decode("#F59E0B");   // Warm Amber Gold
+    public static final Color COLOR_FAT = Color.decode("#38BDF8");     // Sky Blue
 
-    // Donut/Pie chart
-    private final JPanel pnlMacroChart = new JPanel(new BorderLayout());
+    // Macros stats
+    private final JLabel lblProtein = new JLabel("0.0 g  •  0%");
+    private final JLabel lblCarbs = new JLabel("0.0 g  •  0%");
+    private final JLabel lblFat = new JLabel("0.0 g  •  0%");
+
+    // Donut chart
+    private final MacroDonutChart macroDonutChart = new MacroDonutChart();
 
     // Meal section panels
     private final JPanel pnlBreakfast = new JPanel();
@@ -168,18 +169,18 @@ public class NutritionPanel extends JPanel {
         macTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
         cardMacros.add(macTitle, BorderLayout.NORTH);
 
-        JPanel macCenter = new JPanel(new BorderLayout(14, 0));
+        JPanel macCenter = new JPanel(new BorderLayout(16, 0));
         macCenter.setOpaque(false);
 
-        pnlMacroChart.setOpaque(false);
-        pnlMacroChart.setPreferredSize(new Dimension(140, 140));
-        macCenter.add(pnlMacroChart, BorderLayout.WEST);
+        macroDonutChart.setPreferredSize(new Dimension(140, 140));
+        macCenter.add(macroDonutChart, BorderLayout.WEST);
 
-        JPanel macStats = new JPanel(new GridLayout(3, 1, 0, 6));
+        JPanel macStats = new JPanel(new GridLayout(3, 1, 0, 8));
         macStats.setOpaque(false);
-        macStats.add(createMacroIndicator("Protein", lblProtein, ThemeConfig.PRIMARY_ACCENT));
-        macStats.add(createMacroIndicator("Carbohydrates", lblCarbs, ThemeConfig.WARNING));
-        macStats.add(createMacroIndicator("Healthy Fats", lblFat, ThemeConfig.ERROR));
+        macStats.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        macStats.add(createMacroIndicator("Protein", lblProtein, COLOR_PROTEIN));
+        macStats.add(createMacroIndicator("Carbohydrates", lblCarbs, COLOR_CARBS));
+        macStats.add(createMacroIndicator("Healthy Fats", lblFat, COLOR_FAT));
         macCenter.add(macStats, BorderLayout.CENTER);
 
         cardMacros.add(macCenter, BorderLayout.CENTER);
@@ -222,21 +223,28 @@ public class NutritionPanel extends JPanel {
         JPanel p = new JPanel(new BorderLayout(8, 0));
         p.setOpaque(false);
 
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        left.setOpaque(false);
+
         JPanel dot = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
-                g.setColor(color);
-                g.fillOval(0, 4, 10, 10);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(color);
+                g2.fillOval(0, 5, 8, 8);
+                g2.dispose();
             }
         };
         dot.setOpaque(false);
-        dot.setPreferredSize(new Dimension(12, 18));
-        p.add(dot, BorderLayout.WEST);
+        dot.setPreferredSize(new Dimension(10, 18));
+        left.add(dot);
 
         JLabel l = new JLabel(label);
         l.setFont(ThemeConfig.FONT_BODY);
         l.setForeground(ThemeConfig.TEXT_SECONDARY);
-        p.add(l, BorderLayout.CENTER);
+        left.add(l);
+        p.add(left, BorderLayout.WEST);
 
         valLbl.setFont(ThemeConfig.FONT_BODY_BOLD);
         valLbl.setForeground(ThemeConfig.TEXT_PRIMARY);
@@ -362,13 +370,23 @@ public class NutritionPanel extends JPanel {
         int pct = (int) Math.round(((double) totalCal / calTarget) * 100);
         lblCalorieTarget.setText("Target: " + calTarget + " kcal (" + pct + "%)");
 
-        // Update Macro labels
-        lblProtein.setText(String.format("%.1f g", totalProtein));
-        lblCarbs.setText(String.format("%.1f g", totalCarbs));
-        lblFat.setText(String.format("%.1f g", totalFat));
+        // Update Macro labels & percentages
+        double totalMacroKcal = (totalProtein * 4.0) + (totalCarbs * 4.0) + (totalFat * 9.0);
+        if (totalMacroKcal > 0) {
+            int pctP = (int) Math.round(((totalProtein * 4.0) / totalMacroKcal) * 100);
+            int pctC = (int) Math.round(((totalCarbs * 4.0) / totalMacroKcal) * 100);
+            int pctF = Math.max(0, 100 - pctP - pctC);
+            lblProtein.setText(String.format("%.1f g  •  %d%%", totalProtein, pctP));
+            lblCarbs.setText(String.format("%.1f g  •  %d%%", totalCarbs, pctC));
+            lblFat.setText(String.format("%.1f g  •  %d%%", totalFat, pctF));
+        } else {
+            lblProtein.setText("0.0 g  •  0%");
+            lblCarbs.setText("0.0 g  •  0%");
+            lblFat.setText("0.0 g  •  0%");
+        }
 
         // Update Macro Chart
-        updateMacroChart(totalProtein, totalCarbs, totalFat);
+        macroDonutChart.setData(totalProtein, totalCarbs, totalFat, totalCal);
 
         if (entriesForDate.size() >= 3) {
             new Thread(() -> {
@@ -443,41 +461,118 @@ public class NutritionPanel extends JPanel {
         return row;
     }
 
-    private void updateMacroChart(double p, double c, double f) {
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        if (p == 0 && c == 0 && f == 0) {
-            dataset.setValue("No Data", 1);
-        } else {
-            dataset.setValue("Protein", p * 4); // 4 kcal per gram
-            dataset.setValue("Carbs", c * 4);   // 4 kcal per gram
-            dataset.setValue("Fat", f * 9);     // 9 kcal per gram
+    /**
+     * Custom minimal anti-aliased macronutrient donut chart.
+     * Preserves a 1:1 circular ratio without distortion and displays center calorie summary.
+     */
+    private static class MacroDonutChart extends JComponent {
+        private static final long serialVersionUID = 1L;
+
+        private double proteinKcal = 0;
+        private double carbsKcal = 0;
+        private double fatKcal = 0;
+        private int totalCalories = 0;
+
+        public MacroDonutChart() {
+            setOpaque(false);
+            setPreferredSize(new Dimension(140, 140));
+            setMinimumSize(new Dimension(120, 120));
         }
 
-        JFreeChart chart = ChartFactory.createRingChart(null, dataset, false, false, false);
-        chart.setBackgroundPaint(new Color(0, 0, 0, 0));
-
-        PiePlot plot = (PiePlot) chart.getPlot();
-        plot.setBackgroundPaint(new Color(0, 0, 0, 0));
-        plot.setOutlinePaint(null);
-        plot.setShadowPaint(null);
-        plot.setLabelGenerator(null);
-
-        if (p > 0 || c > 0 || f > 0) {
-            plot.setSectionPaint("Protein", ThemeConfig.PRIMARY_ACCENT);
-            plot.setSectionPaint("Carbs", ThemeConfig.WARNING);
-            plot.setSectionPaint("Fat", ThemeConfig.ACCENT_HOVER);
-        } else {
-            plot.setSectionPaint("No Data", new Color(0x35, 0x35, 0x35, 140));
+        public void setData(double pGrams, double cGrams, double fGrams, int totalCal) {
+            this.proteinKcal = Math.max(0, pGrams * 4.0);
+            this.carbsKcal = Math.max(0, cGrams * 4.0);
+            this.fatKcal = Math.max(0, fGrams * 9.0);
+            this.totalCalories = totalCal;
+            repaint();
         }
 
-        ChartPanel chartPanel = new ChartPanel(chart);
-        chartPanel.setOpaque(false);
-        chartPanel.setBackground(new Color(0, 0, 0, 0));
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
-        pnlMacroChart.removeAll();
-        pnlMacroChart.add(chartPanel, BorderLayout.CENTER);
-        pnlMacroChart.revalidate();
-        pnlMacroChart.repaint();
+            int w = getWidth();
+            int h = getHeight();
+            int diameter = Math.min(w, h) - 18;
+            if (diameter < 20) {
+                g2.dispose();
+                return;
+            }
+
+            int x = (w - diameter) / 2;
+            int y = (h - diameter) / 2;
+            int strokeWidth = 14;
+
+            // Background subtle track
+            g2.setStroke(new BasicStroke(strokeWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.setColor(new Color(0x28, 0x28, 0x28));
+            g2.drawOval(x + strokeWidth / 2, y + strokeWidth / 2, diameter - strokeWidth, diameter - strokeWidth);
+
+            double totalKcal = proteinKcal + carbsKcal + fatKcal;
+            if (totalKcal > 0) {
+                double pExtent = (proteinKcal / totalKcal) * 360.0;
+                double cExtent = (carbsKcal / totalKcal) * 360.0;
+                double fExtent = 360.0 - pExtent - cExtent;
+
+                double startAngle = 90.0; // Start at 12 o'clock
+                double gap = 3.0; // Minimal elegant gap between arcs
+
+                // 1. Protein Arc
+                if (pExtent > gap) {
+                    g2.setColor(COLOR_PROTEIN);
+                    g2.draw(new Arc2D.Double(x + strokeWidth / 2.0, y + strokeWidth / 2.0,
+                            diameter - strokeWidth, diameter - strokeWidth,
+                            startAngle - pExtent + (gap / 2.0), pExtent - gap, Arc2D.OPEN));
+                }
+                startAngle -= pExtent;
+
+                // 2. Carbs Arc
+                if (cExtent > gap) {
+                    g2.setColor(COLOR_CARBS);
+                    g2.draw(new Arc2D.Double(x + strokeWidth / 2.0, y + strokeWidth / 2.0,
+                            diameter - strokeWidth, diameter - strokeWidth,
+                            startAngle - cExtent + (gap / 2.0), cExtent - gap, Arc2D.OPEN));
+                }
+                startAngle -= cExtent;
+
+                // 3. Fats Arc
+                if (fExtent > gap) {
+                    g2.setColor(COLOR_FAT);
+                    g2.draw(new Arc2D.Double(x + strokeWidth / 2.0, y + strokeWidth / 2.0,
+                            diameter - strokeWidth, diameter - strokeWidth,
+                            startAngle - fExtent + (gap / 2.0), fExtent - gap, Arc2D.OPEN));
+                }
+            }
+
+            // Center Text: Total Calories
+            Font numFont = new Font("Segoe UI", Font.BOLD, 17);
+            Font lblFont = new Font("Segoe UI", Font.BOLD, 10);
+
+            String calStr = String.valueOf(totalCalories);
+            String unitStr = "kcal";
+
+            FontMetrics fmNum = g2.getFontMetrics(numFont);
+            FontMetrics fmLbl = g2.getFontMetrics(lblFont);
+
+            int totalTextHeight = fmNum.getAscent() + fmLbl.getAscent() + 2;
+            int textYStart = (h - totalTextHeight) / 2 + fmNum.getAscent() - 2;
+
+            g2.setFont(numFont);
+            g2.setColor(ThemeConfig.TEXT_PRIMARY);
+            int calX = (w - fmNum.stringWidth(calStr)) / 2;
+            g2.drawString(calStr, calX, textYStart);
+
+            g2.setFont(lblFont);
+            g2.setColor(ThemeConfig.TEXT_MUTED);
+            int unitX = (w - fmLbl.stringWidth(unitStr)) / 2;
+            g2.drawString(unitStr, unitX, textYStart + fmLbl.getAscent() + 2);
+
+            g2.dispose();
+        }
     }
 
     private void openFoodDialog(NutritionEntry editing, String defaultMeal) {
