@@ -979,12 +979,10 @@ public class WaterSleepPanel extends JPanel {
         private final ModernTextField txtWakeTime = new ModernTextField("", "07:00 (HH:MM)");
         private final ModernTextField txtNotes = new ModernTextField("", "e.g. Felt well rested, deep sleep");
 
-        private final JLabel lblLiveDuration = new JLabel("Calculated Duration: --h --m • Enter times above");
-
         public SleepDialog(Window owner) {
             super(owner, "Log Sleep Session", ModalityType.APPLICATION_MODAL);
-            setSize(520, 500);
-            setMinimumSize(new Dimension(500, 460));
+            setSize(520, 430);
+            setMinimumSize(new Dimension(500, 390));
             setLocationRelativeTo(owner);
             setResizable(false);
             getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -1049,23 +1047,6 @@ public class WaterSleepPanel extends JPanel {
             form.add(r2);
             form.add(Box.createVerticalStrut(14));
 
-            // Live Sleep Duration Box
-            JPanel durationBox = new JPanel(new BorderLayout(8, 4));
-            durationBox.setBackground(ThemeConfig.BG_CARD);
-            durationBox.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                    BorderFactory.createEmptyBorder(10, 14, 10, 14)
-            ));
-            JLabel durTag = new JLabel("LIVE DURATION CALCULATION");
-            durTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            durTag.setForeground(ThemeConfig.TEXT_SECONDARY);
-            lblLiveDuration.setFont(ThemeConfig.FONT_BODY_BOLD);
-            lblLiveDuration.setForeground(ThemeConfig.TEXT_MUTED);
-            durationBox.add(durTag, BorderLayout.NORTH);
-            durationBox.add(lblLiveDuration, BorderLayout.CENTER);
-            form.add(durationBox);
-            form.add(Box.createVerticalStrut(14));
-
             // Section 4: Notes (Optional)
             form.add(createFieldRow("Notes (Optional)", txtNotes));
             form.add(Box.createVerticalStrut(10));
@@ -1103,15 +1084,6 @@ public class WaterSleepPanel extends JPanel {
             actions.add(btnRow, BorderLayout.EAST);
             add(actions, BorderLayout.SOUTH);
 
-            // Document listeners for live duration recalculation
-            DocumentListener timeListener = new DocumentListener() {
-                @Override public void insertUpdate(DocumentEvent e) { updateLiveDuration(); }
-                @Override public void removeUpdate(DocumentEvent e) { updateLiveDuration(); }
-                @Override public void changedUpdate(DocumentEvent e) { updateLiveDuration(); }
-            };
-            txtBedTime.getDocument().addDocumentListener(timeListener);
-            txtWakeTime.getDocument().addDocumentListener(timeListener);
-
             // Enter key shortcuts
             txtBedTime.addActionListener(e -> saveSleep());
             txtWakeTime.addActionListener(e -> saveSleep());
@@ -1140,7 +1112,6 @@ public class WaterSleepPanel extends JPanel {
                 txtBedTime.setText(bed);
                 txtWakeTime.setText(wake);
                 txtNotes.setText(note);
-                updateLiveDuration();
             });
             return btn;
         }
@@ -1157,34 +1128,6 @@ public class WaterSleepPanel extends JPanel {
                     BorderFactory.createEmptyBorder(6, 12, 6, 12)
             ));
             return btn;
-        }
-
-        private void updateLiveDuration() {
-            String bStr = txtBedTime.getText().trim();
-            String wStr = txtWakeTime.getText().trim();
-            if (bStr.isEmpty() || wStr.isEmpty()) {
-                lblLiveDuration.setText("Calculated Duration: --h --m • Enter times above or tap a schedule");
-                lblLiveDuration.setForeground(ThemeConfig.TEXT_MUTED);
-                return;
-            }
-
-            try {
-                String[] b = bStr.split(":");
-                String[] w = wStr.split(":");
-                int bh = Integer.parseInt(b[0]);
-                int bm = Integer.parseInt(b[1]);
-                int wh = Integer.parseInt(w[0]);
-                int wm = Integer.parseInt(w[1]);
-                int totalMins = (wh * 60 + wm) - (bh * 60 + bm);
-                if (totalMins < 0) totalMins += 24 * 60;
-                int hours = totalMins / 60;
-                int mins = totalMins % 60;
-                lblLiveDuration.setText(String.format("Calculated Duration: %dh %02dm", hours, mins));
-                lblLiveDuration.setForeground(ThemeConfig.TEXT_PRIMARY);
-            } catch (Exception ignored) {
-                lblLiveDuration.setText("Enter valid HH:MM times (e.g. 23:00 and 07:00)");
-                lblLiveDuration.setForeground(ThemeConfig.TEXT_MUTED);
-            }
         }
 
         private JPanel createFieldRow(String label, JComponent comp) {
