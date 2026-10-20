@@ -63,10 +63,6 @@ public class WaterSleepPanel extends JPanel {
     private final JLabel lblWaterCount = new JLabel("0 entries");
     private final JPanel pnlWaterLogs = new JPanel();
 
-    // Hydration Cadence & Pace indicators
-    private final JLabel lblHydrationPace = new JLabel("On Track");
-    private final JLabel lblAvgIntake = new JLabel("Avg -- ml");
-    private final JLabel lblLastSip = new JLabel("Last: --");
 
     // Sleep state
     private final JLabel lblSleepDuration = new JLabel("No sleep logged");
@@ -264,22 +260,7 @@ public class WaterSleepPanel extends JPanel {
         center.add(btnGrid);
         center.add(Box.createVerticalStrut(10));
 
-        // Hydration Cadence Strip
-        ModernCard cadenceCard = new ModernCard(8, new Insets(8, 14, 8, 14));
-        cadenceCard.setBackgroundColor(ThemeConfig.BG_INPUT);
-        cadenceCard.setPreferredSize(new Dimension(0, 50));
-        cadenceCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        cadenceCard.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel cadenceGrid = new JPanel(new GridLayout(1, 3, 10, 0));
-        cadenceGrid.setOpaque(false);
-        cadenceGrid.add(createCadenceItem("CADENCE", lblHydrationPace, ThemeConfig.SUCCESS));
-        cadenceGrid.add(createCadenceItem("AVG INTAKE", lblAvgIntake, ThemeConfig.TEXT_PRIMARY));
-        cadenceGrid.add(createCadenceItem("LATEST SIP", lblLastSip, ThemeConfig.TEXT_SECONDARY));
-        cadenceCard.add(cadenceGrid, BorderLayout.CENTER);
-
-        center.add(cadenceCard);
-        center.add(Box.createVerticalStrut(12));
 
         // History logs header
         JPanel logHeader = new JPanel(new BorderLayout());
@@ -505,18 +486,6 @@ public class WaterSleepPanel extends JPanel {
         return card;
     }
 
-    private JPanel createCadenceItem(String label, JLabel valLabel, Color valColor) {
-        JPanel p = new JPanel(new GridLayout(2, 1, 0, 2));
-        p.setOpaque(false);
-        JLabel l = new JLabel(label);
-        l.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        l.setForeground(ThemeConfig.TEXT_MUTED);
-        p.add(l);
-        valLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        valLabel.setForeground(valColor);
-        p.add(valLabel);
-        return p;
-    }
 
     public void loadData() {
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
@@ -619,29 +588,7 @@ public class WaterSleepPanel extends JPanel {
         cardWaterStatus.setValue(pct + "%");
         cardWaterStatus.setSubtitle(remaining > 0 ? String.format("%,d ml to goal", remaining) : "Target achieved!");
 
-        if (!todayWater.isEmpty()) {
-            int avg = totalMl / todayWater.size();
-            lblAvgIntake.setText("Avg " + avg + " ml");
 
-            WaterIntake latest = todayWater.get(todayWater.size() - 1);
-            lblLastSip.setText(latest.getRecordedTime() != null ? DateUtil.formatTime(latest.getRecordedTime()) : "--");
-
-            if (totalMl >= target) {
-                lblHydrationPace.setText("Goal Met");
-                lblHydrationPace.setForeground(ThemeConfig.SUCCESS);
-            } else if (pct >= 50) {
-                lblHydrationPace.setText("On Track");
-                lblHydrationPace.setForeground(ThemeConfig.SUCCESS);
-            } else {
-                lblHydrationPace.setText("Needs Intake");
-                lblHydrationPace.setForeground(ThemeConfig.WARNING);
-            }
-        } else {
-            lblAvgIntake.setText("Avg -- ml");
-            lblLastSip.setText("None yet");
-            lblHydrationPace.setText("Start Logging");
-            lblHydrationPace.setForeground(ThemeConfig.TEXT_MUTED);
-        }
 
         pnlWaterLogs.revalidate();
         pnlWaterLogs.repaint();
