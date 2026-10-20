@@ -21,8 +21,15 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.category.BarPainter;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.ui.RectangleEdge;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.RectangularShape;
+import java.awt.geom.Ellipse2D;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
@@ -866,7 +873,10 @@ public class DashboardPanel extends JPanel {
         CategoryPlot plot = chart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
         renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
-        renderer.setMaximumBarWidth(0.12);
+        renderer.setBarPainter(new ModernRoundedBarPainter());
+        renderer.setMaximumBarWidth(0.13);
+        renderer.setShadowVisible(false);
+        renderer.setDrawBarOutline(false);
 
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setOpaque(false);
@@ -899,7 +909,14 @@ public class DashboardPanel extends JPanel {
         XYPlot plot = chart.getXYPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
         renderer.setSeriesPaint(0, ThemeConfig.SUCCESS);
-        renderer.setSeriesStroke(0, new BasicStroke(2.2f));
+        renderer.setSeriesStroke(0, new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        renderer.setSeriesShape(0, new Ellipse2D.Double(-3.5, -3.5, 7, 7));
+        renderer.setSeriesShapesFilled(0, true);
+        renderer.setDrawOutlines(true);
+        renderer.setUseFillPaint(true);
+        renderer.setSeriesFillPaint(0, ThemeConfig.BG_CARD);
+        renderer.setSeriesOutlinePaint(0, ThemeConfig.SUCCESS);
+        renderer.setSeriesOutlineStroke(0, new BasicStroke(2.0f));
         plot.setRenderer(renderer);
 
         DateAxis axis = (DateAxis) plot.getDomainAxis();
@@ -915,35 +932,125 @@ public class DashboardPanel extends JPanel {
         pnlWeightChart.repaint();
     }
 
+    /**
+     * Modern custom BarPainter that eliminates JFreeChart's harsh 3D gloss/cylinder glare.
+     * Renders smooth rounded tops and clean rich gradients for a state-of-the-art look.
+     */
+    public static class ModernRoundedBarPainter implements BarPainter {
+        @Override
+        public void paintBar(Graphics2D g2, BarRenderer renderer, int row, int column, RectangularShape bar, RectangleEdge base) {
+            Graphics2D g = (Graphics2D) g2.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            Paint itemPaint = renderer.getItemPaint(row, column);
+
+            double x = bar.getX();
+            double y = bar.getY();
+            double w = bar.getWidth();
+            double h = bar.getHeight();
+            if (w <= 0 || h <= 0) {
+                g.dispose();
+                return;
+            }
+
+            // Create pill / rounded top corner shape
+            double arc = Math.min(8.0, w / 2.0);
+            RoundRectangle2D roundBar = new RoundRectangle2D.Double(x, y, w, h + arc, arc, arc);
+            Area area = new Area(roundBar);
+            area.intersect(new Area(new Rectangle2D.Double(x, y, w, h)));
+
+            if (itemPaint instanceof Color) {
+                Color c = (Color) itemPaint;
+                // Elegant subtle vertical gradient from slightly brighter at top to deep base
+                Color topColor = new Color(
+                        Math.min(255, (int) (c.getRed() * 1.15)),
+                        Math.min(255, (int) (c.getGreen() * 1.15)),
+                        Math.min(255, (int) (c.getBlue() * 1.15)),
+                        c.getAlpha());
+                GradientPaint gp = new GradientPaint((float) x, (float) y, topColor, (float) x, (float) (y + h), c);
+                g.setPaint(gp);
+            } else {
+                g.setPaint(itemPaint);
+            }
+
+            g.fill(area);
+            g.dispose();
+        }
+
+        @Override
+        public void paintBarShadow(Graphics2D g2, BarRenderer renderer, int row, int column, RectangularShape bar, RectangleEdge base, boolean pegShadow) {
+            // Intentionally no shadow for clean minimalist aesthetic
+        }
+    }
+
     public static void applyDarkChartTheme(JFreeChart chart) {
         chart.setBackgroundPaint(new Color(0, 0, 0, 0));
         chart.setAntiAlias(true);
+        chart.setTextAntiAlias(true);
+
+        BarRenderer.setDefaultBarPainter(new ModernRoundedBarPainter());
 
         if (chart.getPlot() instanceof CategoryPlot) {
             CategoryPlot plot = chart.getCategoryPlot();
-            plot.setBackgroundPaint(new Color(0x1C, 0x1C, 0x1C, 120));
+            plot.setBackgroundPaint(new Color(0, 0, 0, 0));
             plot.setOutlinePaint(null);
             plot.setRangeGridlinePaint(new Color(0x35, 0x35, 0x35, 120));
-            plot.setDomainGridlinePaint(new Color(0x35, 0x35, 0x35, 60));
+            plot.setRangeGridlineStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
+            plot.setDomainGridlinesVisible(false);
 
             CategoryAxis domain = plot.getDomainAxis();
-            domain.setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
-            domain.setTickLabelFont(ThemeConfig.FONT_SMALL);
+            if (domain != null) {
+                domain.setAxisLineVisible(false);
+                domain.setTickMarksVisible(false);
+                domain.setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
+                domain.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 11));
+            }
 
             NumberAxis range = (NumberAxis) plot.getRangeAxis();
-            range.setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
-            range.setTickLabelFont(ThemeConfig.FONT_SMALL);
+            if (range != null) {
+                range.setAxisLineVisible(false);
+                range.setTickMarksVisible(false);
+                range.setTickLabelPaint(ThemeConfig.TEXT_MUTED);
+                range.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+            }
+
+            if (plot.getRenderer() instanceof BarRenderer) {
+                BarRenderer renderer = (BarRenderer) plot.getRenderer();
+                renderer.setBarPainter(new ModernRoundedBarPainter());
+                renderer.setShadowVisible(false);
+                renderer.setDrawBarOutline(false);
+            }
         } else if (chart.getPlot() instanceof XYPlot) {
             XYPlot plot = chart.getXYPlot();
-            plot.setBackgroundPaint(new Color(0x1C, 0x1C, 0x1C, 120));
+            plot.setBackgroundPaint(new Color(0, 0, 0, 0));
             plot.setOutlinePaint(null);
             plot.setRangeGridlinePaint(new Color(0x35, 0x35, 0x35, 120));
-            plot.setDomainGridlinePaint(new Color(0x35, 0x35, 0x35, 60));
+            plot.setRangeGridlineStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
+            plot.setDomainGridlinesVisible(false);
 
-            plot.getDomainAxis().setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
-            plot.getDomainAxis().setTickLabelFont(ThemeConfig.FONT_SMALL);
-            plot.getRangeAxis().setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
-            plot.getRangeAxis().setTickLabelFont(ThemeConfig.FONT_SMALL);
+            if (plot.getDomainAxis() != null) {
+                plot.getDomainAxis().setAxisLineVisible(false);
+                plot.getDomainAxis().setTickMarksVisible(false);
+                plot.getDomainAxis().setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
+                plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 11));
+            }
+            if (plot.getRangeAxis() != null) {
+                plot.getRangeAxis().setAxisLineVisible(false);
+                plot.getRangeAxis().setTickMarksVisible(false);
+                plot.getRangeAxis().setTickLabelPaint(ThemeConfig.TEXT_MUTED);
+                plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+            }
+
+            if (plot.getRenderer() instanceof XYLineAndShapeRenderer) {
+                XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+                renderer.setSeriesStroke(0, new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                renderer.setSeriesShape(0, new Ellipse2D.Double(-3.5, -3.5, 7, 7));
+                renderer.setSeriesShapesFilled(0, true);
+                renderer.setDrawOutlines(true);
+                renderer.setUseFillPaint(true);
+                renderer.setSeriesFillPaint(0, ThemeConfig.BG_CARD);
+                renderer.setSeriesOutlinePaint(0, ThemeConfig.SUCCESS);
+                renderer.setSeriesOutlineStroke(0, new BasicStroke(2.0f));
+            }
         }
     }
 

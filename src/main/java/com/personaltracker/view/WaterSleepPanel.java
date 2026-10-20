@@ -723,18 +723,21 @@ public class WaterSleepPanel extends JPanel {
         CategoryPlot plot = chart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
         renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
-        renderer.setMaximumBarWidth(0.18);
+        renderer.setBarPainter(new DashboardPanel.ModernRoundedBarPainter());
+        renderer.setMaximumBarWidth(0.13);
         renderer.setShadowVisible(false);
         renderer.setDrawBarOutline(false);
         renderer.setItemMargin(0.04);
 
         // 8h Target guideline line
         ValueMarker targetMarker = new ValueMarker(8.0);
-        targetMarker.setPaint(new Color(240, 68, 68, 140));
-        targetMarker.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f, 4.0f}, 0.0f));
-        targetMarker.setLabel("8h Goal");
-        targetMarker.setLabelFont(ThemeConfig.FONT_SMALL);
-        targetMarker.setLabelPaint(ThemeConfig.TEXT_MUTED);
+        targetMarker.setPaint(new Color(240, 68, 68, 160));
+        targetMarker.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f, 4.0f}, 0.0f));
+        targetMarker.setLabel("8h Target");
+        targetMarker.setLabelFont(new Font("Segoe UI", Font.BOLD, 10));
+        targetMarker.setLabelPaint(new Color(240, 100, 100, 220));
+        targetMarker.setLabelAnchor(org.jfree.chart.ui.RectangleAnchor.TOP_RIGHT);
+        targetMarker.setLabelTextAnchor(org.jfree.chart.ui.TextAnchor.BOTTOM_RIGHT);
         plot.addRangeMarker(targetMarker);
 
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();

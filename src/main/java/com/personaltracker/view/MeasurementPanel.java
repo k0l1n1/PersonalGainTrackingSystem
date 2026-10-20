@@ -246,7 +246,14 @@ public class MeasurementPanel extends JPanel {
         XYPlot plot = chart.getXYPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
         renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
-        renderer.setSeriesStroke(0, new BasicStroke(2.4f));
+        renderer.setSeriesStroke(0, new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        renderer.setSeriesShape(0, new java.awt.geom.Ellipse2D.Double(-3.5, -3.5, 7, 7));
+        renderer.setSeriesShapesFilled(0, true);
+        renderer.setDrawOutlines(true);
+        renderer.setUseFillPaint(true);
+        renderer.setSeriesFillPaint(0, ThemeConfig.BG_CARD);
+        renderer.setSeriesOutlinePaint(0, ThemeConfig.PRIMARY_ACCENT);
+        renderer.setSeriesOutlineStroke(0, new BasicStroke(2.0f));
         plot.setRenderer(renderer);
 
         DateAxis axis = (DateAxis) plot.getDomainAxis();
