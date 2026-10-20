@@ -657,11 +657,11 @@ public class WorkoutPanel extends JPanel {
         private boolean saved = false;
         private final Workout editingWorkout;
 
-        private final ModernTextField txtTitle = new ModernTextField("Morning Upper Body");
+        private final ModernTextField txtTitle = new ModernTextField("", "e.g. Morning Upper Body");
         private final JComboBox<String> cmbType = new JComboBox<>(new String[]{"Strength", "Cardio", "HIIT", "Yoga", "Flexibility", "Endurance", "Other"});
-        private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString());
-        private final ModernTextField txtDuration = new ModernTextField("45");
-        private final ModernTextField txtCalories = new ModernTextField("350");
+        private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString(), "YYYY-MM-DD");
+        private final ModernTextField txtDuration = new ModernTextField("", "e.g. 45");
+        private final ModernTextField txtCalories = new ModernTextField("", "e.g. 350");
         private final JComboBox<String> cmbStatus = new JComboBox<>(new String[]{"COMPLETED", "PLANNED"});
         private final JTextArea txtNotes = new JTextArea(2, 20);
 
@@ -1771,10 +1771,10 @@ public class WorkoutPanel extends JPanel {
         private boolean saved = false;
         private final Reminder editingReminder;
 
-        private final ModernTextField txtTitle = new ModernTextField("Evening Workout Session");
-        private final ModernTextField txtDesc = new ModernTextField("Leg day workout & protein shake");
-        private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString());
-        private final ModernTextField txtTime = new ModernTextField("18:00");
+        private final ModernTextField txtTitle = new ModernTextField("", "e.g. Evening Workout Session");
+        private final ModernTextField txtDesc = new ModernTextField("", "e.g. Leg day workout & protein shake");
+        private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString(), "YYYY-MM-DD");
+        private final ModernTextField txtTime = new ModernTextField("", "e.g. 18:00");
 
         public ReminderDialog(Window owner, Reminder reminder) {
             super(owner, reminder == null ? "Create New Reminder" : "Edit Reminder", ModalityType.APPLICATION_MODAL);

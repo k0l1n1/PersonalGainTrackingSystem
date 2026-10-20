@@ -360,13 +360,13 @@ public class GoalPanel extends JPanel {
         private boolean saved = false;
         private final Goal editing;
 
-        private final ModernTextField txtTitle = new ModernTextField("Bench Press 100kg");
+        private final ModernTextField txtTitle = new ModernTextField("", "e.g. Bench Press 100kg");
         private final JComboBox<String> cmbCat = new JComboBox<>(new String[]{"Weight", "Workout Frequency", "Strength", "Endurance", "Nutrition", "Habit"});
         private final JComboBox<String> cmbStatus = new JComboBox<>(new String[]{"IN_PROGRESS", "COMPLETED", "OVERDUE", "CANCELLED"});
-        private final ModernTextField txtTarget = new ModernTextField("100.0");
-        private final ModernTextField txtCurrent = new ModernTextField("80.0");
-        private final ModernTextField txtUnit = new ModernTextField("kg");
-        private final ModernTextField txtTargetDate = new ModernTextField(LocalDate.now().plusMonths(1).toString());
+        private final ModernTextField txtTarget = new ModernTextField("", "e.g. 100.0");
+        private final ModernTextField txtCurrent = new ModernTextField("", "e.g. 80.0");
+        private final ModernTextField txtUnit = new ModernTextField("", "e.g. kg");
+        private final ModernTextField txtTargetDate = new ModernTextField(LocalDate.now().plusMonths(1).toString(), "YYYY-MM-DD");
         private final JLabel lblLiveProgress = new JLabel("Progress: 80%");
         private final ModernProgressBar prgPreview = new ModernProgressBar(0, 100);
 

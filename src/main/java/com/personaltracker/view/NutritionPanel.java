@@ -511,13 +511,13 @@ public class NutritionPanel extends JPanel {
         private boolean saved = false;
         private final NutritionEntry editing;
 
-        private final ModernTextField txtFood = new ModernTextField("Grilled Salmon Fillet");
+        private final ModernTextField txtFood = new ModernTextField("", "e.g. Grilled Salmon Fillet");
         private final JComboBox<String> cmbMeal = new JComboBox<>(new String[]{"BREAKFAST", "LUNCH", "DINNER", "SNACK"});
-        private final ModernTextField txtServing = new ModernTextField("1 fillet (150g)");
-        private final ModernTextField txtCalories = new ModernTextField("320");
-        private final ModernTextField txtProtein = new ModernTextField("34.0");
-        private final ModernTextField txtCarbs = new ModernTextField("0.0");
-        private final ModernTextField txtFat = new ModernTextField("18.0");
+        private final ModernTextField txtServing = new ModernTextField("", "e.g. 1 fillet (150g)");
+        private final ModernTextField txtCalories = new ModernTextField("", "e.g. 320");
+        private final ModernTextField txtProtein = new ModernTextField("", "e.g. 34.0");
+        private final ModernTextField txtCarbs = new ModernTextField("", "e.g. 0.0");
+        private final ModernTextField txtFat = new ModernTextField("", "e.g. 18.0");
 
         public FoodDialog(Window owner, NutritionEntry entry, String defaultMeal) {
             super(owner, entry == null ? "Log Food / Meal Item (" + DateUtil.formatDate(selectedDate) + ")" : "Edit Meal", ModalityType.APPLICATION_MODAL);

@@ -352,13 +352,13 @@ public class MeasurementPanel extends JPanel {
             String initialChest = (lastCheckIn != null && lastCheckIn.getChestCm() != null) ? String.format(java.util.Locale.US, "%.1f", lastCheckIn.getChestCm()) : "";
             String initialArm = (lastCheckIn != null && lastCheckIn.getArmCm() != null) ? String.format(java.util.Locale.US, "%.1f", lastCheckIn.getArmCm()) : "";
 
-            txtDate = new ModernTextField(LocalDate.now().toString());
-            txtWeight = new ModernTextField(String.format(java.util.Locale.US, "%.1f", initialWeight));
-            txtHeight = new ModernTextField(String.format(java.util.Locale.US, "%.1f", initialHeight));
-            txtWaist = new ModernTextField(initialWaist);
-            txtChest = new ModernTextField(initialChest);
-            txtArm = new ModernTextField(initialArm);
-            txtNotes = new ModernTextField("Morning check-in");
+            txtDate = new ModernTextField(LocalDate.now().toString(), "YYYY-MM-DD");
+            txtWeight = new ModernTextField(String.format(java.util.Locale.US, "%.1f", initialWeight), "e.g. 75.0");
+            txtHeight = new ModernTextField(String.format(java.util.Locale.US, "%.1f", initialHeight), "e.g. 175.0");
+            txtWaist = new ModernTextField(initialWaist, "e.g. 80.0");
+            txtChest = new ModernTextField(initialChest, "e.g. 95.0");
+            txtArm = new ModernTextField(initialArm, "e.g. 35.0");
+            txtNotes = new ModernTextField("", "e.g. Morning check-in, feeling energetic");
 
             // Make weight field prominent
             txtWeight.setFont(new Font("Segoe UI", Font.BOLD, 17));

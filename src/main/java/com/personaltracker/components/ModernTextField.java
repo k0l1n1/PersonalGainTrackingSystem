@@ -82,8 +82,8 @@ public class ModernTextField extends JTextField {
         // Translucent placeholder guide (visible when text is empty)
         if (getText().isEmpty() && placeholder != null && !placeholder.isEmpty()) {
             Color placeholderColor = isFocused
-                    ? new Color(0x8A, 0x8A, 0x8A, 130)
-                    : new Color(0x8A, 0x8A, 0x8A, 180);
+                    ? new Color(170, 170, 170, 160)
+                    : new Color(150, 150, 150, 180);
             g2.setColor(placeholderColor);
             g2.setFont(getFont());
             FontMetrics fm = g2.getFontMetrics();
