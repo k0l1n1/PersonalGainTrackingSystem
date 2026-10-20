@@ -184,6 +184,7 @@ public class WaterSleepPanel extends JPanel {
         ModernCard heroCard = new ModernCard(10, new Insets(12, 16, 12, 16));
         heroCard.setBackgroundColor(ThemeConfig.BG_INPUT);
         heroCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 105));
+        heroCard.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel heroBox = new JPanel();
         heroBox.setLayout(new BoxLayout(heroBox, BoxLayout.Y_AXIS));
@@ -673,7 +674,9 @@ public class WaterSleepPanel extends JPanel {
     private void updateSleepView() {
         if (!sleepRecords.isEmpty()) {
             SleepRecord latest = sleepRecords.get(0);
-            lblSleepDuration.setText(String.format(Locale.US, "%.1f Hours", latest.getDurationHours()));
+            double latestHours = latest.getDurationHours();
+            if (latestHours > 14.0) latestHours = latestHours % 24.0;
+            lblSleepDuration.setText(String.format(Locale.US, "%.1f Hours", latestHours));
 
             if (latest.getBedtime() != null && latest.getWakeTime() != null) {
                 lblSleepTimes.setText(DateUtil.formatTime(latest.getBedtime()) + " → " + DateUtil.formatTime(latest.getWakeTime()));
@@ -694,7 +697,7 @@ public class WaterSleepPanel extends JPanel {
             }
             lblSleepQuality.setText(score + " / 5 (" + scoreDesc + ")");
 
-            if (latest.getDurationHours() >= 7.0 && latest.getDurationHours() <= 9.0) {
+            if (latestHours >= 7.0 && latestHours <= 9.0) {
                 lblSleepTag.setText("Optimal Recovery");
                 lblSleepTag.setForeground(ThemeConfig.SUCCESS);
                 lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
@@ -702,14 +705,14 @@ public class WaterSleepPanel extends JPanel {
                         BorderFactory.createEmptyBorder(2, 7, 2, 7)
                 ));
                 lblSleepSub.setText("Within recommended 7.0 - 9.0 hr window");
-            } else if (latest.getDurationHours() < 7.0) {
-                lblSleepTag.setText(String.format(Locale.US, "Short Sleep (%.1fh)", latest.getDurationHours()));
+            } else if (latestHours < 7.0) {
+                lblSleepTag.setText(String.format(Locale.US, "Short Sleep (%.1fh)", latestHours));
                 lblSleepTag.setForeground(ThemeConfig.WARNING);
                 lblSleepTag.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(new Color(0xF5, 0x9E, 0x0B, 140), 1, true),
                         BorderFactory.createEmptyBorder(2, 7, 2, 7)
                 ));
-                lblSleepSub.setText(String.format(Locale.US, "%.1f hrs below 8.0 hr target", 8.0 - latest.getDurationHours()));
+                lblSleepSub.setText(String.format(Locale.US, "%.1f hrs below 8.0 hr target", 8.0 - latestHours));
             } else {
                 lblSleepTag.setText("Extended Rest");
                 lblSleepTag.setForeground(ThemeConfig.PRIMARY_ACCENT);
@@ -727,7 +730,7 @@ public class WaterSleepPanel extends JPanel {
                 pnlSleepNotes.setVisible(false);
             }
 
-            cardLastNightSleep.setValue(String.format(Locale.US, "%.1f hrs", latest.getDurationHours()));
+            cardLastNightSleep.setValue(String.format(Locale.US, "%.1f hrs", latestHours));
             cardLastNightSleep.setSubtitle("Score: " + score + "/5 · " + scoreDesc);
 
             // Calculate 7-day average
@@ -736,11 +739,13 @@ public class WaterSleepPanel extends JPanel {
             LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
             for (SleepRecord s : sleepRecords) {
                 if (s.getSleepDate() != null && !s.getSleepDate().isBefore(sevenDaysAgo)) {
-                    sum7 += s.getDurationHours();
+                    double h = s.getDurationHours();
+                    if (h > 14.0) h = h % 24.0;
+                    sum7 += h;
                     count7++;
                 }
             }
-            double avg7 = count7 > 0 ? (sum7 / count7) : latest.getDurationHours();
+            double avg7 = count7 > 0 ? (sum7 / count7) : latestHours;
             cardAvgSleep.setValue(String.format(Locale.US, "%.1f hrs", avg7));
             cardAvgSleep.setSubtitle(avg7 >= 7.0 && avg7 <= 9.0 ? "Optimal recovery range" : "Target: 7.0 - 9.0 hrs");
         } else {
@@ -775,6 +780,7 @@ public class WaterSleepPanel extends JPanel {
             for (SleepRecord s : sleepRecords) {
                 if (s.getSleepDate() != null && s.getSleepDate().isEqual(d)) {
                     hours = s.getDurationHours();
+                    if (hours > 14.0) hours = hours % 24.0;
                     break;
                 }
             }
@@ -812,11 +818,13 @@ public class WaterSleepPanel extends JPanel {
         rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
         double maxLogged = 0.0;
         for (SleepRecord s : sleepRecords) {
-            if (s.getDurationHours() > maxLogged) {
-                maxLogged = s.getDurationHours();
+            double h = s.getDurationHours();
+            if (h > 14.0) h = h % 24.0;
+            if (h > maxLogged) {
+                maxLogged = h;
             }
         }
-        rangeAxis.setRange(0.0, Math.max(10.0, Math.ceil(maxLogged + 1.0)));
+        rangeAxis.setRange(0.0, Math.max(10.0, Math.min(14.0, Math.ceil(maxLogged + 1.0))));
 
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setOpaque(false);
@@ -850,7 +858,9 @@ public class WaterSleepPanel extends JPanel {
             lblDate.setForeground(ThemeConfig.TEXT_PRIMARY);
             left.add(lblDate);
 
-            JLabel lblHours = new JLabel(String.format(Locale.US, "%.1f hrs", s.getDurationHours()));
+            double dispHours = s.getDurationHours();
+            if (dispHours > 14.0) dispHours = dispHours % 24.0;
+            JLabel lblHours = new JLabel(String.format(Locale.US, "%.1f hrs", dispHours));
             lblHours.setFont(ThemeConfig.FONT_BODY_BOLD);
             lblHours.setForeground(ThemeConfig.PRIMARY_ACCENT);
             left.add(lblHours);

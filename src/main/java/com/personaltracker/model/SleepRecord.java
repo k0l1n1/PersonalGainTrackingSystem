@@ -73,9 +73,17 @@ public class SleepRecord {
         if (durationMinutes >= 24 * 60 && bedtime != null && wakeTime != null) {
             this.durationMinutes = HealthCalculator.calculateSleepDurationMinutes(bedtime, wakeTime);
         }
+        if (durationMinutes >= 24 * 60) {
+            this.durationMinutes = durationMinutes % (24 * 60);
+        }
         return durationMinutes;
     }
-    public void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
+    public void setDurationMinutes(int durationMinutes) {
+        if (durationMinutes >= 24 * 60) {
+            durationMinutes = durationMinutes % (24 * 60);
+        }
+        this.durationMinutes = durationMinutes;
+    }
 
     public Integer getQualityScore() { return qualityScore; }
     public void setQualityScore(Integer qualityScore) { this.qualityScore = qualityScore; }
@@ -94,6 +102,6 @@ public class SleepRecord {
 
     @JsonIgnore
     public double getDurationHours() {
-        return Math.round((durationMinutes / 60.0) * 10.0) / 10.0;
+        return Math.round((getDurationMinutes() / 60.0) * 10.0) / 10.0;
     }
 }
