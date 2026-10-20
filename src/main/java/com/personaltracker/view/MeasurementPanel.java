@@ -153,22 +153,11 @@ public class MeasurementPanel extends JPanel {
         content.add(chartCard);
         content.add(Box.createVerticalStrut(14));
 
-        // Bottom: Measurements History Table with Header Toolbar
-        JPanel tableToolbar = new JPanel(new BorderLayout());
-        tableToolbar.setOpaque(false);
-
+        // Bottom: Measurements History Table
         JLabel lblHistoryHead = new JLabel("Check-in Records");
         lblHistoryHead.setFont(ThemeConfig.FONT_SUBTITLE);
         lblHistoryHead.setForeground(ThemeConfig.TEXT_PRIMARY);
-        tableToolbar.add(lblHistoryHead, BorderLayout.WEST);
-
-        ModernButton btnDeleteTable = new ModernButton("Delete Selected Record", ModernButton.ButtonStyle.DANGER);
-        btnDeleteTable.setIcon(IconFactory.createIcon(IconFactory.IconType.TRASH, 13, Color.WHITE));
-        btnDeleteTable.setIconTextGap(6);
-        btnDeleteTable.addActionListener(e -> deleteSelectedRecord());
-        tableToolbar.add(btnDeleteTable, BorderLayout.EAST);
-
-        content.add(tableToolbar);
+        content.add(lblHistoryHead);
         content.add(Box.createVerticalStrut(8));
 
         String[] cols = {"Date", "Weight (kg)", "Height (cm)", "BMI", "Waist (cm)", "Chest (cm)", "Arm (cm)", "Notes"};
