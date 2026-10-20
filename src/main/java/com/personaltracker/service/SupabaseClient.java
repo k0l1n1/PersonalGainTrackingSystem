@@ -402,7 +402,7 @@ public class SupabaseClient {
         s2.setUserId(demoUserId);
         sleep.add(s2);
 
-        OffsetDateTime bed3 = OffsetDateTime.now().minusDays(4).withHour(0).withMinute(15);
+        OffsetDateTime bed3 = OffsetDateTime.now().minusDays(3).withHour(0).withMinute(15);
         OffsetDateTime wake3 = OffsetDateTime.now().minusDays(3).withHour(7).withMinute(0);
         SleepRecord s3 = new SleepRecord(today.minusDays(3), bed3, wake3, 3, "Slightly interrupted sleep");
         s3.setId(UUID.randomUUID().toString());

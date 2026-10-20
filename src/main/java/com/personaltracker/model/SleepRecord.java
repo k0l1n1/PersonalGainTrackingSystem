@@ -69,7 +69,12 @@ public class SleepRecord {
         recalculateDuration();
     }
 
-    public int getDurationMinutes() { return durationMinutes; }
+    public int getDurationMinutes() {
+        if (durationMinutes >= 24 * 60 && bedtime != null && wakeTime != null) {
+            this.durationMinutes = HealthCalculator.calculateSleepDurationMinutes(bedtime, wakeTime);
+        }
+        return durationMinutes;
+    }
     public void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
 
     public Integer getQualityScore() { return qualityScore; }

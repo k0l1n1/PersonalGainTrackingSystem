@@ -42,4 +42,29 @@ public class WaterAndSleepTest {
         assertEquals(480, record.getDurationMinutes());
         assertEquals(8.0, record.getDurationHours());
     }
+
+    @Test
+    @DisplayName("Should correctly calculate sleep starting after midnight (12:15am to 07:00am)")
+    void testMidnightSleepDuration() {
+        LocalDate date = LocalDate.now();
+        OffsetDateTime bed = OffsetDateTime.parse("2026-10-17T00:15:00Z");
+        OffsetDateTime wake = OffsetDateTime.parse("2026-10-17T07:00:00Z");
+
+        SleepRecord record = new SleepRecord(date, bed, wake, 3, "Slightly interrupted sleep");
+        assertEquals(405, record.getDurationMinutes(), "Duration should be 405 minutes (6h 45m)");
+        assertEquals(6.8, record.getDurationHours(), "Duration hours should be 6.8 hrs");
+    }
+
+    @Test
+    @DisplayName("Should normalize accidental multi-day date offset on bedtime")
+    void testAccidentalMultiDayOffsetNormalization() {
+        LocalDate date = LocalDate.now();
+        // Bedtime mistakenly set with extra 24h offset (2026-10-16T00:15 vs 2026-10-17T07:00)
+        OffsetDateTime bedExtraDay = OffsetDateTime.parse("2026-10-16T00:15:00Z");
+        OffsetDateTime wake = OffsetDateTime.parse("2026-10-17T07:00:00Z");
+
+        SleepRecord record = new SleepRecord(date, bedExtraDay, wake, 3, "Interrupted");
+        assertEquals(405, record.getDurationMinutes(), "Should normalize to 405 mins instead of 1845 mins");
+        assertEquals(6.8, record.getDurationHours(), "Should normalize to 6.8 hrs instead of 30.8 hrs");
+    }
 }

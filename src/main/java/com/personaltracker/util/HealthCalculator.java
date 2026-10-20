@@ -52,6 +52,10 @@ public class HealthCalculator {
             // In case bedtime is after wakeTime on same calendar date without day adjustment
             minutes += 24 * 60;
         }
+        // Normalize against inadvertent multi-day calendar offsets (single sleep session is < 24h)
+        if (minutes >= 24 * 60) {
+            minutes = minutes % (24 * 60);
+        }
         return (int) Math.max(0, minutes);
     }
 
