@@ -61,7 +61,7 @@ public class MeasurementPanel extends JPanel {
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
-        content.setBorder(BorderFactory.createEmptyBorder(24, 28, 28, 28));
+        content.setBorder(BorderFactory.createEmptyBorder(18, 24, 20, 24));
 
         // Header
         JPanel header = new JPanel(new BorderLayout());
@@ -80,18 +80,29 @@ public class MeasurementPanel extends JPanel {
         titlePanel.add(subtitle);
         header.add(titlePanel, BorderLayout.WEST);
 
+        ModernButton btnDeleteTop = new ModernButton("Delete Selected Record", ModernButton.ButtonStyle.DANGER);
+        btnDeleteTop.setIcon(IconFactory.createIcon(IconFactory.IconType.TRASH, 13, Color.WHITE));
+        btnDeleteTop.setIconTextGap(6);
+        btnDeleteTop.addActionListener(e -> deleteSelectedRecord());
+
         ModernButton btnNew = new ModernButton("+ Log Measurement", ModernButton.ButtonStyle.PRIMARY);
         btnNew.addActionListener(e -> openMeasurementDialog());
-        header.add(btnNew, BorderLayout.EAST);
+
+        JPanel headerActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        headerActions.setOpaque(false);
+        headerActions.add(btnDeleteTop);
+        headerActions.add(btnNew);
+
+        header.add(headerActions, BorderLayout.EAST);
         content.add(header);
-        content.add(Box.createVerticalStrut(18));
+        content.add(Box.createVerticalStrut(14));
 
         // Top Summary Cards Grid
         JPanel topGrid = new JPanel(new GridLayout(1, 3, 16, 0));
         topGrid.setOpaque(false);
-        topGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        topGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 98));
 
-        ModernCard cardWeight = new ModernCard(14, new Insets(16, 18, 16, 18));
+        ModernCard cardWeight = new ModernCard(14, new Insets(12, 18, 12, 18));
         JLabel wTitle = new JLabel("CURRENT BODY WEIGHT");
         wTitle.setFont(ThemeConfig.FONT_SMALL);
         wTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
@@ -101,7 +112,7 @@ public class MeasurementPanel extends JPanel {
         cardWeight.add(lblCurrentWeight, BorderLayout.CENTER);
         topGrid.add(cardWeight);
 
-        ModernCard cardBmi = new ModernCard(14, new Insets(16, 18, 16, 18));
+        ModernCard cardBmi = new ModernCard(14, new Insets(12, 18, 12, 18));
         JLabel bTitle = new JLabel("CALCULATED BMI");
         bTitle.setFont(ThemeConfig.FONT_SMALL);
         bTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
@@ -111,7 +122,7 @@ public class MeasurementPanel extends JPanel {
         cardBmi.add(lblCurrentBmi, BorderLayout.CENTER);
         topGrid.add(cardBmi);
 
-        ModernCard cardStatus = new ModernCard(14, new Insets(16, 18, 16, 18));
+        ModernCard cardStatus = new ModernCard(14, new Insets(12, 18, 12, 18));
         JLabel sTitle = new JLabel("WHO CLASSIFICATION");
         sTitle.setFont(ThemeConfig.FONT_SMALL);
         sTitle.setForeground(ThemeConfig.TEXT_SECONDARY);
@@ -126,28 +137,39 @@ public class MeasurementPanel extends JPanel {
         topGrid.add(cardStatus);
 
         content.add(topGrid);
-        content.add(Box.createVerticalStrut(20));
+        content.add(Box.createVerticalStrut(14));
 
         // Middle: Progression Line Chart
-        ModernCard chartCard = new ModernCard(14, new Insets(16, 18, 16, 18));
+        ModernCard chartCard = new ModernCard(14, new Insets(14, 18, 14, 18));
         JLabel lblChartHead = new JLabel("Weight Progression History (kg)");
         lblChartHead.setFont(ThemeConfig.FONT_SUBTITLE);
         lblChartHead.setForeground(ThemeConfig.TEXT_PRIMARY);
         chartCard.add(lblChartHead, BorderLayout.NORTH);
 
         pnlChartContainer.setOpaque(false);
-        pnlChartContainer.setPreferredSize(new Dimension(0, 240));
+        pnlChartContainer.setPreferredSize(new Dimension(0, 190));
         chartCard.add(pnlChartContainer, BorderLayout.CENTER);
-        chartCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 280));
+        chartCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 230));
         content.add(chartCard);
-        content.add(Box.createVerticalStrut(20));
+        content.add(Box.createVerticalStrut(14));
 
-        // Bottom: Measurements History Table
+        // Bottom: Measurements History Table with Header Toolbar
+        JPanel tableToolbar = new JPanel(new BorderLayout());
+        tableToolbar.setOpaque(false);
+
         JLabel lblHistoryHead = new JLabel("Check-in Records");
         lblHistoryHead.setFont(ThemeConfig.FONT_SUBTITLE);
         lblHistoryHead.setForeground(ThemeConfig.TEXT_PRIMARY);
-        content.add(lblHistoryHead);
-        content.add(Box.createVerticalStrut(10));
+        tableToolbar.add(lblHistoryHead, BorderLayout.WEST);
+
+        ModernButton btnDeleteTable = new ModernButton("Delete Selected Record", ModernButton.ButtonStyle.DANGER);
+        btnDeleteTable.setIcon(IconFactory.createIcon(IconFactory.IconType.TRASH, 13, Color.WHITE));
+        btnDeleteTable.setIconTextGap(6);
+        btnDeleteTable.addActionListener(e -> deleteSelectedRecord());
+        tableToolbar.add(btnDeleteTable, BorderLayout.EAST);
+
+        content.add(tableToolbar);
+        content.add(Box.createVerticalStrut(8));
 
         String[] cols = {"Date", "Weight (kg)", "Height (cm)", "BMI", "Waist (cm)", "Chest (cm)", "Arm (cm)", "Notes"};
         tableModel = new DefaultTableModel(cols, 0) {
@@ -156,17 +178,8 @@ public class MeasurementPanel extends JPanel {
         };
         table = new ModernTable(tableModel);
         JScrollPane scrollTable = ModernTable.wrapInScrollPane(table);
-        scrollTable.setPreferredSize(new Dimension(0, 220));
+        scrollTable.setPreferredSize(new Dimension(0, 180));
         content.add(scrollTable);
-        content.add(Box.createVerticalStrut(12));
-
-        // Delete button
-        JPanel delBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        delBar.setOpaque(false);
-        ModernButton btnDelete = new ModernButton("Delete Selected Record", ModernButton.ButtonStyle.DANGER);
-        btnDelete.addActionListener(e -> deleteSelectedRecord());
-        delBar.add(btnDelete);
-        content.add(delBar);
 
         JScrollPane mainScroll = new JScrollPane(content);
         mainScroll.setBorder(null);
