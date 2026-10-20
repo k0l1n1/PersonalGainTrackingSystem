@@ -8,6 +8,7 @@ import com.personaltracker.components.ModernTextField;
 import com.personaltracker.components.ToastNotification;
 import com.personaltracker.config.AppConfig;
 import com.personaltracker.config.ThemeConfig;
+import com.personaltracker.dao.GoalDAO;
 import com.personaltracker.dao.MeasurementDAO;
 import com.personaltracker.dao.NutritionDAO;
 import com.personaltracker.dao.ProfileDAO;
@@ -15,6 +16,7 @@ import com.personaltracker.dao.SleepDAO;
 import com.personaltracker.dao.WaterDAO;
 import com.personaltracker.dao.WorkoutDAO;
 import com.personaltracker.model.BodyMeasurement;
+import com.personaltracker.model.Goal;
 import com.personaltracker.model.NutritionEntry;
 import com.personaltracker.model.SleepRecord;
 import com.personaltracker.model.UserProfile;
@@ -51,6 +53,7 @@ public class SettingsPanel extends JPanel {
     private final NutritionDAO nutritionDAO = new NutritionDAO();
     private final WaterDAO waterDAO = new WaterDAO();
     private final SleepDAO sleepDAO = new SleepDAO();
+    private final GoalDAO goalDAO = new GoalDAO();
     private final SupabaseAuthService authService = SupabaseAuthService.getInstance();
     private final AppConfig config = AppConfig.getInstance();
 
@@ -91,6 +94,11 @@ public class SettingsPanel extends JPanel {
     private final JLabel lblAccountEmail = new JLabel("--");
 
     private Runnable onProfileUpdatedCallback;
+    private java.util.function.Consumer<SidebarPanel.NavItem> navigationConsumer;
+
+    public void setNavigationConsumer(java.util.function.Consumer<SidebarPanel.NavItem> consumer) {
+        this.navigationConsumer = consumer;
+    }
 
     public SettingsPanel() {
         setOpaque(false);
@@ -340,10 +348,23 @@ public class SettingsPanel extends JPanel {
         ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
+        // Header Row: Title on left, Adjust Target button on right
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setOpaque(false);
+
         JLabel title = new JLabel("Weight Journey & Goal Progress");
         title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
-        card.add(title);
+        headerRow.add(title, BorderLayout.WEST);
+
+        ModernButton btnAdjust = new ModernButton("Adjust Target", ModernButton.ButtonStyle.SECONDARY);
+        btnAdjust.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnAdjust.setIcon(IconFactory.createIcon(IconFactory.IconType.EDIT, 12, ThemeConfig.TEXT_SECONDARY));
+        btnAdjust.setIconTextGap(6);
+        btnAdjust.addActionListener(e -> openQuickTargetDialog());
+        headerRow.add(btnAdjust, BorderLayout.EAST);
+
+        card.add(headerRow);
         card.add(Box.createVerticalStrut(14));
 
         // 3 Milestone Cards: Starting -> Current -> Target
@@ -372,6 +393,31 @@ public class SettingsPanel extends JPanel {
         // Modern Progress Bar
         barWeightProgress.setPreferredSize(new Dimension(Integer.MAX_VALUE, 12));
         card.add(barWeightProgress);
+        card.add(Box.createVerticalStrut(10));
+
+        // Contextual Footer Row
+        JPanel footerRow = new JPanel(new BorderLayout());
+        footerRow.setOpaque(false);
+
+        JLabel hint = new JLabel("Starting is your baseline check-in; Current is your latest check-in.");
+        hint.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        hint.setForeground(ThemeConfig.TEXT_MUTED);
+        footerRow.add(hint, BorderLayout.WEST);
+
+        JLabel lnkCheckIns = new JLabel("Manage Check-ins →");
+        lnkCheckIns.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        lnkCheckIns.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        lnkCheckIns.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lnkCheckIns.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (navigationConsumer != null) {
+                    navigationConsumer.accept(SidebarPanel.NavItem.MEASUREMENTS);
+                }
+            }
+        });
+        footerRow.add(lnkCheckIns, BorderLayout.EAST);
+        card.add(footerRow);
 
         return card;
     }
@@ -559,64 +605,148 @@ public class SettingsPanel extends JPanel {
             }
         }
 
-        // Fetch body measurement history to calculate current vs starting weight journey
+        // Fetch body measurement history and goals to calculate current vs starting weight journey
         final UserProfile userProf = profile;
-        SwingWorker<List<BodyMeasurement>, Void> worker = new SwingWorker<>() {
+        SwingWorker<Object[], Void> worker = new SwingWorker<>() {
             @Override
-            protected List<BodyMeasurement> doInBackground() throws Exception {
-                return measurementDAO.getAllMeasurements();
+            protected Object[] doInBackground() throws Exception {
+                List<BodyMeasurement> measurements = measurementDAO.getAllMeasurements();
+                List<Goal> goals = List.of();
+                try {
+                    goals = goalDAO.getAllGoals();
+                } catch (Exception ignored) {}
+                return new Object[]{measurements, goals};
             }
 
             @Override
             protected void done() {
                 try {
-                    List<BodyMeasurement> measurements = get();
+                    Object[] res = get();
+                    @SuppressWarnings("unchecked")
+                    List<BodyMeasurement> measurements = (List<BodyMeasurement>) res[0];
+                    @SuppressWarnings("unchecked")
+                    List<Goal> goals = (List<Goal>) res[1];
+
                     double currentWeight = 75.0;
                     double startingWeight = 75.0;
-                    double targetWeight = (userProf != null && userProf.getTargetWeightKg() != null) ? userProf.getTargetWeightKg() : 70.0;
+                    double targetWeight = (userProf != null && userProf.getTargetWeightKg() != null && userProf.getTargetWeightKg() > 0)
+                            ? userProf.getTargetWeightKg() : 70.0;
                     double height = (userProf != null && userProf.getHeightCm() != null) ? userProf.getHeightCm() : 175.0;
                     String gender = (userProf != null && userProf.getGender() != null) ? userProf.getGender() : "Male";
                     int age = (userProf != null && userProf.getDateOfBirth() != null) ? Period.between(userProf.getDateOfBirth(), LocalDate.now()).getYears() : 25;
 
-                    if (!measurements.isEmpty()) {
+                    // Check if an explicit active weight goal exists
+                    Goal activeWeightGoal = null;
+                    if (goals != null) {
+                        for (Goal g : goals) {
+                            if ("Weight".equalsIgnoreCase(g.getCategory()) ||
+                                    (g.getTitle() != null && g.getTitle().toLowerCase().contains("weight"))) {
+                                activeWeightGoal = g;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (measurements != null && !measurements.isEmpty()) {
                         currentWeight = measurements.get(0).getWeightKg();
                         startingWeight = measurements.get(measurements.size() - 1).getWeightKg();
+                    } else if (activeWeightGoal != null && activeWeightGoal.getCurrentValue() > 0) {
+                        currentWeight = activeWeightGoal.getCurrentValue();
+                        startingWeight = currentWeight;
                     } else if (userProf != null && userProf.getTargetWeightKg() != null) {
                         currentWeight = userProf.getTargetWeightKg();
                         startingWeight = currentWeight;
+                    }
+
+                    if (userProf == null || userProf.getTargetWeightKg() == null || userProf.getTargetWeightKg() <= 0) {
+                        if (activeWeightGoal != null && activeWeightGoal.getTargetValue() > 0) {
+                            targetWeight = activeWeightGoal.getTargetValue();
+                        }
                     }
 
                     valStartingWeight.setText(String.format(Locale.US, "%.1f kg", startingWeight));
                     valCurrentWeight.setText(String.format(Locale.US, "%.1f kg", currentWeight));
                     valTargetWeight.setText(String.format(Locale.US, "%.1f kg", targetWeight));
 
-                    // Calculate weight journey progress
-                    double totalDeltaToLose = startingWeight - targetWeight;
-                    double deltaRemaining = currentWeight - targetWeight;
+                    // Accurate weight journey progress calculation
+                    double deltaFromTarget = currentWeight - targetWeight;
+                    double journeyDelta = startingWeight - targetWeight;
 
-                    if (Math.abs(deltaRemaining) < 0.2) {
-                        valGoalStatus.setText("Goal Achieved! Maintaining at " + String.format(Locale.US, "%.1f kg", currentWeight));
+                    if (Math.abs(deltaFromTarget) <= 0.3) {
+                        // User has achieved target maintenance!
+                        valGoalStatus.setText(String.format(Locale.US, "Goal Achieved! Maintaining at %.1f kg", currentWeight));
+                        valGoalStatus.setForeground(ThemeConfig.SUCCESS);
                         barWeightProgress.setValue(100);
+                        barWeightProgress.setProgressColor(ThemeConfig.SUCCESS);
                         lblProgressPercent.setText("100% Completed");
-                    } else if (totalDeltaToLose > 0.5) {
-                        // Weight loss goal
+                        lblProgressPercent.setForeground(ThemeConfig.SUCCESS);
+                    } else if (journeyDelta > 0.5) {
+                        // Weight loss goal (startingWeight > targetWeight)
+                        double totalToLose = startingWeight - targetWeight;
                         double lost = startingWeight - currentWeight;
-                        int percent = (int) Math.min(100, Math.max(0, (lost / totalDeltaToLose) * 100));
-                        valGoalStatus.setText(String.format(Locale.US, "%.1f kg remaining to reach target", Math.max(0, deltaRemaining)));
-                        barWeightProgress.setValue(percent);
-                        lblProgressPercent.setText(percent + "% Completed");
-                    } else if (totalDeltaToLose < -0.5) {
-                        // Muscle gain goal
-                        double gained = currentWeight - startingWeight;
+                        double remaining = currentWeight - targetWeight;
+
+                        if (remaining <= 0) {
+                            valGoalStatus.setText(String.format(Locale.US, "Goal Reached! Target was %.1f kg (Current: %.1f kg)", targetWeight, currentWeight));
+                            valGoalStatus.setForeground(ThemeConfig.SUCCESS);
+                            barWeightProgress.setValue(100);
+                            barWeightProgress.setProgressColor(ThemeConfig.SUCCESS);
+                            lblProgressPercent.setText("100% Completed");
+                            lblProgressPercent.setForeground(ThemeConfig.SUCCESS);
+                        } else {
+                            int percent = (int) Math.round((lost / totalToLose) * 100.0);
+                            percent = Math.min(100, Math.max(0, percent));
+                            valGoalStatus.setText(String.format(Locale.US, "%.1f kg remaining to reach target (%.1f kg)", remaining, targetWeight));
+                            valGoalStatus.setForeground(ThemeConfig.TEXT_PRIMARY);
+                            barWeightProgress.setValue(percent);
+                            barWeightProgress.setProgressColor(ThemeConfig.PRIMARY_ACCENT);
+                            lblProgressPercent.setText(percent + "% Completed");
+                            lblProgressPercent.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                        }
+                    } else if (journeyDelta < -0.5) {
+                        // Muscle / Weight gain goal (startingWeight < targetWeight)
                         double totalToGain = targetWeight - startingWeight;
-                        int percent = (int) Math.min(100, Math.max(0, (gained / totalToGain) * 100));
-                        valGoalStatus.setText(String.format(Locale.US, "%.1f kg remaining to reach target", Math.max(0, -deltaRemaining)));
-                        barWeightProgress.setValue(percent);
-                        lblProgressPercent.setText(percent + "% Completed");
+                        double gained = currentWeight - startingWeight;
+                        double remaining = targetWeight - currentWeight;
+
+                        if (remaining <= 0) {
+                            valGoalStatus.setText(String.format(Locale.US, "Goal Reached! Target was %.1f kg (Current: %.1f kg)", targetWeight, currentWeight));
+                            valGoalStatus.setForeground(ThemeConfig.SUCCESS);
+                            barWeightProgress.setValue(100);
+                            barWeightProgress.setProgressColor(ThemeConfig.SUCCESS);
+                            lblProgressPercent.setText("100% Completed");
+                            lblProgressPercent.setForeground(ThemeConfig.SUCCESS);
+                        } else {
+                            int percent = (int) Math.round((gained / totalToGain) * 100.0);
+                            percent = Math.min(100, Math.max(0, percent));
+                            valGoalStatus.setText(String.format(Locale.US, "%.1f kg remaining to reach target (%.1f kg)", remaining, targetWeight));
+                            valGoalStatus.setForeground(ThemeConfig.TEXT_PRIMARY);
+                            barWeightProgress.setValue(percent);
+                            barWeightProgress.setProgressColor(ThemeConfig.PRIMARY_ACCENT);
+                            lblProgressPercent.setText(percent + "% Completed");
+                            lblProgressPercent.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                        }
                     } else {
-                        valGoalStatus.setText("Weight maintenance in progress");
-                        barWeightProgress.setValue(100);
-                        lblProgressPercent.setText("Maintained");
+                        // startingWeight == targetWeight (within 0.5kg), but currentWeight != targetWeight
+                        if (currentWeight < targetWeight) {
+                            double toGain = targetWeight - currentWeight;
+                            valGoalStatus.setText(String.format(Locale.US, "%.1f kg to gain to reach target (%.1f kg)", toGain, targetWeight));
+                            valGoalStatus.setForeground(ThemeConfig.TEXT_PRIMARY);
+                            int percent = (int) Math.min(100, Math.max(0, Math.round((currentWeight / targetWeight) * 100.0)));
+                            barWeightProgress.setValue(percent);
+                            barWeightProgress.setProgressColor(ThemeConfig.PRIMARY_ACCENT);
+                            lblProgressPercent.setText(String.format(Locale.US, "%d%% • %.1f kg to gain", percent, toGain));
+                            lblProgressPercent.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                        } else {
+                            double toLose = currentWeight - targetWeight;
+                            valGoalStatus.setText(String.format(Locale.US, "%.1f kg to lose to reach target (%.1f kg)", toLose, targetWeight));
+                            valGoalStatus.setForeground(ThemeConfig.TEXT_PRIMARY);
+                            int percent = (int) Math.min(100, Math.max(0, Math.round((targetWeight / currentWeight) * 100.0)));
+                            barWeightProgress.setValue(percent);
+                            barWeightProgress.setProgressColor(ThemeConfig.PRIMARY_ACCENT);
+                            lblProgressPercent.setText(String.format(Locale.US, "%d%% • %.1f kg to lose", percent, toLose));
+                            lblProgressPercent.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                        }
                     }
 
                     // Clinical calculations
@@ -669,9 +799,134 @@ public class SettingsPanel extends JPanel {
         return name.substring(0, Math.min(2, name.length())).toUpperCase();
     }
 
-    // =========================================================================
-    // DIALOGS & ACTIONS
-    // =========================================================================
+    /**
+     * Opens a quick modal dialog to adjust or set target weight.
+     */
+    private void openQuickTargetDialog() {
+        UserSession session = SupabaseClient.getInstance().getCurrentSession();
+        if (session == null) return;
+        UserProfile profile = session.getProfile();
+        if (profile == null) return;
+
+        double curTarget = (profile.getTargetWeightKg() != null && profile.getTargetWeightKg() > 0)
+                ? profile.getTargetWeightKg() : 70.0;
+
+        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Adjust Target Weight Goal", Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setSize(400, 290);
+        dlg.setLocationRelativeTo(this);
+        dlg.setResizable(false);
+        dlg.getContentPane().setBackground(ThemeConfig.BG_DARK);
+
+        JPanel pnl = new JPanel();
+        pnl.setLayout(new BoxLayout(pnl, BoxLayout.Y_AXIS));
+        pnl.setOpaque(false);
+        pnl.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+
+        JLabel title = new JLabel("Adjust Target Weight Goal");
+        title.setFont(ThemeConfig.FONT_TITLE);
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        pnl.add(title);
+        pnl.add(Box.createVerticalStrut(6));
+
+        JLabel sub = new JLabel("Set your desired target goal weight in kilograms:");
+        sub.setFont(ThemeConfig.FONT_SMALL);
+        sub.setForeground(ThemeConfig.TEXT_MUTED);
+        pnl.add(sub);
+        pnl.add(Box.createVerticalStrut(14));
+
+        ModernTextField txtTarget = new ModernTextField(String.format(Locale.US, "%.1f", curTarget), "e.g. 75.0");
+        pnl.add(txtTarget);
+        pnl.add(Box.createVerticalStrut(8));
+
+        // Stepper micro-adjust buttons
+        JPanel stepRow = new JPanel(new GridLayout(1, 4, 6, 0));
+        stepRow.setOpaque(false);
+        stepRow.add(createAdjustButton("-1.0", () -> adjustTargetField(txtTarget, -1.0)));
+        stepRow.add(createAdjustButton("-0.5", () -> adjustTargetField(txtTarget, -0.5)));
+        stepRow.add(createAdjustButton("+0.5", () -> adjustTargetField(txtTarget, +0.5)));
+        stepRow.add(createAdjustButton("+1.0", () -> adjustTargetField(txtTarget, +1.0)));
+        pnl.add(stepRow);
+        pnl.add(Box.createVerticalStrut(18));
+
+        JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        btnBar.setOpaque(false);
+
+        ModernButton btnCancel = new ModernButton("Cancel", ModernButton.ButtonStyle.SECONDARY);
+        btnCancel.addActionListener(e -> dlg.dispose());
+        btnBar.add(btnCancel);
+
+        ModernButton btnSave = new ModernButton("Save Target", ModernButton.ButtonStyle.PRIMARY);
+        btnSave.addActionListener(e -> {
+            try {
+                double newTarget = Double.parseDouble(txtTarget.getText().trim());
+                if (newTarget < 20 || newTarget > 350) {
+                    JOptionPane.showMessageDialog(dlg, "Please enter a realistic target weight (20-350 kg).");
+                    return;
+                }
+                profile.setTargetWeightKg(newTarget);
+                btnSave.setEnabled(false);
+                btnSave.setText("Saving...");
+
+                SwingWorker<Void, Void> sw = new SwingWorker<>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        profileDAO.updateProfile(profile);
+                        try {
+                            List<Goal> goals = goalDAO.getAllGoals();
+                            for (Goal g : goals) {
+                                if ("Weight".equalsIgnoreCase(g.getCategory()) ||
+                                        (g.getTitle() != null && g.getTitle().toLowerCase().contains("weight"))) {
+                                    g.setTargetValue(newTarget);
+                                    goalDAO.updateGoal(g);
+                                    break;
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        dlg.dispose();
+                        ToastNotification.showToast(SettingsPanel.this, "Target goal updated to " + String.format(Locale.US, "%.1f kg", newTarget), ToastNotification.ToastType.SUCCESS);
+                        loadSettings();
+                        if (onProfileUpdatedCallback != null) onProfileUpdatedCallback.run();
+                    }
+                };
+                sw.execute();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dlg, "Please enter a valid numeric target weight.");
+            }
+        });
+        btnBar.add(btnSave);
+        pnl.add(btnBar);
+
+        dlg.setContentPane(pnl);
+        dlg.setVisible(true);
+    }
+
+    private void adjustTargetField(ModernTextField field, double delta) {
+        try {
+            double current = Double.parseDouble(field.getText().trim());
+            double updated = Math.max(20.0, current + delta);
+            field.setText(String.format(Locale.US, "%.1f", updated));
+        } catch (Exception ignored) {}
+    }
+
+    private JButton createAdjustButton(String text, Runnable action) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+        btn.setBackground(ThemeConfig.BG_CARD);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(4, 6, 4, 6)
+        ));
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.addActionListener(e -> action.run());
+        return btn;
+    }
 
     /**
      * Opens the dedicated, elegant Edit Profile modal dialog.

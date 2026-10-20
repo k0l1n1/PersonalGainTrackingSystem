@@ -58,6 +58,7 @@ public class MainFrame extends JFrame {
         sidebar.setOnLogoutListener(this::handleLogout);
 
         dashboardPanel.setNavigationConsumer(this::navigateTo);
+        settingsPanel.setNavigationConsumer(this::navigateTo);
         dashboardPanel.setOnOpenRemindersCallback(() -> {
             navigateTo(SidebarPanel.NavItem.WORKOUTS);
             workoutPanel.selectRemindersTab();
