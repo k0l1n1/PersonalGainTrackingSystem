@@ -17,6 +17,7 @@ public class WorkoutTimerPanel extends ModernCard {
     private static final long serialVersionUID = 1L;
 
     private final JLabel lblTime;
+    private final JPanel timerBadge;
     private final JLabel lblStatusBadge;
     private final ModernButton btnStartPause;
     private final ModernButton btnReset;
@@ -80,28 +81,32 @@ public class WorkoutTimerPanel extends ModernCard {
         leftPanel.add(textPanel);
         add(leftPanel, BorderLayout.WEST);
 
-        // 2. Center: Prominent Digital LCD Timer Display Console
+        // 2. Center: Prominent Digital Timer Display Console
         JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setOpaque(false);
 
-        JPanel timerBadge = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 4)) {
+        timerBadge = new JPanel(new FlowLayout(FlowLayout.CENTER, 14, 4)) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(0x12, 0x14, 0x1C)); // Sleek dark digital console
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2.setColor(isRunning ? new Color(0x10, 0xB9, 0x81, 120) : ThemeConfig.BORDER_COLOR);
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g2.setColor(new Color(0x14, 0x14, 0x18));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+
+                Color borderColor = isRunning ? new Color(0x10, 0xB9, 0x81, 180) :
+                        (elapsedSeconds > 0 ? new Color(0xF5, 0x9E, 0x0B, 180) : new Color(0x35, 0x35, 0x38));
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
                 g2.dispose();
             }
         };
         timerBadge.setOpaque(false);
-        timerBadge.setBorder(BorderFactory.createEmptyBorder(2, 20, 2, 20));
+        timerBadge.setBorder(BorderFactory.createEmptyBorder(2, 18, 2, 18));
 
-        lblTime = new JLabel("00:00:00");
-        lblTime.setFont(new Font("Consolas", Font.BOLD, 24));
+        lblTime = new JLabel("00 : 00 : 00");
+        lblTime.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTime.setForeground(ThemeConfig.TEXT_PRIMARY);
         timerBadge.add(lblTime);
 
@@ -179,7 +184,7 @@ public class WorkoutTimerPanel extends ModernCard {
                     BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 140), 1, true),
                     BorderFactory.createEmptyBorder(1, 6, 1, 6)
             ));
-            lblTime.setForeground(new Color(0x10, 0xB9, 0x81)); // Vivid Emerald green when live
+            lblTime.setForeground(new Color(0x34, 0xD3, 0x99)); // Vivid Emerald green when live
         } else {
             swingTimer.stop();
             isRunning = false;
@@ -192,8 +197,9 @@ public class WorkoutTimerPanel extends ModernCard {
                     BorderFactory.createLineBorder(new Color(0xF5, 0x9E, 0x0B, 140), 1, true),
                     BorderFactory.createEmptyBorder(1, 6, 1, 6)
             ));
-            lblTime.setForeground(ThemeConfig.WARNING);
+            lblTime.setForeground(new Color(0xFB, 0xBF, 0x24)); // Warm amber
         }
+        timerBadge.repaint();
         repaint();
     }
 
@@ -213,7 +219,9 @@ public class WorkoutTimerPanel extends ModernCard {
                 BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
                 BorderFactory.createEmptyBorder(1, 6, 1, 6)
         ));
+        lblTime.setText("00 : 00 : 00");
         lblTime.setForeground(ThemeConfig.TEXT_PRIMARY);
+        timerBadge.repaint();
         repaint();
     }
 
@@ -221,7 +229,8 @@ public class WorkoutTimerPanel extends ModernCard {
         int hours = elapsedSeconds / 3600;
         int minutes = (elapsedSeconds % 3600) / 60;
         int seconds = elapsedSeconds % 60;
-        lblTime.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
+        lblTime.setText(String.format("%02d : %02d : %02d", hours, minutes, seconds));
+        timerBadge.repaint();
     }
 
     public int getElapsedMinutes() {
