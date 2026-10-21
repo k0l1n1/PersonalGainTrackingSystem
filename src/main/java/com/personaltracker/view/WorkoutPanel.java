@@ -193,15 +193,19 @@ public class WorkoutPanel extends JPanel {
                 lbl.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
                 String val = value != null ? value.toString() : "";
                 if ("COMPLETED".equalsIgnoreCase(val)) {
-                    lbl.setText("✓ COMPLETED");
+                    lbl.setText("COMPLETED");
+                    lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 11, ThemeConfig.SUCCESS));
                     lbl.setForeground(ThemeConfig.SUCCESS);
                 } else if ("REST DAY".equalsIgnoreCase(val)) {
-                    lbl.setText("💤 REST DAY");
+                    lbl.setText("REST DAY");
+                    lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.SLEEP, 11, new Color(0x94, 0xA3, 0xB8)));
                     lbl.setForeground(new Color(0x94, 0xA3, 0xB8)); // Modern cool slate
                 } else {
-                    lbl.setText("⏱ PLANNED");
+                    lbl.setText("PLANNED");
+                    lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.TIMER, 11, ThemeConfig.WARNING));
                     lbl.setForeground(ThemeConfig.WARNING);
                 }
+                lbl.setIconTextGap(5);
                 lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
                 if (!isSelected) {
                     lbl.setBackground(row % 2 == 0 ? ThemeConfig.BG_CARD : new Color(0x1F, 0x1F, 0x1F));
@@ -327,7 +331,9 @@ public class WorkoutPanel extends JPanel {
         card.add(lbl);
 
         DailyRoutine todayRoutine = getRoutineForDay(LocalDate.now().getDayOfWeek());
-        JButton btnToday = new JButton("★ Today (" + todayRoutine.shortDay + "): " + todayRoutine.title + " (" + todayRoutine.durationMinutes + "m)");
+        JButton btnToday = new JButton("Today (" + todayRoutine.shortDay + "): " + todayRoutine.title + " (" + todayRoutine.durationMinutes + "m)");
+        btnToday.setIcon(IconFactory.createIcon(IconFactory.IconType.STAR, 12, Color.WHITE));
+        btnToday.setIconTextGap(6);
         btnToday.setFont(new Font("Segoe UI", Font.BOLD, 11));
         btnToday.setForeground(Color.WHITE);
         btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
@@ -1725,10 +1731,14 @@ public class WorkoutPanel extends JPanel {
             btnPnl.setOpaque(false);
 
             final Reminder focusReminder = nextTodayReminder;
-            ModernButton btnMarkDone = new ModernButton("✓ Mark Done", ModernButton.ButtonStyle.SECONDARY);
+            ModernButton btnMarkDone = new ModernButton("Mark Done", ModernButton.ButtonStyle.SECONDARY);
+            btnMarkDone.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 12, ThemeConfig.TEXT_PRIMARY));
+            btnMarkDone.setIconTextGap(6);
             btnMarkDone.addActionListener(e -> toggleReminderStatus(focusReminder, true));
 
-            ModernButton btnStartWorkout = new ModernButton("⏱ Start Workout Now", ModernButton.ButtonStyle.PRIMARY);
+            ModernButton btnStartWorkout = new ModernButton("Start Workout Now", ModernButton.ButtonStyle.PRIMARY);
+            btnStartWorkout.setIcon(IconFactory.createIcon(IconFactory.IconType.TIMER, 12, Color.WHITE));
+            btnStartWorkout.setIconTextGap(6);
             btnStartWorkout.addActionListener(e -> {
                 timerPanel.startTimer();
                 selectWorkoutsTab();

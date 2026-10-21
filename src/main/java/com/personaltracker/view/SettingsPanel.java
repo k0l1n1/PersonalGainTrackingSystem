@@ -1161,7 +1161,9 @@ public class SettingsPanel extends JPanel {
         card.add(Box.createVerticalStrut(12));
 
         // Full Comprehensive Export Button
-        ModernButton btnFullExport = new ModernButton("📥 Export Complete Fitness Archive (All 5 Reports)", ModernButton.ButtonStyle.PRIMARY);
+        ModernButton btnFullExport = new ModernButton("Export Complete Fitness Archive (All 5 Reports)", ModernButton.ButtonStyle.PRIMARY);
+        btnFullExport.setIcon(IconFactory.createIcon(IconFactory.IconType.COPY, 13, Color.WHITE));
+        btnFullExport.setIconTextGap(6);
         btnFullExport.setFont(ThemeConfig.FONT_SMALL);
         btnFullExport.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         btnFullExport.setAlignmentX(Component.LEFT_ALIGNMENT);

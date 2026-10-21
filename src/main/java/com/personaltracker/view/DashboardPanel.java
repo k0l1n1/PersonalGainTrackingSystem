@@ -745,7 +745,7 @@ public class DashboardPanel extends JPanel {
                 }
             }
             if (count == 0) {
-                pnlReminders.add(createEmptyActionRow("✓ You're all caught up!", "+ Add Reminder", e -> openRemindersView()));
+                pnlReminders.add(createEmptyActionRow("You're all caught up!", "+ Add Reminder", e -> openRemindersView()));
             }
         } else {
             pnlReminders.add(createEmptyActionRow("No upcoming reminders.", "+ Add Reminder", e -> openRemindersView()));
