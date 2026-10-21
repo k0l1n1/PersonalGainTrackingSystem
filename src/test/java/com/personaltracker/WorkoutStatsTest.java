@@ -60,4 +60,18 @@ public class WorkoutStatsTest {
         dao.updateWorkout(unpersisted);
         assertNotNull(unpersisted.getId());
     }
+
+    @Test
+    @DisplayName("Should return valid daily routines for all days of the week")
+    void testDailySplitRoutines() {
+        for (java.time.DayOfWeek day : java.time.DayOfWeek.values()) {
+            com.personaltracker.view.WorkoutPanel.DailyRoutine routine = com.personaltracker.view.WorkoutPanel.getRoutineForDay(day);
+            assertNotNull(routine);
+            assertEquals(day, routine.dayOfWeek);
+            assertNotNull(routine.title);
+            assertFalse(routine.title.isBlank());
+            assertTrue(routine.durationMinutes > 0);
+            assertTrue(routine.calories > 0);
+        }
+    }
 }

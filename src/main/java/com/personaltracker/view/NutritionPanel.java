@@ -323,7 +323,8 @@ public class NutritionPanel extends JPanel {
             totalFat += entry.getFatG();
 
             JPanel row = createFoodItemRow(entry);
-            switch (entry.getMealType().toUpperCase()) {
+            String mealType = entry.getMealType() != null ? entry.getMealType().toUpperCase() : "SNACK";
+            switch (mealType) {
                 case "BREAKFAST":
                     pnlBreakfast.add(row);
                     pnlBreakfast.add(Box.createVerticalStrut(6));
@@ -417,12 +418,13 @@ public class NutritionPanel extends JPanel {
         JPanel left = new JPanel(new GridLayout(2, 1, 0, 2));
         left.setOpaque(false);
 
-        JLabel name = new JLabel(entry.getFoodName());
+        JLabel name = new JLabel(entry.getFoodName() != null ? entry.getFoodName() : "Unnamed Food");
         name.setFont(ThemeConfig.FONT_BODY_BOLD);
         name.setForeground(ThemeConfig.TEXT_PRIMARY);
         left.add(name);
 
-        JLabel sub = new JLabel(entry.getServingSize() + " | P: " + entry.getProteinG() + "g C: " + entry.getCarbsG() + "g F: " + entry.getFatG() + "g");
+        String serving = (entry.getServingSize() != null && !entry.getServingSize().isBlank()) ? entry.getServingSize() + " • " : "";
+        JLabel sub = new JLabel(String.format(java.util.Locale.US, "%sP: %.1fg  C: %.1fg  F: %.1fg", serving, entry.getProteinG(), entry.getCarbsG(), entry.getFatG()));
         sub.setFont(ThemeConfig.FONT_SMALL);
         sub.setForeground(ThemeConfig.TEXT_MUTED);
         left.add(sub);

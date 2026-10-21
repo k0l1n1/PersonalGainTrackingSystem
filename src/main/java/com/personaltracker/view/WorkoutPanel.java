@@ -27,10 +27,14 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +42,89 @@ import java.util.stream.Collectors;
  */
 public class WorkoutPanel extends JPanel {
     private static final long serialVersionUID = 1L;
+
+    public static class DailyRoutine {
+        public final DayOfWeek dayOfWeek;
+        public final String shortDay;
+        public final String title;
+        public final String type;
+        public final int durationMinutes;
+        public final int calories;
+        public final String[][] exercises;
+
+        public DailyRoutine(DayOfWeek dayOfWeek, String shortDay, String title, String type, int durationMinutes, int calories, String[][] exercises) {
+            this.dayOfWeek = dayOfWeek;
+            this.shortDay = shortDay;
+            this.title = title;
+            this.type = type;
+            this.durationMinutes = durationMinutes;
+            this.calories = calories;
+            this.exercises = exercises;
+        }
+    }
+
+    public static final DailyRoutine[] WEEKLY_ROUTINES = {
+        new DailyRoutine(DayOfWeek.MONDAY, "Mon", "Push Day (Chest & Triceps)", "Strength", 50, 420, new String[][]{
+            {"Barbell Bench Press", "4", "8", "75.0"},
+            {"Overhead Military Press", "3", "10", "45.0"},
+            {"Incline Dumbbell Press", "3", "12", "22.0"},
+            {"Tricep Cable Pushdown", "3", "12", "25.0"}
+        }),
+        new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Pull Day (Back & Biceps)", "Strength", 50, 410, new String[][]{
+            {"Barbell Deadlift", "4", "6", "100.0"},
+            {"Lat Pulldown", "3", "10", "55.0"},
+            {"Barbell Bent-Over Row", "3", "10", "50.0"},
+            {"Dumbbell Bicep Curls", "3", "12", "14.0"}
+        }),
+        new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Leg Day (Quads & Hamstrings)", "Strength", 55, 480, new String[][]{
+            {"Barbell Back Squat", "4", "8", "90.0"},
+            {"Romanian Deadlift", "3", "10", "75.0"},
+            {"Leg Press", "3", "12", "140.0"},
+            {"Standing Calf Raises", "4", "15", "45.0"}
+        }),
+        new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Cardio Conditioning & Core", "Cardio", 40, 380, new String[][]{
+            {"5K Interval Run", "1", "1", "0.0"},
+            {"Hanging Leg Raises", "3", "12", "0.0"},
+            {"Plank Hold", "3", "60", "0.0"},
+            {"Russian Twists", "3", "20", "10.0"}
+        }),
+        new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Upper Body Hypertrophy & Arms", "Strength", 45, 390, new String[][]{
+            {"Incline Dumbbell Bench", "4", "10", "24.0"},
+            {"Cable Seated Rows", "3", "12", "50.0"},
+            {"Lateral Dumbbell Raises", "4", "15", "10.0"},
+            {"Skull Crushers", "3", "12", "25.0"}
+        }),
+        new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "Full Body HIIT & Power", "HIIT", 35, 410, new String[][]{
+            {"Kettlebell Swings", "4", "20", "20.0"},
+            {"Burpees", "4", "12", "0.0"},
+            {"Box Jumps", "3", "12", "0.0"},
+            {"Dumbbell Thrusters", "3", "12", "16.0"}
+        }),
+        new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Active Recovery & Mobility", "Flexibility", 30, 180, new String[][]{
+            {"Deep Dynamic Mobility", "1", "15", "0.0"},
+            {"Foam Rolling & Release", "1", "15", "0.0"},
+            {"Core Breathing & Stretch", "1", "10", "0.0"}
+        })
+    };
+
+    public static DailyRoutine getRoutineForDay(DayOfWeek day) {
+        for (DailyRoutine r : WEEKLY_ROUTINES) {
+            if (r.dayOfWeek == day) return r;
+        }
+        return WEEKLY_ROUTINES[0];
+    }
+
+    public static class WorkoutRowItem {
+        public final LocalDate date;
+        public final Workout workout;
+        public final boolean isRestDay;
+
+        public WorkoutRowItem(LocalDate date, Workout workout, boolean isRestDay) {
+            this.date = date;
+            this.workout = workout;
+            this.isRestDay = isRestDay;
+        }
+    }
 
     private final WorkoutDAO workoutDAO = new WorkoutDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
@@ -60,8 +147,8 @@ public class WorkoutPanel extends JPanel {
 
     // Workouts Log Components
     private final ModernTextField txtSearch = new ModernTextField("", "Search workouts by title or type...");
-    private final JComboBox<String> cmbTypeFilter = new JComboBox<>(new String[]{"All Types", "Strength", "Cardio", "HIIT", "Yoga", "Flexibility", "Endurance", "Other"});
-    private final JComboBox<String> cmbStatusFilter = new JComboBox<>(new String[]{"All Statuses", "COMPLETED", "PLANNED"});
+    private final JComboBox<String> cmbTypeFilter = new JComboBox<>(new String[]{"All Types", "Strength", "Cardio", "HIIT", "Yoga", "Flexibility", "Endurance", "Recovery", "Other"});
+    private final JComboBox<String> cmbStatusFilter = new JComboBox<>(new String[]{"All Statuses", "COMPLETED", "PLANNED", "REST DAY"});
 
     private final DefaultTableModel tableModel;
     private final ModernTable table;
@@ -71,6 +158,7 @@ public class WorkoutPanel extends JPanel {
     private final JLabel lblSummaryStats = new JLabel("Loading workouts...");
 
     private List<Workout> currentWorkouts = new ArrayList<>();
+    private final List<WorkoutRowItem> displayedRowItems = new ArrayList<>();
 
     // Reminders & Schedule Components
     private final JPanel pnlTodayAgenda = new JPanel();
@@ -107,6 +195,9 @@ public class WorkoutPanel extends JPanel {
                 if ("COMPLETED".equalsIgnoreCase(val)) {
                     lbl.setText("✓ COMPLETED");
                     lbl.setForeground(ThemeConfig.SUCCESS);
+                } else if ("REST DAY".equalsIgnoreCase(val)) {
+                    lbl.setText("💤 REST DAY");
+                    lbl.setForeground(new Color(0x94, 0xA3, 0xB8)); // Modern cool slate
                 } else {
                     lbl.setText("⏱ PLANNED");
                     lbl.setForeground(ThemeConfig.WARNING);
@@ -227,44 +318,97 @@ public class WorkoutPanel extends JPanel {
     }
 
     private JPanel createQuickWorkoutPresetsBar() {
-        ModernCard card = new ModernCard(12, new Insets(6, 14, 6, 14));
-        card.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        ModernCard card = new ModernCard(12, new Insets(6, 12, 6, 12));
+        card.setLayout(new FlowLayout(FlowLayout.LEFT, 6, 0));
 
-        JLabel lbl = new JLabel("Quick Log:");
+        JLabel lbl = new JLabel("Daily Split:");
         lbl.setFont(ThemeConfig.FONT_SMALL);
         lbl.setForeground(ThemeConfig.TEXT_MUTED);
         card.add(lbl);
 
-        card.add(createQuickLogChip("+ Push Day (45m)", "Push Day (Chest/Triceps)", "Strength", 45, 380, new String[][]{{"Bench Press", "3", "10", "60.0"}, {"Incline Dumbbell Press", "3", "12", "20.0"}}));
-        card.add(createQuickLogChip("+ Pull Day (45m)", "Pull Day (Back/Biceps)", "Strength", 45, 360, new String[][]{{"Lat Pulldown", "3", "10", "55.0"}, {"Barbell Row", "3", "10", "50.0"}}));
-        card.add(createQuickLogChip("+ Leg Day (50m)", "Leg Day (Quads/Hamstrings)", "Strength", 50, 420, new String[][]{{"Barbell Squats", "3", "8", "80.0"}, {"Leg Press", "3", "12", "120.0"}}));
-        card.add(createQuickLogChip("+ 5K Run (30m)", "5K Outdoor Run", "Cardio", 30, 310, null));
-        card.add(createQuickLogChip("+ HIIT Blitz (20m)", "Full Body HIIT", "HIIT", 20, 240, null));
+        DailyRoutine todayRoutine = getRoutineForDay(LocalDate.now().getDayOfWeek());
+        JButton btnToday = new JButton("★ Today (" + todayRoutine.shortDay + "): " + todayRoutine.title + " (" + todayRoutine.durationMinutes + "m)");
+        btnToday.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnToday.setForeground(Color.WHITE);
+        btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+        btnToday.setFocusPainted(false);
+        btnToday.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnToday.setToolTipText("Today's recommended routine. Click to review & log, or Shift+Click to instantly log.");
+        btnToday.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
+                BorderFactory.createEmptyBorder(4, 10, 4, 10)
+        ));
+        btnToday.addActionListener(e -> {
+            boolean isShift = (e.getModifiers() & java.awt.event.ActionEvent.SHIFT_MASK) != 0;
+            if (isShift) {
+                quickSavePresetDirectly(todayRoutine.title, todayRoutine.type, todayRoutine.durationMinutes, todayRoutine.calories, todayRoutine.exercises);
+            } else {
+                openAddWorkoutDialogWithPreset(todayRoutine.title, todayRoutine.type, todayRoutine.durationMinutes, todayRoutine.calories, todayRoutine.exercises);
+            }
+        });
+        card.add(btnToday);
+
+        for (DailyRoutine r : WEEKLY_ROUTINES) {
+            card.add(createDailyRoutineChip(r));
+        }
 
         return card;
     }
 
-    private JButton createQuickLogChip(String label, String title, String type, int duration, int calories, String[][] exercises) {
-        JButton btn = new JButton(label);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btn.setForeground(ThemeConfig.TEXT_PRIMARY);
-        btn.setBackground(ThemeConfig.BG_CARD);
+    private JButton createDailyRoutineChip(DailyRoutine r) {
+        boolean isToday = LocalDate.now().getDayOfWeek() == r.dayOfWeek;
+        JButton btn = new JButton(r.shortDay + ": " + r.title.split(" ")[0]);
+        btn.setFont(new Font("Segoe UI", isToday ? Font.BOLD : Font.PLAIN, 11));
+        btn.setForeground(isToday ? ThemeConfig.TEXT_PRIMARY : ThemeConfig.TEXT_SECONDARY);
+        btn.setBackground(isToday ? new Color(0x2D, 0x37, 0x48) : ThemeConfig.BG_CARD);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setToolTipText("Click to review & log, or Shift+Click to instantly save");
+        btn.setToolTipText(r.dayOfWeek.name() + ": " + r.title + " (" + r.durationMinutes + "m, " + r.type + ") - Click to review, Shift+Click to instantly log");
         btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                BorderFactory.createEmptyBorder(4, 8, 4, 8)
+                BorderFactory.createLineBorder(isToday ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(4, 7, 4, 7)
         ));
         btn.addActionListener(e -> {
             boolean isShift = (e.getModifiers() & java.awt.event.ActionEvent.SHIFT_MASK) != 0;
             if (isShift) {
-                quickSavePresetDirectly(title, type, duration, calories, exercises);
+                quickSavePresetDirectly(r.title, r.type, r.durationMinutes, r.calories, r.exercises);
             } else {
-                openAddWorkoutDialogWithPreset(title, type, duration, calories, exercises);
+                openAddWorkoutDialogWithPreset(r.title, r.type, r.durationMinutes, r.calories, r.exercises);
             }
         });
         return btn;
+    }
+
+    private void openAddWorkoutDialogForDate(LocalDate targetDate) {
+        DailyRoutine routine = getRoutineForDay(targetDate.getDayOfWeek());
+        Workout w = new Workout();
+        w.setTitle(routine.title);
+        w.setWorkoutType(routine.type);
+        w.setDurationMinutes(routine.durationMinutes);
+        w.setCaloriesBurned(routine.calories);
+        w.setWorkoutDate(targetDate);
+        w.setStatus("COMPLETED");
+
+        if (routine.exercises != null) {
+            List<WorkoutExercise> exList = new ArrayList<>();
+            for (String[] row : routine.exercises) {
+                WorkoutExercise we = new WorkoutExercise();
+                we.setExerciseName(row[0]);
+                we.setSets(Integer.parseInt(row[1]));
+                we.setReps(Integer.parseInt(row[2]));
+                we.setWeightKg(Double.parseDouble(row[3]));
+                exList.add(we);
+            }
+            w.setExercises(exList);
+        }
+
+        WorkoutDialog dialog = new WorkoutDialog(SwingUtilities.getWindowAncestor(this), w, routine.durationMinutes);
+        dialog.setVisible(true);
+        if (dialog.isSaved()) {
+            ToastNotification.showToast(this, "Workout logged for " + DateUtil.formatDate(targetDate) + "!", ToastNotification.ToastType.SUCCESS);
+            loadWorkouts();
+            checkWorkoutAchievements();
+        }
     }
 
     private void quickSavePresetDirectly(String title, String type, int durationMinutes, int calories, String[][] exercises) {
@@ -518,13 +662,104 @@ public class WorkoutPanel extends JPanel {
                 try {
                     currentWorkouts = get();
                     tableModel.setRowCount(0);
+                    displayedRowItems.clear();
 
                     int totalMins = 0;
                     int totalCal = 0;
 
                     for (Workout w : currentWorkouts) {
+                        totalMins += w.getDurationMinutes();
+                        totalCal += w.getCaloriesBurned();
+                    }
+
+                    LocalDate today = LocalDate.now();
+                    LocalDate rollingWindowStart = today.minusDays(6);
+
+                    Map<LocalDate, List<Workout>> byDate = new LinkedHashMap<>();
+                    List<Workout> undatedWorkouts = new ArrayList<>();
+                    for (Workout w : currentWorkouts) {
+                        if (w.getWorkoutDate() != null) {
+                            byDate.computeIfAbsent(w.getWorkoutDate(), k -> new ArrayList<>()).add(w);
+                        } else {
+                            undatedWorkouts.add(w);
+                        }
+                    }
+
+                    List<LocalDate> sortedDates = new ArrayList<>(byDate.keySet());
+                    sortedDates.sort(Collections.reverseOrder());
+
+                    // 1. Future planned workouts (if any), in descending order
+                    for (LocalDate date : sortedDates) {
+                        if (date.isAfter(today)) {
+                            for (Workout w : byDate.get(date)) {
+                                displayedRowItems.add(new WorkoutRowItem(date, w, false));
+                                tableModel.addRow(new Object[]{
+                                        DateUtil.formatDate(w.getWorkoutDate()),
+                                        w.getTitle(),
+                                        w.getWorkoutType(),
+                                        w.getDurationMinutes() + " mins",
+                                        w.getCaloriesBurned() + " kcal",
+                                        w.getStatus(),
+                                        w.getNotes() != null ? w.getNotes() : ""
+                                });
+                            }
+                        }
+                    }
+
+                    // 2. Rolling 7-day timeline (today down to today-6): each day shows its workout(s) or the day's routine rest day
+                    for (LocalDate date = today; !date.isBefore(rollingWindowStart); date = date.minusDays(1)) {
+                        List<Workout> dayWorkouts = byDate.get(date);
+                        if (dayWorkouts != null && !dayWorkouts.isEmpty()) {
+                            for (Workout w : dayWorkouts) {
+                                displayedRowItems.add(new WorkoutRowItem(date, w, false));
+                                tableModel.addRow(new Object[]{
+                                        DateUtil.formatDate(w.getWorkoutDate()),
+                                        w.getTitle(),
+                                        w.getWorkoutType(),
+                                        w.getDurationMinutes() + " mins",
+                                        w.getCaloriesBurned() + " kcal",
+                                        w.getStatus(),
+                                        w.getNotes() != null ? w.getNotes() : ""
+                                });
+                            }
+                        } else {
+                            DailyRoutine r = getRoutineForDay(date.getDayOfWeek());
+                            displayedRowItems.add(new WorkoutRowItem(date, null, true));
+                            tableModel.addRow(new Object[]{
+                                    DateUtil.formatDate(date),
+                                    "Rest & Recovery (" + r.title + ")",
+                                    "Recovery",
+                                    "--",
+                                    "--",
+                                    "REST DAY",
+                                    "No workout logged • Double-click to log"
+                            });
+                        }
+                    }
+
+                    // 3. Past logged workouts prior to the 7-day window, in descending order (no blank intervening rest days)
+                    for (LocalDate date : sortedDates) {
+                        if (date.isBefore(rollingWindowStart)) {
+                            for (Workout w : byDate.get(date)) {
+                                displayedRowItems.add(new WorkoutRowItem(date, w, false));
+                                tableModel.addRow(new Object[]{
+                                        DateUtil.formatDate(w.getWorkoutDate()),
+                                        w.getTitle(),
+                                        w.getWorkoutType(),
+                                        w.getDurationMinutes() + " mins",
+                                        w.getCaloriesBurned() + " kcal",
+                                        w.getStatus(),
+                                        w.getNotes() != null ? w.getNotes() : ""
+                                });
+                            }
+                        }
+                    }
+
+                    // 4. Any undated workouts
+                    for (Workout w : undatedWorkouts) {
+                        displayedRowItems.add(new WorkoutRowItem(null, w, false));
                         tableModel.addRow(new Object[]{
-                                DateUtil.formatDate(w.getWorkoutDate()),
+                                "--",
                                 w.getTitle(),
                                 w.getWorkoutType(),
                                 w.getDurationMinutes() + " mins",
@@ -532,12 +767,10 @@ public class WorkoutPanel extends JPanel {
                                 w.getStatus(),
                                 w.getNotes() != null ? w.getNotes() : ""
                         });
-                        totalMins += w.getDurationMinutes();
-                        totalCal += w.getCaloriesBurned();
                     }
 
-                    lblSummaryStats.setText(String.format("Total: %d workouts | %d mins (%s) | %d kcal burned",
-                            currentWorkouts.size(), totalMins, DateUtil.formatDuration(totalMins), totalCal));
+                    lblSummaryStats.setText(String.format("Total: %d workouts | %d mins (%s) | %d kcal burned | %d days in timeline",
+                            currentWorkouts.size(), totalMins, DateUtil.formatDuration(totalMins), totalCal, displayedRowItems.size()));
 
                     // Update KPI Metric Cards
                     int totalWorkouts = currentWorkouts.size();
@@ -575,7 +808,15 @@ public class WorkoutPanel extends JPanel {
             return;
         }
         int modelRow = table.convertRowIndexToModel(selectedRow);
-        Workout w = currentWorkouts.get(modelRow);
+        if (modelRow >= displayedRowItems.size()) return;
+
+        WorkoutRowItem item = displayedRowItems.get(modelRow);
+        if (item.isRestDay) {
+            openAddWorkoutDialogForDate(item.date);
+            return;
+        }
+
+        Workout w = item.workout;
         if (w.getExercises() == null && w.getId() != null) {
             try {
                 w.setExercises(workoutDAO.getExercisesForWorkout(w.getId()));
@@ -597,7 +838,15 @@ public class WorkoutPanel extends JPanel {
             return;
         }
         int modelRow = table.convertRowIndexToModel(selectedRow);
-        Workout w = currentWorkouts.get(modelRow);
+        if (modelRow >= displayedRowItems.size()) return;
+
+        WorkoutRowItem item = displayedRowItems.get(modelRow);
+        if (item.isRestDay) {
+            ToastNotification.showToast(this, "This is a rest day with no workout logged.", ToastNotification.ToastType.INFO);
+            return;
+        }
+
+        Workout w = item.workout;
 
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Are you sure you want to delete the workout \"" + w.getTitle() + "\"?",
@@ -681,21 +930,19 @@ public class WorkoutPanel extends JPanel {
             main.setOpaque(false);
             main.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
-            // Section 1: Quick Workout Template Chips
+            // Section 1: Daily Workout Split Routine Chips
             if (workout == null || workout.getId() == null || workout.getId().isBlank()) {
-                JLabel lblTpl = new JLabel("Quick Workout Presets");
+                JLabel lblTpl = new JLabel("Daily Split Presets (Select Any Day):");
                 lblTpl.setFont(ThemeConfig.FONT_SMALL);
                 lblTpl.setForeground(ThemeConfig.TEXT_SECONDARY);
                 main.add(lblTpl);
                 main.add(Box.createVerticalStrut(4));
 
-                JPanel tplRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+                JPanel tplRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
                 tplRow.setOpaque(false);
-                tplRow.add(createTemplateChip("Push Day", "Push Day (Chest & Triceps)", "Strength", 50, new String[][]{{"Bench Press", "3", "10", "60.0"}, {"Incline Dumbbell Press", "3", "12", "20.0"}}));
-                tplRow.add(createTemplateChip("Pull Day", "Pull Day (Back & Biceps)", "Strength", 50, new String[][]{{"Lat Pulldown", "3", "10", "55.0"}, {"Barbell Row", "3", "10", "50.0"}}));
-                tplRow.add(createTemplateChip("Leg Day", "Leg Day (Quads & Hamstrings)", "Strength", 50, new String[][]{{"Squats", "3", "8", "80.0"}, {"Leg Press", "3", "12", "120.0"}}));
-                tplRow.add(createTemplateChip("5K Run", "5K Outdoor Run", "Cardio", 30, null));
-                tplRow.add(createTemplateChip("HIIT Session", "Full Body HIIT", "HIIT", 25, null));
+                for (DailyRoutine r : WEEKLY_ROUTINES) {
+                    tplRow.add(createTemplateChip(r.shortDay + ": " + r.title.split(" ")[0], r.title, r.type, r.durationMinutes, r.exercises));
+                }
                 main.add(tplRow);
                 main.add(Box.createVerticalStrut(12));
             }
@@ -720,8 +967,12 @@ public class WorkoutPanel extends JPanel {
 
             JPanel dateControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
             dateControls.setOpaque(false);
-            JButton btnToday = createQuickPill("Today", true);
-            JButton btnYesterday = createQuickPill("Yesterday", false);
+
+            LocalDate initDate = (workout != null && workout.getWorkoutDate() != null) ? workout.getWorkoutDate() : LocalDate.now();
+            boolean isInitToday = initDate.equals(LocalDate.now());
+            boolean isInitYesterday = initDate.equals(LocalDate.now().minusDays(1));
+            JButton btnToday = createQuickPill("Today", isInitToday);
+            JButton btnYesterday = createQuickPill("Yesterday", isInitYesterday);
             btnToday.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().toString());
                 btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
@@ -916,9 +1167,17 @@ public class WorkoutPanel extends JPanel {
                         exercisesModel.addRow(new Object[]{ex.getExerciseName(), ex.getSets(), ex.getReps(), ex.getWeightKg()});
                     }
                 }
-            } else if (prefillDurationMinutes > 0) {
-                txtDuration.setText(String.valueOf(prefillDurationMinutes));
+            } else {
+                DailyRoutine r = getRoutineForDay(LocalDate.now().getDayOfWeek());
+                txtTitle.setText(r.title);
+                cmbType.setSelectedItem(r.type);
+                txtDuration.setText(String.valueOf(prefillDurationMinutes > 0 ? prefillDurationMinutes : r.durationMinutes));
                 autoEstimateCalories();
+                if (r.exercises != null) {
+                    for (String[] row : r.exercises) {
+                        exercisesModel.addRow(new Object[]{row[0], Integer.parseInt(row[1]), Integer.parseInt(row[2]), Double.parseDouble(row[3])});
+                    }
+                }
             }
 
             // Auto-focus on Title
@@ -1235,7 +1494,6 @@ public class WorkoutPanel extends JPanel {
                     try {
                         get();
                         saved = true;
-                        ToastNotification.showToast(WorkoutPanel.this, "Workout saved successfully!", ToastNotification.ToastType.SUCCESS);
                         dispose();
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(WorkoutDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

@@ -281,6 +281,20 @@ public class SupabaseClient {
         w3.addExercise(new WorkoutExercise("Romanian Deadlift", 3, 10, 90.0));
         workouts.add(w3);
 
+        Workout w4 = new Workout("Pull Day (Back & Biceps)", "Strength", today.minusDays(4), 50, 410);
+        w4.setId(UUID.randomUUID().toString());
+        w4.setUserId(demoUserId);
+        w4.addExercise(new WorkoutExercise("Deadlift", 4, 6, 100.0));
+        w4.addExercise(new WorkoutExercise("Lat Pulldown", 3, 10, 55.0));
+        workouts.add(w4);
+
+        Workout w5 = new Workout("Push Day (Chest & Triceps)", "Strength", today.minusDays(5), 45, 390);
+        w5.setId(UUID.randomUUID().toString());
+        w5.setUserId(demoUserId);
+        w5.addExercise(new WorkoutExercise("Bench Press", 4, 10, 70.0));
+        w5.addExercise(new WorkoutExercise("Tricep Pushdown", 3, 12, 25.0));
+        workouts.add(w5);
+
         mockWorkouts.put(demoUserId, workouts);
 
         // Demo goals
@@ -804,6 +818,28 @@ public class SupabaseClient {
                 for (int i = 0; i < list.size(); i++) {
                     if (Objects.equals(list.get(i).getId(), r.getId())) {
                         list.set(i, r);
+                        return;
+                    }
+                }
+            }
+        } else if (body instanceof WaterIntake) {
+            WaterIntake w = (WaterIntake) body;
+            List<WaterIntake> list = mockWater.get(uid);
+            if (list != null) {
+                for (int i = 0; i < list.size(); i++) {
+                    if (Objects.equals(list.get(i).getId(), w.getId())) {
+                        list.set(i, w);
+                        return;
+                    }
+                }
+            }
+        } else if (body instanceof SleepRecord) {
+            SleepRecord s = (SleepRecord) body;
+            List<SleepRecord> list = mockSleep.get(uid);
+            if (list != null) {
+                for (int i = 0; i < list.size(); i++) {
+                    if (Objects.equals(list.get(i).getId(), s.getId())) {
+                        list.set(i, s);
                         return;
                     }
                 }

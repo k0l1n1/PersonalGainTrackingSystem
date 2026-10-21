@@ -148,6 +148,10 @@ public class TrainerStudentDAO {
                 mList = client.executeGetList("body_measurements", "user_id=eq." + ts.getStudentId() + "&order=recorded_date.desc&limit=1", BodyMeasurement.class);
             }
 
+            if (wList == null) wList = Collections.emptyList();
+            if (gList == null) gList = Collections.emptyList();
+            if (mList == null) mList = Collections.emptyList();
+
             ts.setTotalWorkouts(wList.size());
             ts.setActiveGoals((int) gList.stream().filter(g -> "IN_PROGRESS".equalsIgnoreCase(g.getStatus())).count());
             if (!mList.isEmpty()) {

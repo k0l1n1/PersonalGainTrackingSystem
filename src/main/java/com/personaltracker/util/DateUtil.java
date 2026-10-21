@@ -58,11 +58,15 @@ public class DateUtil {
 
     public static LocalDate parseDateOrNull(String str) {
         if (str == null || str.trim().isEmpty()) return null;
+        String trimmed = str.trim();
+        if ("today".equalsIgnoreCase(trimmed)) return LocalDate.now();
+        if ("yesterday".equalsIgnoreCase(trimmed)) return LocalDate.now().minusDays(1);
+        if ("tomorrow".equalsIgnoreCase(trimmed)) return LocalDate.now().plusDays(1);
         try {
-            return LocalDate.parse(str.trim(), ISO_DATE_FORMAT);
+            return LocalDate.parse(trimmed, ISO_DATE_FORMAT);
         } catch (Exception e) {
             try {
-                return LocalDate.parse(str.trim(), DATE_FORMAT);
+                return LocalDate.parse(trimmed, DATE_FORMAT);
             } catch (Exception ignored) {
                 return null;
             }

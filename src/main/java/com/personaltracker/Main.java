@@ -4,6 +4,7 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.view.AuthDialog;
 import com.personaltracker.view.MainFrame;
+import com.personaltracker.view.OnboardingDialog;
 
 import javax.swing.*;
 
@@ -27,7 +28,7 @@ public class Main {
 
             if (authDialog.isAuthenticated()) {
                 // 3.5. Onboarding Form Filling Session (Only for new users)
-                com.personaltracker.view.OnboardingDialog.showIfNewUser(null);
+                OnboardingDialog.showIfNewUser(null);
 
                 // 4. Launch main desktop application
                 MainFrame mainFrame = new MainFrame();
