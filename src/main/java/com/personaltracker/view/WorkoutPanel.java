@@ -8,11 +8,15 @@ import com.personaltracker.components.ToastNotification;
 import com.personaltracker.components.WorkoutTimerPanel;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.AchievementDAO;
+import com.personaltracker.dao.MeasurementDAO;
 import com.personaltracker.dao.ReminderDAO;
 import com.personaltracker.dao.WorkoutDAO;
+import com.personaltracker.model.BodyMeasurement;
 import com.personaltracker.model.Reminder;
+import com.personaltracker.model.UserSession;
 import com.personaltracker.model.Workout;
 import com.personaltracker.model.WorkoutExercise;
+import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
@@ -34,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -159,6 +164,7 @@ public class WorkoutPanel extends JPanel {
 
     private List<Workout> currentWorkouts = new ArrayList<>();
     private final List<WorkoutRowItem> displayedRowItems = new ArrayList<>();
+    private double cachedUserWeightKg = 70.0;
 
     // Reminders & Schedule Components
     private final JPanel pnlTodayAgenda = new JPanel();
@@ -660,6 +666,18 @@ public class WorkoutPanel extends JPanel {
         SwingWorker<List<Workout>, Void> worker = new SwingWorker<>() {
             @Override
             protected List<Workout> doInBackground() throws Exception {
+                try {
+                    MeasurementDAO mDao = new MeasurementDAO();
+                    List<BodyMeasurement> ms = mDao.getAllMeasurements();
+                    if (ms != null && !ms.isEmpty() && ms.get(0).getWeightKg() > 0) {
+                        cachedUserWeightKg = ms.get(0).getWeightKg();
+                    } else {
+                        UserSession s = SupabaseClient.getInstance().getCurrentSession();
+                        if (s != null && s.getProfile() != null && s.getProfile().getTargetWeightKg() != null && s.getProfile().getTargetWeightKg() > 0) {
+                            cachedUserWeightKg = s.getProfile().getTargetWeightKg();
+                        }
+                    }
+                } catch (Exception ignored) {}
                 return workoutDAO.getAllWorkouts();
             }
 
@@ -914,9 +932,11 @@ public class WorkoutPanel extends JPanel {
 
         private final ModernTextField txtTitle = new ModernTextField("", "e.g. Morning Upper Body");
         private final JComboBox<String> cmbType = new JComboBox<>(new String[]{"Strength", "Cardio", "HIIT", "Yoga", "Flexibility", "Endurance", "Other"});
+        private final JComboBox<String> cmbIntensity = new JComboBox<>(new String[]{"Moderate (Standard)", "Light (Casual)", "Vigorous (High)"});
         private final ModernTextField txtDate = new ModernTextField(LocalDate.now().toString(), "YYYY-MM-DD");
         private final ModernTextField txtDuration = new ModernTextField("", "e.g. 45");
         private final ModernTextField txtCalories = new ModernTextField("", "e.g. 350");
+        private final JLabel lblCalInfo = new JLabel("• MET & volume-based");
         private final JComboBox<String> cmbStatus = new JComboBox<>(new String[]{"COMPLETED", "PLANNED"});
         private final JTextArea txtNotes = new JTextArea(2, 20);
 
@@ -926,7 +946,7 @@ public class WorkoutPanel extends JPanel {
         public WorkoutDialog(Window owner, Workout workout, int prefillDurationMinutes) {
             super(owner, (workout == null || workout.getId() == null || workout.getId().isBlank()) ? "Log New Workout" : "Edit Workout", ModalityType.APPLICATION_MODAL);
             this.editingWorkout = (workout != null && workout.getId() != null && !workout.getId().isBlank()) ? workout : null;
-            setSize(590, 720);
+            setSize(630, 730);
             setLocationRelativeTo(owner);
             setResizable(false);
             getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -998,8 +1018,8 @@ public class WorkoutPanel extends JPanel {
             main.add(row2);
             main.add(Box.createVerticalStrut(10));
 
-            // Duration with Steppers, Auto Calories, Status
-            JPanel row3 = new JPanel(new GridLayout(1, 3, 10, 0));
+            // Duration with Steppers, Intensity, Auto Calories, Status (4 columns)
+            JPanel row3 = new JPanel(new GridLayout(1, 4, 10, 0));
             row3.setOpaque(false);
 
             JPanel durPanel = new JPanel();
@@ -1021,8 +1041,24 @@ public class WorkoutPanel extends JPanel {
             durSteppers.add(createDurationAdjuster("+15", +15));
             durPanel.add(durSteppers);
 
+            JPanel calPanel = new JPanel();
+            calPanel.setLayout(new BoxLayout(calPanel, BoxLayout.Y_AXIS));
+            calPanel.setOpaque(false);
+            JLabel lblCal = new JLabel("Calories (Auto)");
+            lblCal.setFont(ThemeConfig.FONT_SMALL);
+            lblCal.setForeground(ThemeConfig.TEXT_SECONDARY);
+            calPanel.add(lblCal);
+            calPanel.add(Box.createVerticalStrut(4));
+            calPanel.add(txtCalories);
+            calPanel.add(Box.createVerticalStrut(4));
+
+            lblCalInfo.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+            lblCalInfo.setForeground(ThemeConfig.TEXT_MUTED);
+            calPanel.add(lblCalInfo);
+
             row3.add(durPanel);
-            row3.add(createFieldRow("Calories Burned (Auto)", txtCalories));
+            row3.add(createFieldRow("Intensity Level", cmbIntensity));
+            row3.add(calPanel);
             row3.add(createFieldRow("Status", cmbStatus));
             main.add(row3);
             main.add(Box.createVerticalStrut(12));
@@ -1139,13 +1175,15 @@ public class WorkoutPanel extends JPanel {
 
             setContentPane(main);
 
-            // Real-time automatic calorie estimation on duration or type changes
+            // Real-time automatic calorie estimation on duration, type, intensity, or exercise table changes
             txtDuration.getDocument().addDocumentListener(new DocumentListener() {
                 @Override public void insertUpdate(DocumentEvent e) { autoEstimateCalories(); }
                 @Override public void removeUpdate(DocumentEvent e) { autoEstimateCalories(); }
                 @Override public void changedUpdate(DocumentEvent e) { autoEstimateCalories(); }
             });
             cmbType.addActionListener(e -> autoEstimateCalories());
+            cmbIntensity.addActionListener(e -> autoEstimateCalories());
+            exercisesModel.addTableModelListener(e -> autoEstimateCalories());
 
             // Enter key shortcut to save
             txtTitle.addActionListener(e -> saveWorkoutData());
@@ -1173,17 +1211,21 @@ public class WorkoutPanel extends JPanel {
                         exercisesModel.addRow(new Object[]{ex.getExerciseName(), ex.getSets(), ex.getReps(), ex.getWeightKg()});
                     }
                 }
+                if (workout.getCaloriesBurned() > 0 && workout.getDurationMinutes() > 0) {
+                    double rate = (double) workout.getCaloriesBurned() / workout.getDurationMinutes();
+                    lblCalInfo.setText(String.format(Locale.US, "• ~%.1f kcal/min (@%.0fkg)", rate, cachedUserWeightKg));
+                }
             } else {
                 DailyRoutine r = getRoutineForDay(LocalDate.now().getDayOfWeek());
                 txtTitle.setText(r.title);
                 cmbType.setSelectedItem(r.type);
                 txtDuration.setText(String.valueOf(prefillDurationMinutes > 0 ? prefillDurationMinutes : r.durationMinutes));
-                autoEstimateCalories();
                 if (r.exercises != null) {
                     for (String[] row : r.exercises) {
                         exercisesModel.addRow(new Object[]{row[0], Integer.parseInt(row[1]), Integer.parseInt(row[2]), Double.parseDouble(row[3])});
                     }
                 }
+                autoEstimateCalories();
             }
 
             // Auto-focus on Title
@@ -1205,13 +1247,13 @@ public class WorkoutPanel extends JPanel {
                 txtTitle.setText(title);
                 cmbType.setSelectedItem(type);
                 txtDuration.setText(String.valueOf(duration));
-                autoEstimateCalories();
                 if (defaultExercises != null) {
                     exercisesModel.setRowCount(0);
                     for (String[] row : defaultExercises) {
                         exercisesModel.addRow(new Object[]{row[0], Integer.parseInt(row[1]), Integer.parseInt(row[2]), Double.parseDouble(row[3])});
                     }
                 }
+                autoEstimateCalories();
             });
             return btn;
         }
@@ -1395,8 +1437,10 @@ public class WorkoutPanel extends JPanel {
             btn.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true));
             btn.addActionListener(e -> {
                 try {
-                    int current = Integer.parseInt(txtDuration.getText().trim());
-                    txtDuration.setText(String.valueOf(Math.max(5, Math.min(300, current + delta))));
+                    String curStr = txtDuration.getText().trim();
+                    int current = curStr.isEmpty() ? 0 : Integer.parseInt(curStr);
+                    int updated = Math.max(5, Math.min(300, current + delta));
+                    txtDuration.setText(String.valueOf(updated));
                     autoEstimateCalories();
                 } catch (Exception ignored) {}
             });
@@ -1405,11 +1449,45 @@ public class WorkoutPanel extends JPanel {
 
         private void autoEstimateCalories() {
             try {
-                int mins = Integer.parseInt(txtDuration.getText().trim());
+                String durStr = txtDuration.getText().trim();
+                if (durStr.isEmpty()) {
+                    txtCalories.setText("");
+                    lblCalInfo.setText("• MET & volume-based");
+                    return;
+                }
+                int mins = Integer.parseInt(durStr);
+                if (mins <= 0) {
+                    txtCalories.setText("");
+                    lblCalInfo.setText("• MET & volume-based");
+                    return;
+                }
+
                 String type = (String) cmbType.getSelectedItem();
-                int estimated = HealthCalculator.estimateCaloriesBurned(type, mins, 75.0);
+                String intensity = (String) cmbIntensity.getSelectedItem();
+
+                List<WorkoutExercise> exList = new ArrayList<>();
+                for (int r = 0; r < exercisesModel.getRowCount(); r++) {
+                    Object nameObj = exercisesModel.getValueAt(r, 0);
+                    if (nameObj != null && !nameObj.toString().trim().isEmpty()) {
+                        try {
+                            int sets = Integer.parseInt(exercisesModel.getValueAt(r, 1).toString().trim());
+                            int reps = Integer.parseInt(exercisesModel.getValueAt(r, 2).toString().trim());
+                            double weight = Double.parseDouble(exercisesModel.getValueAt(r, 3).toString().trim());
+                            exList.add(new WorkoutExercise(nameObj.toString().trim(), sets, reps, weight));
+                        } catch (Exception ignored) {}
+                    }
+                }
+
+                double userWeight = cachedUserWeightKg > 0 ? cachedUserWeightKg : 70.0;
+                int estimated = HealthCalculator.estimateCaloriesBurned(type, intensity, mins, userWeight, exList);
                 txtCalories.setText(String.valueOf(estimated));
-            } catch (Exception ignored) {}
+
+                double rate = (double) estimated / mins;
+                lblCalInfo.setText(String.format(Locale.US, "• ~%.1f kcal/min (@%.0fkg)", rate, userWeight));
+            } catch (Exception e) {
+                txtCalories.setText("");
+                lblCalInfo.setText("• MET & volume-based");
+            }
         }
 
         private JPanel createFieldRow(String label, JComponent comp) {

@@ -75,6 +75,24 @@ public class HealthCalculatorTest {
         int hiitCal = HealthCalculator.estimateCaloriesBurned("HIIT", 45, 75.0);
         int yogaCal = HealthCalculator.estimateCaloriesBurned("Yoga", 45, 75.0);
         assertTrue(hiitCal > yogaCal);
+
+        // Zero or negative duration should return 0
+        assertEquals(0, HealthCalculator.estimateCaloriesBurned("Cardio", 0, 75.0));
+        assertEquals(0, HealthCalculator.estimateCaloriesBurned("Cardio", -10, 75.0));
+
+        // Intensity levels: Vigorous > Moderate > Light
+        int lightCal = HealthCalculator.estimateCaloriesBurned("Cardio", "Light", 40, 75.0, null);
+        int modCal = HealthCalculator.estimateCaloriesBurned("Cardio", "Moderate", 40, 75.0, null);
+        int vigCal = HealthCalculator.estimateCaloriesBurned("Cardio", "Vigorous", 40, 75.0, null);
+        assertTrue(vigCal > modCal);
+        assertTrue(modCal > lightCal);
+
+        // Strength volume load: workout with heavy compound exercises burns more than bodyweight alone
+        List<com.personaltracker.model.WorkoutExercise> exercises = new ArrayList<>();
+        exercises.add(new com.personaltracker.model.WorkoutExercise("Bench Press", 4, 10, 80.0)); // 3200kg volume
+        exercises.add(new com.personaltracker.model.WorkoutExercise("Squat", 4, 8, 100.0));       // 3200kg volume
+        int volumeStrengthCal = HealthCalculator.estimateCaloriesBurned("Strength", "Moderate", 45, 75.0, exercises);
+        assertTrue(volumeStrengthCal > 250);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.personaltracker.util;
 
 import com.personaltracker.model.Workout;
+import com.personaltracker.model.WorkoutExercise;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -105,39 +106,99 @@ public class HealthCalculator {
 
     /**
      * Calculates estimated calories burned based on exercise type, duration, and body weight.
-     * Uses standard MET (Metabolic Equivalent of Task) values.
+     * Uses standard MET (Metabolic Equivalent of Task) values with moderate intensity.
      */
     public static int estimateCaloriesBurned(String workoutType, int durationMinutes, double userWeightKg) {
-        if (durationMinutes <= 0) return 0;
-        double weight = userWeightKg > 0 ? userWeightKg : 70.0; // fallback standard 70kg
-        double met;
+        return estimateCaloriesBurned(workoutType, "MODERATE", durationMinutes, userWeightKg, null);
+    }
 
-        switch (workoutType != null ? workoutType.toUpperCase() : "OTHER") {
+    /**
+     * Calculates estimated calories burned based on exercise type, intensity, duration,
+     * athlete body weight, and logged resistance training volume (sets, reps, weight).
+     * Incorporates Compendium of Physical Activities METs and mechanical resistance work + EPOC.
+     */
+    public static int estimateCaloriesBurned(String workoutType, String intensity, int durationMinutes, double userWeightKg, List<WorkoutExercise> exercises) {
+        if (durationMinutes <= 0) return 0;
+        double weight = userWeightKg > 0 ? userWeightKg : 70.0;
+
+        String cleanType = workoutType != null ? workoutType.trim().toUpperCase() : "OTHER";
+        String cleanIntensity = intensity != null ? intensity.trim().toUpperCase() : "MODERATE";
+
+        double intensityMultiplier = 1.0;
+        if (cleanIntensity.startsWith("LIGHT") || cleanIntensity.contains("LOW") || cleanIntensity.contains("0.8")) {
+            intensityMultiplier = 0.80;
+        } else if (cleanIntensity.startsWith("VIGOROUS") || cleanIntensity.contains("HIGH") || cleanIntensity.contains("1.25")) {
+            intensityMultiplier = 1.25;
+        }
+
+        double baseMet;
+        switch (cleanType) {
             case "STRENGTH":
-                met = 5.0;
+                baseMet = 5.0;
                 break;
             case "CARDIO":
-                met = 8.0;
+                baseMet = 8.0;
                 break;
             case "HIIT":
-                met = 9.5;
+                baseMet = 10.0;
                 break;
             case "YOGA":
-                met = 3.0;
+                baseMet = 3.2;
                 break;
             case "FLEXIBILITY":
-                met = 2.5;
+            case "RECOVERY":
+                baseMet = 2.5;
                 break;
             case "ENDURANCE":
-                met = 7.5;
+                baseMet = 8.5;
+                break;
+            case "WALKING":
+                baseMet = 3.8;
+                break;
+            case "SWIMMING":
+                baseMet = 7.0;
+                break;
+            case "BOXING":
+            case "COMBAT":
+                baseMet = 9.0;
                 break;
             default:
-                met = 5.0;
+                baseMet = 5.0;
                 break;
         }
 
-        // Calories = MET * weight(kg) * (duration_minutes / 60)
-        double burned = met * weight * (durationMinutes / 60.0);
-        return (int) Math.round(burned);
+        double effectiveMet = baseMet * intensityMultiplier;
+
+        // Base metabolic expenditure: Calories = MET * weight(kg) * (duration_minutes / 60)
+        double durationHours = durationMinutes / 60.0;
+        double baseBurned = effectiveMet * weight * durationHours;
+
+        // For workouts with logged exercises: factor in mechanical work / volume load (sets * reps * weight)
+        if (exercises != null && !exercises.isEmpty()) {
+            double totalVolumeKg = 0;
+            for (WorkoutExercise ex : exercises) {
+                if (ex != null && ex.getSets() > 0 && ex.getReps() > 0) {
+                    int reps = ex.getSets() * ex.getReps();
+                    if (ex.getWeightKg() > 0) {
+                        totalVolumeKg += reps * ex.getWeightKg();
+                    } else {
+                        // Bodyweight exercise (e.g. pull-ups, push-ups): estimate ~60% body weight
+                        totalVolumeKg += reps * (weight * 0.60);
+                    }
+                }
+            }
+
+            if (cleanType.equals("STRENGTH")) {
+                // In strength training: mechanical work + EPOC afterburn contributes ~0.015 kcal per kg lifted
+                double volumeBonus = totalVolumeKg * 0.015 * intensityMultiplier;
+                // Base metabolic burn adjusted for rest intervals between sets + actual tonnage lifted
+                baseBurned = (baseMet * 0.80 * intensityMultiplier) * weight * durationHours + volumeBonus;
+            } else {
+                double volumeBonus = totalVolumeKg * 0.008;
+                baseBurned += volumeBonus;
+            }
+        }
+
+        return (int) Math.max(1, Math.round(baseBurned));
     }
 }
