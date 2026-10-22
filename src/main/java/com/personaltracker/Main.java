@@ -16,25 +16,34 @@ public class Main {
     public static void main(String[] args) {
         // Run application strictly on the Swing Event Dispatch Thread (EDT)
         SwingUtilities.invokeLater(() -> {
-            // 1. Initialize modern dark navy theme with FlatLaf
-            ThemeConfig.initializeTheme();
+            try {
+                // 1. Initialize modern dark navy theme with FlatLaf
+                ThemeConfig.initializeTheme();
 
-            // 2. Initialize client instance
-            SupabaseClient client = SupabaseClient.getInstance();
+                // 2. Initialize client instance
+                SupabaseClient.getInstance();
 
-            // 3. Show Authentication Dialog
-            AuthDialog authDialog = new AuthDialog(null);
-            authDialog.setVisible(true);
+                // 3. Show Authentication Dialog
+                AuthDialog authDialog = new AuthDialog(null);
+                authDialog.setVisible(true);
 
-            if (authDialog.isAuthenticated()) {
-                // 3.5. Onboarding Form Filling Session (Only for new users)
-                OnboardingDialog.showIfNewUser(null);
+                if (authDialog.isAuthenticated()) {
+                    // 3.5. Onboarding Form Filling Session (Only for new users)
+                    OnboardingDialog.showIfNewUser(null);
 
-                // 4. Launch main desktop application
-                MainFrame mainFrame = new MainFrame();
-                mainFrame.setVisible(true);
-            } else {
-                System.exit(0);
+                    // 4. Launch main desktop application
+                    MainFrame mainFrame = new MainFrame();
+                    mainFrame.setVisible(true);
+                } else {
+                    System.exit(0);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null,
+                        "Failed to start Personal Gain Tracker:\n" + (e.getMessage() != null ? e.getMessage() : e.toString()),
+                        "Startup Error",
+                        JOptionPane.ERROR_MESSAGE);
+                System.exit(1);
             }
         });
     }
