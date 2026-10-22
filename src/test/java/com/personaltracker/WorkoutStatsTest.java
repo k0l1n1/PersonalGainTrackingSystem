@@ -74,4 +74,28 @@ public class WorkoutStatsTest {
             assertTrue(routine.calories > 0);
         }
     }
+
+    @Test
+    @DisplayName("Should offer more than 5 comprehensive workout splits with full 7-day schedules")
+    void testMultipleWorkoutSplits() {
+        com.personaltracker.view.WorkoutPanel.WorkoutSplit[] splits = com.personaltracker.view.WorkoutPanel.WORKOUT_SPLITS;
+        assertTrue(splits.length >= 7, "Should offer at least 7 comprehensive workout splits");
+
+        for (com.personaltracker.view.WorkoutPanel.WorkoutSplit split : splits) {
+            assertNotNull(split.id);
+            assertNotNull(split.name);
+            assertNotNull(split.description);
+            assertEquals(7, split.routines.length, "Each split must provide routines for all 7 days");
+
+            for (java.time.DayOfWeek day : java.time.DayOfWeek.values()) {
+                com.personaltracker.view.WorkoutPanel.DailyRoutine r = com.personaltracker.view.WorkoutPanel.getRoutineForDay(split, day);
+                assertNotNull(r, "Split " + split.name + " must provide routine for " + day);
+                assertEquals(day, r.dayOfWeek);
+                assertTrue(r.durationMinutes > 0);
+                assertTrue(r.calories > 0);
+                assertNotNull(r.exercises);
+                assertTrue(r.exercises.length > 0, "Split " + split.name + " routine must have exercises defined");
+            }
+        }
+    }
 }

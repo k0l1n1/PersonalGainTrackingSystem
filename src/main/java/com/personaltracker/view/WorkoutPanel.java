@@ -68,51 +68,335 @@ public class WorkoutPanel extends JPanel {
         }
     }
 
-    public static final DailyRoutine[] WEEKLY_ROUTINES = {
-        new DailyRoutine(DayOfWeek.MONDAY, "Mon", "Push Day (Chest & Triceps)", "Strength", 50, 420, new String[][]{
-            {"Barbell Bench Press", "4", "8", "75.0"},
-            {"Overhead Military Press", "3", "10", "45.0"},
-            {"Incline Dumbbell Press", "3", "12", "22.0"},
-            {"Tricep Cable Pushdown", "3", "12", "25.0"}
+    public static class WorkoutSplit {
+        public final String id;
+        public final String name;
+        public final String description;
+        public final DailyRoutine[] routines;
+
+        public WorkoutSplit(String id, String name, String description, DailyRoutine[] routines) {
+            this.id = id;
+            this.name = name;
+            this.description = description;
+            this.routines = routines;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    public static final WorkoutSplit[] WORKOUT_SPLITS = new WorkoutSplit[]{
+        new WorkoutSplit("PPL", "Push / Pull / Legs (PPL 6-Day)", "Hypertrophy & progressive overload with dedicated push, pull, leg, and conditioning sessions", new DailyRoutine[]{
+            new DailyRoutine(DayOfWeek.MONDAY, "Mon", "Push Day (Chest, Delts & Triceps)", "Strength", 50, 420, new String[][]{
+                {"Barbell Bench Press", "4", "8", "75.0"},
+                {"Overhead Military Press", "3", "10", "45.0"},
+                {"Incline Dumbbell Press", "3", "12", "22.0"},
+                {"Tricep Cable Pushdown", "3", "12", "25.0"}
+            }),
+            new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Pull Day (Back, Biceps & Rear Delts)", "Strength", 50, 410, new String[][]{
+                {"Barbell Deadlift", "4", "6", "100.0"},
+                {"Lat Pulldown", "3", "10", "55.0"},
+                {"Barbell Bent-Over Row", "3", "10", "50.0"},
+                {"Dumbbell Bicep Curls", "3", "12", "14.0"}
+            }),
+            new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Leg Day (Quads, Hamstrings & Calves)", "Strength", 55, 480, new String[][]{
+                {"Barbell Back Squat", "4", "8", "90.0"},
+                {"Romanian Deadlift", "3", "10", "75.0"},
+                {"Leg Press", "3", "12", "140.0"},
+                {"Standing Calf Raises", "4", "15", "45.0"}
+            }),
+            new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Cardio Conditioning & Core", "Cardio", 40, 380, new String[][]{
+                {"5K Interval Run", "1", "1", "0.0"},
+                {"Hanging Leg Raises", "3", "12", "0.0"},
+                {"Plank Hold", "3", "60", "0.0"},
+                {"Russian Twists", "3", "20", "10.0"}
+            }),
+            new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Upper Body Hypertrophy & Arms", "Strength", 45, 390, new String[][]{
+                {"Incline Dumbbell Bench", "4", "10", "24.0"},
+                {"Cable Seated Rows", "3", "12", "50.0"},
+                {"Lateral Dumbbell Raises", "4", "15", "10.0"},
+                {"Skull Crushers", "3", "12", "25.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "Full Body HIIT & Power", "HIIT", 35, 410, new String[][]{
+                {"Kettlebell Swings", "4", "20", "20.0"},
+                {"Burpees", "4", "12", "0.0"},
+                {"Box Jumps", "3", "12", "0.0"},
+                {"Dumbbell Thrusters", "3", "12", "16.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Active Recovery & Mobility", "Flexibility", 30, 180, new String[][]{
+                {"Deep Dynamic Mobility", "1", "15", "0.0"},
+                {"Foam Rolling & Release", "1", "15", "0.0"},
+                {"Core Breathing & Stretch", "1", "10", "0.0"}
+            })
         }),
-        new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Pull Day (Back & Biceps)", "Strength", 50, 410, new String[][]{
-            {"Barbell Deadlift", "4", "6", "100.0"},
-            {"Lat Pulldown", "3", "10", "55.0"},
-            {"Barbell Bent-Over Row", "3", "10", "50.0"},
-            {"Dumbbell Bicep Curls", "3", "12", "14.0"}
+
+        new WorkoutSplit("UPPER_LOWER", "Upper / Lower Split (4-5 Day)", "Heavy compound upper and lower days balanced with athletic intervals and core", new DailyRoutine[]{
+            new DailyRoutine(DayOfWeek.MONDAY, "Mon", "Upper Body Heavy Strength", "Strength", 55, 440, new String[][]{
+                {"Barbell Bench Press", "4", "6", "80.0"},
+                {"Barbell Bent-Over Row", "4", "6", "70.0"},
+                {"Overhead Military Press", "3", "8", "48.0"},
+                {"Weighted Pull-ups", "3", "8", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Lower Body Heavy Strength", "Strength", 55, 490, new String[][]{
+                {"Barbell Back Squat", "4", "6", "95.0"},
+                {"Romanian Deadlift", "4", "8", "80.0"},
+                {"Walking Dumbbell Lunges", "3", "12", "20.0"},
+                {"Standing Calf Raises", "4", "15", "45.0"}
+            }),
+            new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Cardio Conditioning & Core", "Cardio", 35, 320, new String[][]{
+                {"Zone 2 Incline Walk", "1", "30", "0.0"},
+                {"Hanging Knee Tucks", "3", "15", "0.0"},
+                {"Cable Woodchoppers", "3", "12", "15.0"}
+            }),
+            new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Upper Body Hypertrophy & Volume", "Strength", 50, 420, new String[][]{
+                {"Incline Dumbbell Press", "4", "10", "26.0"},
+                {"Cable Lat Pulldown", "3", "12", "60.0"},
+                {"Dumbbell Lateral Raises", "4", "15", "10.0"},
+                {"Incline Dumbbell Curls", "3", "12", "12.0"},
+                {"Rope Tricep Pushdown", "3", "15", "22.0"}
+            }),
+            new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Lower Body Hypertrophy & Glutes", "Strength", 50, 460, new String[][]{
+                {"Front Squat", "3", "8", "70.0"},
+                {"Leg Press", "4", "12", "150.0"},
+                {"Lying Leg Curls", "3", "12", "45.0"},
+                {"Seated Calf Raises", "4", "15", "40.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "HIIT Sprint Conditioning", "HIIT", 30, 350, new String[][]{
+                {"Rowing Machine Sprints", "5", "1", "0.0"},
+                {"Kettlebell Snatch", "3", "12", "16.0"},
+                {"Mountain Climbers", "3", "30", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Active Mobility & Foam Rolling", "Flexibility", 30, 160, new String[][]{
+                {"Full Body Foam Rolling", "1", "15", "0.0"},
+                {"Hip & Ankle Mobility Flow", "1", "15", "0.0"}
+            })
         }),
-        new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Leg Day (Quads & Hamstrings)", "Strength", 55, 480, new String[][]{
-            {"Barbell Back Squat", "4", "8", "90.0"},
-            {"Romanian Deadlift", "3", "10", "75.0"},
-            {"Leg Press", "3", "12", "140.0"},
-            {"Standing Calf Raises", "4", "15", "45.0"}
+
+        new WorkoutSplit("ARNOLD", "Arnold Golden Era Split", "Legendary high-volume chest/back, shoulders/arms, and legs antagonist super-sets", new DailyRoutine[]{
+            new DailyRoutine(DayOfWeek.MONDAY, "Mon", "Chest & Back Super-sets", "Strength", 55, 470, new String[][]{
+                {"Flat Barbell Bench Press", "4", "10", "75.0"},
+                {"Wide-Grip Lat Pulldown", "4", "10", "60.0"},
+                {"Incline Dumbbell Flyes", "3", "12", "18.0"},
+                {"T-Bar Row", "3", "10", "55.0"}
+            }),
+            new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Shoulders & Arms Blast", "Strength", 55, 450, new String[][]{
+                {"Seated Dumbbell Shoulder Press", "4", "10", "22.0"},
+                {"Barbell Standing Bicep Curl", "4", "10", "30.0"},
+                {"Close-Grip Bench Press", "4", "10", "60.0"},
+                {"Dumbbell Hammer Curls", "3", "12", "14.0"},
+                {"Overhead Tricep Extension", "3", "12", "25.0"}
+            }),
+            new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Legs & Lower Back Power", "Strength", 55, 500, new String[][]{
+                {"Barbell Back Squat", "5", "8", "95.0"},
+                {"Stiff-Legged Deadlift", "4", "10", "80.0"},
+                {"Leg Extension", "3", "15", "50.0"},
+                {"Standing Calf Raises", "4", "15", "50.0"}
+            }),
+            new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Chest & Back Detail & Pump", "Strength", 50, 430, new String[][]{
+                {"Incline Barbell Bench", "4", "10", "65.0"},
+                {"Cable Seated Rows", "4", "12", "55.0"},
+                {"Dumbbell Pullovers", "3", "12", "24.0"},
+                {"Chin-ups", "3", "8", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Shoulders & Arms Volume", "Strength", 50, 420, new String[][]{
+                {"Arnold Dumbbell Press", "4", "12", "18.0"},
+                {"Cable Lateral Raises", "4", "15", "10.0"},
+                {"Preacher Curls", "3", "12", "25.0"},
+                {"Parallel Bar Dips", "3", "12", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "Legs & Abs Conditioning", "Strength", 45, 410, new String[][]{
+                {"Hack Squat", "4", "10", "100.0"},
+                {"Lying Hamstring Curls", "4", "12", "40.0"},
+                {"Hanging Leg Raises", "4", "15", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Rest & Golden Era Walk", "Flexibility", 25, 130, new String[][]{
+                {"Brisk Walking & Stretches", "1", "20", "0.0"}
+            })
         }),
-        new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Cardio Conditioning & Core", "Cardio", 40, 380, new String[][]{
-            {"5K Interval Run", "1", "1", "0.0"},
-            {"Hanging Leg Raises", "3", "12", "0.0"},
-            {"Plank Hold", "3", "60", "0.0"},
-            {"Russian Twists", "3", "20", "10.0"}
+
+        new WorkoutSplit("BRO_SPLIT", "Classic Bro Split (Body Part)", "1 muscle group per day targeting maximum pump, intensity, and deep recovery", new DailyRoutine[]{
+            new DailyRoutine(DayOfWeek.MONDAY, "Mon", "Chest Day Demolition", "Strength", 50, 410, new String[][]{
+                {"Flat Barbell Bench Press", "4", "8", "75.0"},
+                {"Incline Dumbbell Press", "4", "10", "24.0"},
+                {"Cable Crossover Flyes", "3", "12", "15.0"},
+                {"Push-ups to Failure", "3", "15", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Heavy Back & Thickness", "Strength", 50, 430, new String[][]{
+                {"Conventional Deadlift", "4", "6", "105.0"},
+                {"Lat Pulldowns", "4", "10", "55.0"},
+                {"One-Arm Dumbbell Rows", "3", "10", "28.0"},
+                {"Barbell Shrugs", "4", "12", "70.0"}
+            }),
+            new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Leg Day Demolition", "Strength", 55, 480, new String[][]{
+                {"Barbell Back Squat", "4", "8", "90.0"},
+                {"Leg Press", "4", "12", "140.0"},
+                {"Seated Hamstring Curls", "3", "12", "45.0"},
+                {"Standing Calf Raises", "4", "15", "45.0"}
+            }),
+            new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Shoulders & Traps Boulders", "Strength", 45, 370, new String[][]{
+                {"Overhead Military Press", "4", "8", "45.0"},
+                {"Dumbbell Lateral Raises", "4", "12", "10.0"},
+                {"Face Pulls", "3", "15", "25.0"},
+                {"Front Dumbbell Raises", "3", "12", "10.0"}
+            }),
+            new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Arm Blaster (Bi's & Tri's)", "Strength", 45, 360, new String[][]{
+                {"Barbell Bicep Curls", "4", "10", "30.0"},
+                {"Skull Crushers", "4", "10", "28.0"},
+                {"Cable Rope Hammer Curls", "3", "12", "20.0"},
+                {"Overhead Cable Tricep Extension", "3", "12", "25.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "Cardio & Core Shred", "Cardio", 40, 390, new String[][]{
+                {"5K Treadmill Run", "1", "1", "0.0"},
+                {"Bicycle Crunches", "3", "20", "0.0"},
+                {"Hanging Leg Raises", "3", "12", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Rest & Active Stretching", "Flexibility", 25, 140, new String[][]{
+                {"Full Body Dynamic Stretch", "1", "20", "0.0"}
+            })
         }),
-        new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Upper Body Hypertrophy & Arms", "Strength", 45, 390, new String[][]{
-            {"Incline Dumbbell Bench", "4", "10", "24.0"},
-            {"Cable Seated Rows", "3", "12", "50.0"},
-            {"Lateral Dumbbell Raises", "4", "15", "10.0"},
-            {"Skull Crushers", "3", "12", "25.0"}
+
+        new WorkoutSplit("FULL_BODY", "Full Body Functional (3-Day)", "Whole-body compound foundation with active recovery and mobility on off-days", new DailyRoutine[]{
+            new DailyRoutine(DayOfWeek.MONDAY, "Mon", "Full Body A (Squat, Bench, Row)", "Strength", 55, 460, new String[][]{
+                {"Barbell Back Squat", "4", "6", "90.0"},
+                {"Barbell Bench Press", "4", "6", "75.0"},
+                {"Barbell Bent-Over Row", "3", "8", "60.0"},
+                {"Plank Hold", "3", "60", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Zone 2 Steady Cardio", "Cardio", 40, 290, new String[][]{
+                {"30-Min Incline Treadmill Walk", "1", "30", "0.0"},
+                {"Thoracic Spine Flow", "1", "15", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Full Body B (Deadlift, OHP, Pull-up)", "Strength", 55, 470, new String[][]{
+                {"Conventional Deadlift", "4", "5", "105.0"},
+                {"Overhead Military Press", "4", "6", "45.0"},
+                {"Weighted Pull-ups", "3", "6", "5.0"},
+                {"Hanging Leg Raises", "3", "12", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Active Recovery & Mobility", "Flexibility", 30, 170, new String[][]{
+                {"Foam Rolling & Joint Mobility", "1", "20", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Full Body C (Front Squat, Incline, Dips)", "Strength", 50, 430, new String[][]{
+                {"Front Squat", "3", "8", "70.0"},
+                {"Incline Dumbbell Press", "3", "10", "24.0"},
+                {"Dumbbell Romanian Deadlift", "3", "10", "26.0"},
+                {"Parallel Bar Dips", "3", "10", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "HIIT Intervals & MetCon", "HIIT", 30, 360, new String[][]{
+                {"Kettlebell Swings", "4", "20", "20.0"},
+                {"Assault Bike Intervals", "5", "1", "0.0"},
+                {"Burpees", "3", "12", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Rest & Yoga Recovery Flow", "Flexibility", 25, 140, new String[][]{
+                {"Restorative Yoga", "1", "25", "0.0"}
+            })
         }),
-        new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "Full Body HIIT & Power", "HIIT", 35, 410, new String[][]{
-            {"Kettlebell Swings", "4", "20", "20.0"},
-            {"Burpees", "4", "12", "0.0"},
-            {"Box Jumps", "3", "12", "0.0"},
-            {"Dumbbell Thrusters", "3", "12", "16.0"}
+
+        new WorkoutSplit("HIIT_FATLOSS", "HIIT & Fat Loss Conditioning", "Calorie incineration, metabolic conditioning, kettlebells, and endurance intervals", new DailyRoutine[]{
+            new DailyRoutine(DayOfWeek.MONDAY, "Mon", "HIIT MetCon & Core Burner", "HIIT", 40, 450, new String[][]{
+                {"Kettlebell Swings", "4", "20", "20.0"},
+                {"Burpees", "4", "15", "0.0"},
+                {"Mountain Climbers", "4", "30", "0.0"},
+                {"Plank Jacks", "3", "25", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Functional Upper & Intervals", "HIIT", 45, 440, new String[][]{
+                {"Dumbbell Thrusters", "4", "12", "14.0"},
+                {"Push-ups", "4", "15", "0.0"},
+                {"Renegade Rows", "3", "12", "12.0"},
+                {"Jump Rope Intervals", "5", "1", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Lower Body Tabata & Plyometrics", "HIIT", 40, 420, new String[][]{
+                {"Jump Squats", "4", "15", "0.0"},
+                {"Walking Lunges", "3", "16", "12.0"},
+                {"Box Jumps", "3", "12", "0.0"},
+                {"Wall Sit Hold", "3", "45", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Steady State Cardio (Zone 2)", "Cardio", 45, 410, new String[][]{
+                {"5K Outdoor or Treadmill Run", "1", "1", "0.0"},
+                {"Core Hollow Body Hold", "3", "45", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Full Body Kettlebell Circuit", "HIIT", 40, 430, new String[][]{
+                {"Kettlebell Clean & Press", "4", "10", "16.0"},
+                {"Goblet Squat", "4", "15", "24.0"},
+                {"Russian Twists", "4", "20", "10.0"},
+                {"Battle Ropes", "4", "30", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "Sprint Intervals (Tabata Protocol)", "Cardio", 30, 340, new String[][]{
+                {"100m Sprints", "6", "1", "0.0"},
+                {"Hanging Knee Raises", "3", "15", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Restorative Yoga & Recovery", "Flexibility", 30, 160, new String[][]{
+                {"Vinyasa Flow", "1", "30", "0.0"}
+            })
         }),
-        new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Active Recovery & Mobility", "Flexibility", 30, 180, new String[][]{
-            {"Deep Dynamic Mobility", "1", "15", "0.0"},
-            {"Foam Rolling & Release", "1", "15", "0.0"},
-            {"Core Breathing & Stretch", "1", "10", "0.0"}
+
+        new WorkoutSplit("CALISTHENICS", "Calisthenics & Bodyweight Mastery", "Pure bodyweight strength, relative power, gymnastic core, and balance mastery", new DailyRoutine[]{
+            new DailyRoutine(DayOfWeek.MONDAY, "Mon", "Push Mastery (Dips & Push-ups)", "Strength", 45, 360, new String[][]{
+                {"Parallel Bar Dips", "4", "10", "0.0"},
+                {"Decline Push-ups", "3", "15", "0.0"},
+                {"Pike Push-ups", "3", "10", "0.0"},
+                {"Diamond Push-ups", "3", "12", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.TUESDAY, "Tue", "Pull Mastery (Pull-ups & Rows)", "Strength", 45, 370, new String[][]{
+                {"Wide-Grip Pull-ups", "4", "8", "0.0"},
+                {"Chin-ups", "3", "8", "0.0"},
+                {"Inverted Bodyweight Rows", "3", "12", "0.0"},
+                {"Dead Hang Hold", "3", "45", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.WEDNESDAY, "Wed", "Explosive Lower Body & Pistol Squats", "Strength", 45, 390, new String[][]{
+                {"Pistol Squats", "3", "8", "0.0"},
+                {"Jump Squats", "4", "15", "0.0"},
+                {"Bulgarian Split Squats", "3", "12", "0.0"},
+                {"Single-Leg Calf Raises", "4", "15", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.THURSDAY, "Thu", "Core Strength & Handstand Balance", "Strength", 40, 310, new String[][]{
+                {"Handstand Wall Hold", "4", "30", "0.0"},
+                {"Hanging Leg Raises", "4", "12", "0.0"},
+                {"L-Sit Hold", "4", "15", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.FRIDAY, "Fri", "Full Body Calisthenics Combo", "Strength", 50, 410, new String[][]{
+                {"High Pull-up Progression", "4", "5", "0.0"},
+                {"Parallel Bar Dips", "4", "12", "0.0"},
+                {"Archer Push-ups", "3", "10", "0.0"},
+                {"Bodyweight Walking Lunges", "3", "20", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SATURDAY, "Sat", "Endurance & Speed Circuit", "HIIT", 35, 340, new String[][]{
+                {"Burpees to Pull-up", "3", "10", "0.0"},
+                {"Bear Crawls", "3", "20", "0.0"},
+                {"Mountain Climbers", "3", "30", "0.0"}
+            }),
+            new DailyRoutine(DayOfWeek.SUNDAY, "Sun", "Mobility & Shoulder Dislocates", "Flexibility", 30, 150, new String[][]{
+                {"Shoulder Dislocates & Wrist Flow", "1", "15", "0.0"},
+                {"Hamstring & Hip Mobility", "1", "20", "0.0"}
+            })
         })
     };
 
+    public static final DailyRoutine[] WEEKLY_ROUTINES = WORKOUT_SPLITS[0].routines;
+    private static WorkoutSplit currentSelectedSplit = WORKOUT_SPLITS[0];
+
+    public static WorkoutSplit getCurrentSelectedSplit() {
+        return currentSelectedSplit;
+    }
+
+    public static void setCurrentSelectedSplit(WorkoutSplit split) {
+        if (split != null) {
+            currentSelectedSplit = split;
+        }
+    }
+
     public static DailyRoutine getRoutineForDay(DayOfWeek day) {
+        return getRoutineForDay(currentSelectedSplit, day);
+    }
+
+    public static DailyRoutine getRoutineForDay(WorkoutSplit split, DayOfWeek day) {
+        WorkoutSplit targetSplit = split != null ? split : currentSelectedSplit;
+        if (targetSplit != null && targetSplit.routines != null) {
+            for (DailyRoutine r : targetSplit.routines) {
+                if (r.dayOfWeek == day) return r;
+            }
+        }
         for (DailyRoutine r : WEEKLY_ROUTINES) {
             if (r.dayOfWeek == day) return r;
         }
@@ -327,16 +611,46 @@ public class WorkoutPanel extends JPanel {
         return card;
     }
 
-    private JPanel createQuickWorkoutPresetsBar() {
-        ModernCard card = new ModernCard(12, new Insets(6, 12, 6, 12));
-        card.setLayout(new FlowLayout(FlowLayout.LEFT, 6, 0));
+    private final JComboBox<WorkoutSplit> cmbSplitSelector = new JComboBox<>(WORKOUT_SPLITS);
+    private final JPanel presetsChipsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
 
+    private JPanel createQuickWorkoutPresetsBar() {
+        ModernCard card = new ModernCard(12, new Insets(5, 12, 5, 12));
+        card.setLayout(new BorderLayout(8, 0));
+
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        left.setOpaque(false);
         JLabel lbl = new JLabel("Daily Split:");
         lbl.setFont(ThemeConfig.FONT_SMALL);
         lbl.setForeground(ThemeConfig.TEXT_MUTED);
-        card.add(lbl);
+        left.add(lbl);
 
-        DailyRoutine todayRoutine = getRoutineForDay(LocalDate.now().getDayOfWeek());
+        cmbSplitSelector.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        cmbSplitSelector.setPreferredSize(new Dimension(215, 28));
+        cmbSplitSelector.setSelectedItem(currentSelectedSplit);
+        cmbSplitSelector.setToolTipText("Select your preferred workout split routine");
+        cmbSplitSelector.addActionListener(e -> {
+            WorkoutSplit selected = (WorkoutSplit) cmbSplitSelector.getSelectedItem();
+            if (selected != null) {
+                currentSelectedSplit = selected;
+                rebuildPresetsChips();
+                loadWorkouts();
+            }
+        });
+        left.add(cmbSplitSelector);
+        card.add(left, BorderLayout.WEST);
+
+        presetsChipsPanel.setOpaque(false);
+        rebuildPresetsChips();
+        card.add(presetsChipsPanel, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private void rebuildPresetsChips() {
+        presetsChipsPanel.removeAll();
+
+        DailyRoutine todayRoutine = getRoutineForDay(currentSelectedSplit, LocalDate.now().getDayOfWeek());
         JButton btnToday = new JButton("Today (" + todayRoutine.shortDay + "): " + todayRoutine.title + " (" + todayRoutine.durationMinutes + "m)");
         btnToday.setIcon(IconFactory.createIcon(IconFactory.IconType.STAR, 12, Color.WHITE));
         btnToday.setIconTextGap(6);
@@ -358,13 +672,14 @@ public class WorkoutPanel extends JPanel {
                 openAddWorkoutDialogWithPreset(todayRoutine.title, todayRoutine.type, todayRoutine.durationMinutes, todayRoutine.calories, todayRoutine.exercises);
             }
         });
-        card.add(btnToday);
+        presetsChipsPanel.add(btnToday);
 
-        for (DailyRoutine r : WEEKLY_ROUTINES) {
-            card.add(createDailyRoutineChip(r));
+        for (DailyRoutine r : currentSelectedSplit.routines) {
+            presetsChipsPanel.add(createDailyRoutineChip(r));
         }
 
-        return card;
+        presetsChipsPanel.revalidate();
+        presetsChipsPanel.repaint();
     }
 
     private JButton createDailyRoutineChip(DailyRoutine r) {
@@ -958,19 +1273,48 @@ public class WorkoutPanel extends JPanel {
 
             // Section 1: Daily Workout Split Routine Chips
             if (workout == null || workout.getId() == null || workout.getId().isBlank()) {
-                JLabel lblTpl = new JLabel("Daily Split Presets (Select Any Day):");
+                JPanel tplHeader = new JPanel(new BorderLayout());
+                tplHeader.setOpaque(false);
+                JLabel lblTpl = new JLabel("Daily Split Presets:");
                 lblTpl.setFont(ThemeConfig.FONT_SMALL);
                 lblTpl.setForeground(ThemeConfig.TEXT_SECONDARY);
-                main.add(lblTpl);
+                tplHeader.add(lblTpl, BorderLayout.WEST);
+
+                JComboBox<WorkoutSplit> dialogSplitCombo = new JComboBox<>(WORKOUT_SPLITS);
+                dialogSplitCombo.setSelectedItem(currentSelectedSplit);
+                dialogSplitCombo.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+                dialogSplitCombo.setPreferredSize(new Dimension(210, 24));
+                tplHeader.add(dialogSplitCombo, BorderLayout.EAST);
+                main.add(tplHeader);
                 main.add(Box.createVerticalStrut(4));
 
                 JPanel tplRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
                 tplRow.setOpaque(false);
-                for (DailyRoutine r : WEEKLY_ROUTINES) {
-                    tplRow.add(createTemplateChip(r.shortDay + ": " + r.title.split(" ")[0], r.title, r.type, r.durationMinutes, r.exercises));
-                }
+
+                Runnable refreshDialogChips = () -> {
+                    tplRow.removeAll();
+                    WorkoutSplit split = (WorkoutSplit) dialogSplitCombo.getSelectedItem();
+                    if (split != null) {
+                        for (DailyRoutine r : split.routines) {
+                            tplRow.add(createTemplateChip(r.shortDay + ": " + r.title.split(" ")[0], r.title, r.type, r.durationMinutes, r.exercises));
+                        }
+                    }
+                    tplRow.revalidate();
+                    tplRow.repaint();
+                };
+
+                dialogSplitCombo.addActionListener(e -> {
+                    WorkoutSplit s = (WorkoutSplit) dialogSplitCombo.getSelectedItem();
+                    if (s != null) {
+                        setCurrentSelectedSplit(s);
+                        refreshDialogChips.run();
+                        rebuildPresetsChips();
+                    }
+                });
+                refreshDialogChips.run();
+
                 main.add(tplRow);
-                main.add(Box.createVerticalStrut(12));
+                main.add(Box.createVerticalStrut(10));
             }
 
             // Title
