@@ -8,7 +8,6 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.TrainerAssignmentDAO;
 import com.personaltracker.model.*;
 import com.personaltracker.service.SupabaseClient;
-import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.IconFactory;
 
 import javax.swing.*;
@@ -18,7 +17,6 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,15 +33,15 @@ public class AssignTaskDialog extends JDialog {
 
     // Mode Selector
     private enum AssignmentMode {
-        GOAL,
         WORKOUT,
+        GOAL,
         SCHEDULE
     }
     private AssignmentMode currentMode = AssignmentMode.WORKOUT;
 
-    private final JButton btnTabWorkout = new JButton("🏋️ Schedule Workout");
-    private final JButton btnTabGoal = new JButton("🎯 Assign Goal");
-    private final JButton btnTabSchedule = new JButton("⏰ Schedule Task / Reminder");
+    private final JButton btnTabWorkout = new JButton("Schedule Workout");
+    private final JButton btnTabGoal = new JButton("Assign Goal");
+    private final JButton btnTabSchedule = new JButton("Schedule Task");
 
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel pnlCards = new JPanel(cardLayout);
@@ -60,6 +58,7 @@ public class AssignTaskDialog extends JDialog {
     private final DefaultTableModel exerciseTableModel;
     private final JTable tblExercises;
     private final List<WorkoutExercise> plannedExercises = new ArrayList<>();
+    private JLabel lblExCount;
 
     // --- GOAL FIELDS ---
     private final ModernTextField txtGoalTitle = new ModernTextField("", "e.g. Sub-25 Minute 5K Run");
@@ -77,12 +76,12 @@ public class AssignTaskDialog extends JDialog {
     private final ModernButton btnDispatch;
 
     public AssignTaskDialog(Window owner, UserProfile studentProfile, Runnable onSuccessCallback) {
-        super(owner, "Assign Task & Schedule - " + (studentProfile != null ? studentProfile.getDisplayName() : "Student"), ModalityType.APPLICATION_MODAL);
+        super(owner, "Assign Coaching Task - " + (studentProfile != null ? studentProfile.getDisplayName() : "Student"), ModalityType.APPLICATION_MODAL);
         this.studentProfile = studentProfile;
         this.onSuccessCallback = onSuccessCallback;
 
-        setSize(780, 720);
-        setMinimumSize(new Dimension(720, 640));
+        setSize(820, 740);
+        setMinimumSize(new Dimension(740, 660));
         setLocationRelativeTo(owner);
         getContentPane().setBackground(ThemeConfig.BG_DARK);
         setLayout(new BorderLayout());
@@ -101,27 +100,36 @@ public class AssignTaskDialog extends JDialog {
         add(createHeaderBanner(), BorderLayout.NORTH);
 
         // 2. Center Content with Tab Switcher & Dynamic Forms
-        JPanel centerContainer = new JPanel(new BorderLayout(0, 14));
+        JPanel centerContainer = new JPanel();
+        centerContainer.setLayout(new BoxLayout(centerContainer, BoxLayout.Y_AXIS));
         centerContainer.setOpaque(false);
         centerContainer.setBorder(BorderFactory.createEmptyBorder(14, 24, 14, 24));
 
         // Tab switcher row
-        centerContainer.add(createTabSwitcher(), BorderLayout.NORTH);
+        JPanel tabSwitcher = createTabSwitcher();
+        tabSwitcher.setAlignmentX(Component.LEFT_ALIGNMENT);
+        centerContainer.add(tabSwitcher);
+        centerContainer.add(Box.createVerticalStrut(12));
 
         // Cards
         pnlCards.setOpaque(false);
+        pnlCards.setAlignmentX(Component.LEFT_ALIGNMENT);
         pnlCards.add(createWorkoutForm(), AssignmentMode.WORKOUT.name());
         pnlCards.add(createGoalForm(), AssignmentMode.GOAL.name());
         pnlCards.add(createScheduleForm(), AssignmentMode.SCHEDULE.name());
-        centerContainer.add(pnlCards, BorderLayout.CENTER);
+        centerContainer.add(pnlCards);
+        centerContainer.add(Box.createVerticalStrut(12));
 
         // Coach Notes & Advice Card
-        centerContainer.add(createCoachNotesSection(), BorderLayout.SOUTH);
+        JPanel coachNotes = createCoachNotesSection();
+        coachNotes.setAlignmentX(Component.LEFT_ALIGNMENT);
+        centerContainer.add(coachNotes);
 
         JScrollPane scrollCenter = new JScrollPane(centerContainer);
         scrollCenter.setOpaque(false);
         scrollCenter.getViewport().setOpaque(false);
         scrollCenter.setBorder(null);
+        scrollCenter.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollCenter.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollCenter, BorderLayout.CENTER);
 
@@ -136,14 +144,17 @@ public class AssignTaskDialog extends JDialog {
         bottomBar.add(btnCancel);
 
         String studentName = studentProfile != null ? studentProfile.getDisplayName() : "Student";
-        btnDispatch = new ModernButton("🚀 Dispatch Assignment to " + studentName, ModernButton.ButtonStyle.PRIMARY);
+        btnDispatch = new ModernButton("Dispatch Assignment to " + studentName, ModernButton.ButtonStyle.PRIMARY);
+        btnDispatch.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 14, Color.WHITE));
+        btnDispatch.setIconTextGap(8);
         btnDispatch.setPreferredSize(new Dimension(280, 38));
         btnDispatch.addActionListener(e -> executeDispatch());
         bottomBar.add(btnDispatch);
 
         add(bottomBar, BorderLayout.SOUTH);
 
-        // Initialize with default template
+        // Initialize with default template & show workout mode
+        switchMode(AssignmentMode.WORKOUT);
         loadWorkoutTemplate("Push");
     }
 
@@ -207,11 +218,17 @@ public class AssignTaskDialog extends JDialog {
     private JPanel createTabSwitcher() {
         JPanel bar = new JPanel(new GridLayout(1, 3, 10, 0));
         bar.setOpaque(false);
-        bar.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
+        bar.setMaximumSize(new Dimension(32767, 42));
+        bar.setPreferredSize(new Dimension(720, 42));
 
-        styleTabButton(btnTabWorkout, true);
-        styleTabButton(btnTabGoal, false);
-        styleTabButton(btnTabSchedule, false);
+        btnTabWorkout.setText("Schedule Workout");
+        btnTabWorkout.setIconTextGap(8);
+
+        btnTabGoal.setText("Assign Goal");
+        btnTabGoal.setIconTextGap(8);
+
+        btnTabSchedule.setText("Schedule Task");
+        btnTabSchedule.setIconTextGap(8);
 
         btnTabWorkout.addActionListener(e -> switchMode(AssignmentMode.WORKOUT));
         btnTabGoal.addActionListener(e -> switchMode(AssignmentMode.GOAL));
@@ -224,33 +241,37 @@ public class AssignTaskDialog extends JDialog {
         return bar;
     }
 
-    private void styleTabButton(JButton btn, boolean active) {
+    private void styleTabButton(JButton btn, boolean active, IconFactory.IconType iconType) {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         if (active) {
             btn.setForeground(Color.WHITE);
             btn.setBackground(ThemeConfig.PRIMARY_ACCENT);
+            btn.setIcon(IconFactory.createIcon(iconType, 15, Color.WHITE));
             btn.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
-                    BorderFactory.createEmptyBorder(6, 12, 6, 12)
+                    BorderFactory.createEmptyBorder(8, 14, 8, 14)
             ));
         } else {
             btn.setForeground(ThemeConfig.TEXT_SECONDARY);
             btn.setBackground(ThemeConfig.BG_CARD);
+            btn.setIcon(IconFactory.createIcon(iconType, 15, ThemeConfig.TEXT_SECONDARY));
             btn.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                    BorderFactory.createEmptyBorder(6, 12, 6, 12)
+                    BorderFactory.createEmptyBorder(8, 14, 8, 14)
             ));
         }
     }
 
     private void switchMode(AssignmentMode mode) {
         this.currentMode = mode;
-        styleTabButton(btnTabWorkout, mode == AssignmentMode.WORKOUT);
-        styleTabButton(btnTabGoal, mode == AssignmentMode.GOAL);
-        styleTabButton(btnTabSchedule, mode == AssignmentMode.SCHEDULE);
+        styleTabButton(btnTabWorkout, mode == AssignmentMode.WORKOUT, IconFactory.IconType.WORKOUT);
+        styleTabButton(btnTabGoal, mode == AssignmentMode.GOAL, IconFactory.IconType.GOAL);
+        styleTabButton(btnTabSchedule, mode == AssignmentMode.SCHEDULE, IconFactory.IconType.REMINDERS);
         cardLayout.show(pnlCards, mode.name());
+        pnlCards.revalidate();
+        pnlCards.repaint();
     }
 
     // =========================================================================
@@ -301,10 +322,10 @@ public class AssignTaskDialog extends JDialog {
         // Exercises Section Header with "+ Add Exercise" button
         JPanel exHeader = new JPanel(new BorderLayout());
         exHeader.setOpaque(false);
-        JLabel lblEx = new JLabel("Assigned Exercise Routine (" + plannedExercises.size() + " exercises)");
-        lblEx.setFont(ThemeConfig.FONT_BODY_BOLD);
-        lblEx.setForeground(ThemeConfig.TEXT_PRIMARY);
-        exHeader.add(lblEx, BorderLayout.WEST);
+        lblExCount = new JLabel("Assigned Exercise Routine (" + plannedExercises.size() + " exercises)");
+        lblExCount.setFont(ThemeConfig.FONT_BODY_BOLD);
+        lblExCount.setForeground(ThemeConfig.TEXT_PRIMARY);
+        exHeader.add(lblExCount, BorderLayout.WEST);
 
         ModernButton btnAddEx = new ModernButton("+ Add Exercise", ModernButton.ButtonStyle.SECONDARY);
         btnAddEx.setPreferredSize(new Dimension(130, 28));
@@ -315,10 +336,12 @@ public class AssignTaskDialog extends JDialog {
 
         // Table
         JScrollPane scrollEx = new JScrollPane(tblExercises);
-        scrollEx.setPreferredSize(new Dimension(Integer.MAX_VALUE, 120));
+        scrollEx.setPreferredSize(new Dimension(700, 130));
+        scrollEx.setMaximumSize(new Dimension(32767, 130));
         scrollEx.setOpaque(false);
         scrollEx.getViewport().setOpaque(false);
         scrollEx.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true));
+        scrollEx.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         card.add(scrollEx);
 
         return card;
@@ -395,12 +418,18 @@ public class AssignTaskDialog extends JDialog {
             addExerciseToPlan("Plank with Shoulder Taps", 3, 20, 0.0);
             txtCoachNotes.setText("30 seconds work, 15 seconds rest. Keep heart rate elevated.");
         }
+        if (lblExCount != null) {
+            lblExCount.setText("Assigned Exercise Routine (" + plannedExercises.size() + " exercises)");
+        }
     }
 
     private void addExerciseToPlan(String name, int sets, int reps, double weight) {
         WorkoutExercise ex = new WorkoutExercise(name, sets, reps, weight);
         plannedExercises.add(ex);
         exerciseTableModel.addRow(new Object[]{name, sets, reps, String.format(java.util.Locale.US, "%.1f", weight)});
+        if (lblExCount != null) {
+            lblExCount.setText("Assigned Exercise Routine (" + plannedExercises.size() + " exercises)");
+        }
     }
 
     private void openAddExerciseDialog() {
@@ -468,7 +497,7 @@ public class AssignTaskDialog extends JDialog {
         // Row 2: Target Value, Current Value, Unit
         JPanel r2 = new JPanel(new GridLayout(1, 3, 14, 0));
         r2.setOpaque(false);
-        r2.add(createFieldWrapper("Target Target *", txtGoalTargetVal));
+        r2.add(createFieldWrapper("Target Value *", txtGoalTargetVal));
         r2.add(createFieldWrapper("Starting / Current Value", txtGoalCurrentVal));
         r2.add(createFieldWrapper("Unit (kg, reps, etc.)", txtGoalUnit));
         card.add(r2);
@@ -563,8 +592,10 @@ public class AssignTaskDialog extends JDialog {
         ));
 
         JScrollPane scrollNotes = new JScrollPane(txtCoachNotes);
-        scrollNotes.setPreferredSize(new Dimension(Integer.MAX_VALUE, 70));
+        scrollNotes.setPreferredSize(new Dimension(700, 75));
+        scrollNotes.setMaximumSize(new Dimension(32767, 75));
         scrollNotes.setBorder(null);
+        scrollNotes.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         card.add(scrollNotes);
 
         return card;
@@ -687,7 +718,7 @@ public class AssignTaskDialog extends JDialog {
                     }
                 } catch (Exception ex) {
                     btnDispatch.setEnabled(true);
-                    btnDispatch.setText("🚀 Dispatch Assignment");
+                    btnDispatch.setText("Dispatch Assignment");
                     String msg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
                     JOptionPane.showMessageDialog(AssignTaskDialog.this,
                             "Failed to dispatch assignment:\n" + msg, "Dispatch Error", JOptionPane.ERROR_MESSAGE);
