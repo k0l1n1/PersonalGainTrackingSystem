@@ -12,6 +12,7 @@ import com.personaltracker.util.IconFactory;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.time.LocalDate;
@@ -182,7 +183,7 @@ public class StudentDetailDialog extends JDialog {
 
             String source = "Athlete Logged";
             if (w.getNotes() != null && (w.getNotes().contains("[Coach") || w.getNotes().contains("[Trainer"))) {
-                source = "🏋️ Coach Assigned";
+                source = "Coach Assigned";
                 coachAssignedCount++;
             }
 
@@ -234,7 +235,9 @@ public class StudentDetailDialog extends JDialog {
                 BorderFactory.createEmptyBorder(4, 10, 4, 10)
         ));
 
-        JButton btnCoachOnly = new JButton("🏋️ Assigned by Coach (" + coachAssignedCount + ")");
+        JButton btnCoachOnly = new JButton("Assigned by Coach (" + coachAssignedCount + ")");
+        btnCoachOnly.setIcon(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 12, ThemeConfig.PRIMARY_ACCENT));
+        btnCoachOnly.setIconTextGap(6);
         btnCoachOnly.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         btnCoachOnly.setForeground(ThemeConfig.TEXT_SECONDARY);
         btnCoachOnly.setBackground(ThemeConfig.BG_CARD);

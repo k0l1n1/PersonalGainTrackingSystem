@@ -169,6 +169,16 @@ public class WorkoutTimerPanel extends ModernCard {
         }
     }
 
+    public void startWithDuration(int minutes) {
+        if (isRunning) {
+            swingTimer.stop();
+            isRunning = false;
+        }
+        elapsedSeconds = Math.max(0, minutes) * 60;
+        updateDisplay();
+        startTimer();
+    }
+
     private void toggleStartPause() {
         if (!isRunning) {
             swingTimer.start();
