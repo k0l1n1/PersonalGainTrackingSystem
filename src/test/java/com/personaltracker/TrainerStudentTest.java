@@ -218,4 +218,20 @@ public class TrainerStudentTest {
         afterDeleteDao.removeStudent(testTrainer, "student-sarah-101");
         assertTrue(afterDeleteDao.getEnrolledStudents(testTrainer).isEmpty());
     }
+
+    @Test
+    @DisplayName("Remote student with code PG-56EBE6 can be looked up and enrolled")
+    public void testEnrollRemoteStudentByCode() throws Exception {
+        String testTrainer = "test-trainer-remote-lookup";
+        dao.clearRosterForTrainer(testTrainer);
+
+        TrainerStudent enrolled = dao.enrollStudentByCode(testTrainer, "PG-56EBE6");
+        assertNotNull(enrolled);
+        assertNotNull(enrolled.getStudentProfile());
+        assertEquals("PG-56EBE6", enrolled.getStudentProfile().getUserCode());
+        assertEquals("lexi", enrolled.getStudentProfile().getFullName());
+        assertEquals("68e74179-0901-4802-a1dd-36961bb8ae63", enrolled.getStudentId());
+
+        dao.clearRosterForTrainer(testTrainer);
+    }
 }

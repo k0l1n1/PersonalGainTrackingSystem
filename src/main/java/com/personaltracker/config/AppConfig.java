@@ -21,6 +21,7 @@ public class AppConfig {
 
     private String supabaseUrl;
     private String supabaseAnonKey;
+    private String supabaseSecretKey;
     private String dbHost;
     private int dbPort = 5432;
     private String dbName = "postgres";
@@ -57,6 +58,7 @@ public class AppConfig {
         if (this.supabaseAnonKey.isEmpty()) {
             this.supabaseAnonKey = getEnvValue("SUPABASE_PUBLISHABLE_KEY", dotenv, "");
         }
+        this.supabaseSecretKey = getEnvValue("SUPABASE_SECRET_KEY", dotenv, "");
         this.dbHost = getEnvValue("DB_HOST", dotenv, "");
         String portStr = getEnvValue("DB_PORT", dotenv, "5432");
         try {
@@ -80,6 +82,9 @@ public class AppConfig {
                     this.supabaseAnonKey = props.getProperty("SUPABASE_ANON_KEY");
                 } else if (props.getProperty("SUPABASE_PUBLISHABLE_KEY") != null) {
                     this.supabaseAnonKey = props.getProperty("SUPABASE_PUBLISHABLE_KEY");
+                }
+                if (props.getProperty("SUPABASE_SECRET_KEY") != null) {
+                    this.supabaseSecretKey = props.getProperty("SUPABASE_SECRET_KEY");
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.WARNING, "Failed to read property file: " + e.getMessage());
@@ -195,6 +200,10 @@ public class AppConfig {
 
     public String getSupabaseAnonKey() {
         return supabaseAnonKey;
+    }
+
+    public String getSupabaseSecretKey() {
+        return supabaseSecretKey;
     }
 
     public String getDbHost() {

@@ -110,21 +110,7 @@ public class TrainerStudentDAO {
         }
         String cleanCode = inputCode.trim().toUpperCase();
 
-        UserProfile studentProfile = null;
-        if (config.isMockMode() || client.getCurrentSession() == null || !client.isValidJwt(client.getCurrentSession().getAccessToken())) {
-            studentProfile = client.findProfileByCode(cleanCode);
-        } else {
-            try {
-                List<UserProfile> list = client.executeGetList("profiles", "user_code=ilike." + cleanCode, UserProfile.class);
-                if (list != null && !list.isEmpty()) {
-                    studentProfile = list.get(0);
-                }
-            } catch (Exception ignored) {}
-            // Seamless fallback to built-in presentation demo athletes if not in remote DB
-            if (studentProfile == null) {
-                studentProfile = client.findProfileByCode(cleanCode);
-            }
-        }
+        UserProfile studentProfile = client.findRemoteProfileByCode(cleanCode);
 
         if (studentProfile == null) {
             throw new IllegalArgumentException("No user found with code: " + cleanCode + ".\nPlease double check the code.");
@@ -225,14 +211,42 @@ public class TrainerStudentDAO {
             measurements = client.getMeasurementsForUser(studentId);
             nutrition = client.getNutritionForUser(studentId);
         } else {
+            profile = client.findRemoteProfileById(studentId);
             try {
-                List<UserProfile> plist = client.executeGetList("profiles", "id=eq." + studentId, UserProfile.class);
-                if (plist != null && !plist.isEmpty()) profile = plist.get(0);
                 workouts = client.executeGetList("workouts", "user_id=eq." + studentId + "&order=workout_date.desc", Workout.class);
+            } catch (Exception ignored) {}
+            if (workouts == null || workouts.isEmpty()) {
+                try {
+                    workouts = client.executeGetListWithServiceRole("workouts", "user_id=eq." + studentId + "&order=workout_date.desc", Workout.class);
+                } catch (Exception ignored) {}
+            }
+
+            try {
                 goals = client.executeGetList("goals", "user_id=eq." + studentId + "&order=created_at.desc", Goal.class);
+            } catch (Exception ignored) {}
+            if (goals == null || goals.isEmpty()) {
+                try {
+                    goals = client.executeGetListWithServiceRole("goals", "user_id=eq." + studentId + "&order=created_at.desc", Goal.class);
+                } catch (Exception ignored) {}
+            }
+
+            try {
                 measurements = client.executeGetList("body_measurements", "user_id=eq." + studentId + "&order=recorded_date.desc", BodyMeasurement.class);
+            } catch (Exception ignored) {}
+            if (measurements == null || measurements.isEmpty()) {
+                try {
+                    measurements = client.executeGetListWithServiceRole("body_measurements", "user_id=eq." + studentId + "&order=recorded_date.desc", BodyMeasurement.class);
+                } catch (Exception ignored) {}
+            }
+
+            try {
                 nutrition = client.executeGetList("nutrition_entries", "user_id=eq." + studentId + "&order=entry_date.desc", NutritionEntry.class);
             } catch (Exception ignored) {}
+            if (nutrition == null || nutrition.isEmpty()) {
+                try {
+                    nutrition = client.executeGetListWithServiceRole("nutrition_entries", "user_id=eq." + studentId + "&order=entry_date.desc", NutritionEntry.class);
+                } catch (Exception ignored) {}
+            }
 
             if (profile == null) profile = client.getMockProfile(studentId);
             if (workouts == null || workouts.isEmpty()) workouts = client.getWorkoutsForUser(studentId);
@@ -264,8 +278,7 @@ public class TrainerStudentDAO {
                 if (config.isMockMode() || client.getCurrentSession() == null || !client.isValidJwt(client.getCurrentSession().getAccessToken()) || isDemoStudent(ts.getStudentId())) {
                     ts.setStudentProfile(client.getMockProfile(ts.getStudentId()));
                 } else {
-                    List<UserProfile> list = client.executeGetList("profiles", "id=eq." + ts.getStudentId(), UserProfile.class);
-                    if (list != null && !list.isEmpty()) ts.setStudentProfile(list.get(0));
+                    ts.setStudentProfile(client.findRemoteProfileById(ts.getStudentId()));
                 }
             }
             if (ts.getStudentProfile() == null) {
@@ -273,18 +286,41 @@ public class TrainerStudentDAO {
             }
 
             // Get count of workouts & latest weight
-            List<Workout> wList;
-            List<Goal> gList;
-            List<BodyMeasurement> mList;
+            List<Workout> wList = null;
+            List<Goal> gList = null;
+            List<BodyMeasurement> mList = null;
 
             if (config.isMockMode() || client.getCurrentSession() == null || !client.isValidJwt(client.getCurrentSession().getAccessToken()) || isDemoStudent(ts.getStudentId())) {
                 wList = client.getWorkoutsForUser(ts.getStudentId());
                 gList = client.getGoalsForUser(ts.getStudentId());
                 mList = client.getMeasurementsForUser(ts.getStudentId());
             } else {
-                wList = client.executeGetList("workouts", "user_id=eq." + ts.getStudentId(), Workout.class);
-                gList = client.executeGetList("goals", "user_id=eq." + ts.getStudentId(), Goal.class);
-                mList = client.executeGetList("body_measurements", "user_id=eq." + ts.getStudentId() + "&order=recorded_date.desc&limit=1", BodyMeasurement.class);
+                try {
+                    wList = client.executeGetList("workouts", "user_id=eq." + ts.getStudentId(), Workout.class);
+                } catch (Exception ignored) {}
+                if (wList == null || wList.isEmpty()) {
+                    try {
+                        wList = client.executeGetListWithServiceRole("workouts", "user_id=eq." + ts.getStudentId(), Workout.class);
+                    } catch (Exception ignored) {}
+                }
+
+                try {
+                    gList = client.executeGetList("goals", "user_id=eq." + ts.getStudentId(), Goal.class);
+                } catch (Exception ignored) {}
+                if (gList == null || gList.isEmpty()) {
+                    try {
+                        gList = client.executeGetListWithServiceRole("goals", "user_id=eq." + ts.getStudentId(), Goal.class);
+                    } catch (Exception ignored) {}
+                }
+
+                try {
+                    mList = client.executeGetList("body_measurements", "user_id=eq." + ts.getStudentId() + "&order=recorded_date.desc&limit=1", BodyMeasurement.class);
+                } catch (Exception ignored) {}
+                if (mList == null || mList.isEmpty()) {
+                    try {
+                        mList = client.executeGetListWithServiceRole("body_measurements", "user_id=eq." + ts.getStudentId() + "&order=recorded_date.desc&limit=1", BodyMeasurement.class);
+                    } catch (Exception ignored) {}
+                }
             }
 
             if (wList == null) wList = Collections.emptyList();

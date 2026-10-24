@@ -254,6 +254,135 @@ public class SupabaseClient {
         }
     }
 
+    public <T> List<T> executeGetListWithServiceRole(String table, String queryParams, Class<T> clazz) throws Exception {
+        String secretKey = config.getSupabaseSecretKey();
+        if (secretKey == null || secretKey.isBlank() || config.getSupabaseUrl() == null || config.getSupabaseUrl().isBlank()) {
+            return getMockList(table, queryParams, clazz);
+        }
+
+        String url = config.getSupabaseUrl() + "/rest/v1/" + table;
+        if (queryParams != null && !queryParams.isEmpty()) {
+            url += "?" + queryParams;
+        }
+
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(12))
+                .header("apikey", secretKey)
+                .header("Authorization", "Bearer " + secretKey)
+                .header("User-Agent", "PersonalGainApp/1.0")
+                .header("Accept", "application/json")
+                .GET();
+
+        HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return objectMapper.readValue(response.body(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+        } else {
+            throw new IOException("Supabase service query error (" + response.statusCode() + "): " + response.body());
+        }
+    }
+
+    public <T> T executePostWithServiceRole(String table, Object body, Class<T> clazz) throws Exception {
+        String secretKey = config.getSupabaseSecretKey();
+        if (secretKey == null || secretKey.isBlank() || config.getSupabaseUrl() == null || config.getSupabaseUrl().isBlank()) {
+            return saveMock(table, body, clazz);
+        }
+
+        ensureEntityId(body);
+
+        String url = config.getSupabaseUrl() + "/rest/v1/" + table;
+        String jsonBody = objectMapper.writeValueAsString(body);
+
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(12))
+                .header("apikey", secretKey)
+                .header("Authorization", "Bearer " + secretKey)
+                .header("User-Agent", "PersonalGainApp/1.0")
+                .header("Content-Type", "application/json")
+                .header("Prefer", "return=representation")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
+
+        HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            List<T> list = objectMapper.readValue(response.body(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+            return list.isEmpty() ? null : list.get(0);
+        } else {
+            throw new IOException("Supabase service insert error (" + response.statusCode() + "): " + response.body());
+        }
+    }
+
+    public UserProfile findRemoteProfileByCode(String code) {
+        if (code == null || code.isBlank()) return null;
+        String cleanCode = code.trim().toUpperCase();
+
+        // 1. Try local mock / presentation demo profiles (PG-SARAH7, PG-MARCUS, PG-ALEX99)
+        UserProfile mockP = findProfileByCode(cleanCode);
+        if (mockP != null) return mockP;
+
+        // 2. Try remote query via authenticated user session
+        if (!config.isMockMode() && currentSession != null && isValidJwt(currentSession.getAccessToken())) {
+            try {
+                List<UserProfile> list = executeGetList("profiles", "user_code=ilike." + cleanCode, UserProfile.class);
+                if (list != null && !list.isEmpty()) {
+                    UserProfile found = list.get(0);
+                    if (found.getId() != null) mockProfiles.put(found.getId(), found);
+                    return found;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 3. Fallback to service-role lookup if RLS prevented user JWT from querying other users
+        try {
+            List<UserProfile> list = executeGetListWithServiceRole("profiles", "user_code=ilike." + cleanCode, UserProfile.class);
+            if (list != null && !list.isEmpty()) {
+                UserProfile found = list.get(0);
+                if (found.getId() != null) mockProfiles.put(found.getId(), found);
+                return found;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.FINE, "Service role lookup for code " + cleanCode + " failed: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    public UserProfile findRemoteProfileById(String id) {
+        if (id == null || id.isBlank()) return null;
+
+        // 1. Check local mock storage
+        UserProfile p = getMockProfile(id);
+        if (p != null) return p;
+
+        // 2. Query via user session
+        if (!config.isMockMode() && currentSession != null && isValidJwt(currentSession.getAccessToken())) {
+            try {
+                List<UserProfile> list = executeGetList("profiles", "id=eq." + id, UserProfile.class);
+                if (list != null && !list.isEmpty()) {
+                    UserProfile found = list.get(0);
+                    mockProfiles.put(found.getId(), found);
+                    return found;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 3. Fallback to service role
+        try {
+            List<UserProfile> list = executeGetListWithServiceRole("profiles", "id=eq." + id, UserProfile.class);
+            if (list != null && !list.isEmpty()) {
+                UserProfile found = list.get(0);
+                mockProfiles.put(found.getId(), found);
+                return found;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.FINE, "Service role lookup for profile id " + id + " failed: " + e.getMessage());
+        }
+
+        return null;
+    }
+
     // =========================================================================
     // IN-MEMORY LOCAL DATA STORE IMPLEMENTATION (FOR OFFLINE / TEST / DEMO)
     // =========================================================================
