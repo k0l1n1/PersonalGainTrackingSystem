@@ -126,6 +126,16 @@ public class SupabaseClient {
             return getMockList(table, queryParams, clazz);
         }
 
+        // If query targets a non-UUID student or user, route directly to local mock storage
+        String uFilter = extractParamValue(queryParams, "user_id");
+        if (uFilter != null && !isValidUuid(uFilter)) {
+            return getMockList(table, queryParams, clazz);
+        }
+        String sFilter = extractParamValue(queryParams, "student_id");
+        if (sFilter != null && !isValidUuid(sFilter)) {
+            return getMockList(table, queryParams, clazz);
+        }
+
         String url = config.getSupabaseUrl() + "/rest/v1/" + table;
         if (queryParams != null && !queryParams.isEmpty()) {
             url += "?" + queryParams;
@@ -150,7 +160,7 @@ public class SupabaseClient {
     }
 
     public <T> T executePost(String table, Object body, Class<T> clazz) throws Exception {
-        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken())) {
+        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken()) || containsNonUuidTarget(body)) {
             return saveMock(table, body, clazz);
         }
 
@@ -195,7 +205,7 @@ public class SupabaseClient {
     }
 
     public void executePatch(String table, String filterQuery, Object body) throws Exception {
-        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken())) {
+        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken()) || containsNonUuidTarget(body)) {
             updateMock(table, body);
             return;
         }
@@ -220,7 +230,10 @@ public class SupabaseClient {
     }
 
     public void executeDelete(String table, String filterQuery) throws Exception {
-        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken())) {
+        String uFilter = extractParamValue(filterQuery, "user_id");
+        String sFilter = extractParamValue(filterQuery, "student_id");
+        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken())
+                || (uFilter != null && !isValidUuid(uFilter)) || (sFilter != null && !isValidUuid(sFilter))) {
             deleteMock(table, filterQuery);
             return;
         }
@@ -914,8 +927,43 @@ public class SupabaseClient {
         return null;
     }
 
+    public static boolean isValidUuid(String val) {
+        if (val == null || val.isBlank()) return false;
+        try {
+            UUID.fromString(val);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public boolean containsNonUuidTarget(Object body) {
+        if (body == null) return false;
+        if (body instanceof Goal) {
+            String uid = ((Goal) body).getUserId();
+            return !isValidUuid(uid);
+        }
+        if (body instanceof Workout) {
+            String uid = ((Workout) body).getUserId();
+            return !isValidUuid(uid);
+        }
+        if (body instanceof Reminder) {
+            String uid = ((Reminder) body).getUserId();
+            return !isValidUuid(uid);
+        }
+        if (body instanceof TrainerStudent) {
+            String sid = ((TrainerStudent) body).getStudentId();
+            return !isValidUuid(sid);
+        }
+        if (body instanceof TrainerAssignment) {
+            String sid = ((TrainerAssignment) body).getStudentId();
+            return !isValidUuid(sid);
+        }
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
-    private <T> T saveMock(String table, Object body, Class<T> clazz) {
+    public <T> T saveMock(String table, Object body, Class<T> clazz) {
         String uid = getCurrentUserId() != null ? getCurrentUserId() : "demo-user-123";
         String newId = UUID.randomUUID().toString();
 

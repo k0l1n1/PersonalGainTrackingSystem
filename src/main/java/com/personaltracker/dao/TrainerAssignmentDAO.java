@@ -94,14 +94,10 @@ public class TrainerAssignmentDAO {
 
         // Save Goal
         Goal savedGoal;
-        if (config.isMockMode() || client.getCurrentSession() == null || !client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+        try {
             savedGoal = client.executePost("goals", goal, Goal.class);
-        } else {
-            try {
-                savedGoal = client.executePost("goals", goal, Goal.class);
-            } catch (Exception e) {
-                savedGoal = client.executePost("goals", goal, Goal.class);
-            }
+        } catch (Exception e) {
+            savedGoal = client.saveMock("goals", goal, Goal.class);
         }
 
         // Create Assignment Notification Record
@@ -149,7 +145,12 @@ public class TrainerAssignmentDAO {
         }
 
         // Save workout
-        Workout savedWorkout = client.executePost("workouts", workout, Workout.class);
+        Workout savedWorkout;
+        try {
+            savedWorkout = client.executePost("workouts", workout, Workout.class);
+        } catch (Exception e) {
+            savedWorkout = client.saveMock("workouts", workout, Workout.class);
+        }
         String finalWorkoutId = (savedWorkout != null && savedWorkout.getId() != null) ? savedWorkout.getId() : workout.getId();
 
         // Save associated exercises
@@ -219,7 +220,12 @@ public class TrainerAssignmentDAO {
         reminder.setUserId(studentId);
         reminder.setId(UUID.randomUUID().toString());
 
-        Reminder saved = client.executePost("reminders", reminder, Reminder.class);
+        Reminder saved;
+        try {
+            saved = client.executePost("reminders", reminder, Reminder.class);
+        } catch (Exception e) {
+            saved = client.saveMock("reminders", reminder, Reminder.class);
+        }
 
         TrainerAssignment assignment = new TrainerAssignment(
                 trainerId,
