@@ -467,8 +467,12 @@ public class SupabaseClient {
         mockUserAchievements.put(demoUserId, unlocked);
 
         // =========================================================================
-        // SEED DEMO STUDENTS (For Trainer Portal)
+        // SEED DEMO ATHLETES & STUDENTS (For Trainer Portal & Presentation)
         // =========================================================================
+
+        // -------------------------------------------------------------------------
+        // DEMO ATHLETE 1: Sarah Connor (PG-SARAH7) - Tone & Endurance Focus
+        // -------------------------------------------------------------------------
         String s1Id = "student-sarah-101";
         UserProfile pSarah = new UserProfile(s1Id, "sarah.connor@example.com", "Sarah Connor", UserProfile.ROLE_MEMBER);
         pSarah.setUserCode("PG-SARAH7");
@@ -479,6 +483,7 @@ public class SupabaseClient {
         pSarah.setDailyCalorieTarget(1850);
         pSarah.setDailyWaterTargetMl(2500);
         mockProfiles.put(s1Id, pSarah);
+        mockProfiles.put("sarah@demo.com", pSarah);
 
         List<Workout> s1Workouts = new ArrayList<>();
         Workout sw1 = new Workout("Lower Body Tone & Glutes", "Strength", today.minusDays(1), 50, 390);
@@ -493,6 +498,19 @@ public class SupabaseClient {
         sw2.setId(UUID.randomUUID().toString());
         sw2.setUserId(s1Id);
         s1Workouts.add(sw2);
+
+        Workout sw3 = new Workout("Upper Body Definition & Arms", "Strength", today.minusDays(4), 45, 340);
+        sw3.setId(UUID.randomUUID().toString());
+        sw3.setUserId(s1Id);
+        sw3.addExercise(new WorkoutExercise("Dumbbell Shoulder Press", 4, 10, 14.0));
+        sw3.addExercise(new WorkoutExercise("Lat Pulldown", 3, 12, 42.0));
+        sw3.addExercise(new WorkoutExercise("Cable Lateral Raise", 3, 15, 6.0));
+        s1Workouts.add(sw3);
+
+        Workout sw4 = new Workout("Core & HIIT Burner", "HIIT", today.minusDays(6), 30, 290);
+        sw4.setId(UUID.randomUUID().toString());
+        sw4.setUserId(s1Id);
+        s1Workouts.add(sw4);
         mockWorkouts.put(s1Id, s1Workouts);
 
         List<Goal> s1Goals = new ArrayList<>();
@@ -505,6 +523,11 @@ public class SupabaseClient {
         sg2.setId(UUID.randomUUID().toString());
         sg2.setUserId(s1Id);
         s1Goals.add(sg2);
+
+        Goal sg3 = new Goal("Run 5K in Under 25 Minutes", "Cardio", 25.0, 27.2, "minutes", today.plusMonths(1));
+        sg3.setId(UUID.randomUUID().toString());
+        sg3.setUserId(s1Id);
+        s1Goals.add(sg3);
         mockGoals.put(s1Id, s1Goals);
 
         List<BodyMeasurement> s1Meas = new ArrayList<>();
@@ -512,26 +535,75 @@ public class SupabaseClient {
         sm1.setId(UUID.randomUUID().toString());
         sm1.setUserId(s1Id);
         sm1.setWaistCm(69.0);
+        sm1.setChestCm(88.0);
+        sm1.setHipsCm(96.0);
         s1Meas.add(sm1);
-        BodyMeasurement sm2 = new BodyMeasurement(today.minusDays(14), 65.0, 168.0);
+
+        BodyMeasurement sm2 = new BodyMeasurement(today.minusDays(7), 64.2, 168.0);
         sm2.setId(UUID.randomUUID().toString());
         sm2.setUserId(s1Id);
-        sm2.setWaistCm(71.0);
+        sm2.setWaistCm(70.0);
         s1Meas.add(sm2);
+
+        BodyMeasurement sm3 = new BodyMeasurement(today.minusDays(14), 65.0, 168.0);
+        sm3.setId(UUID.randomUUID().toString());
+        sm3.setUserId(s1Id);
+        sm3.setWaistCm(71.5);
+        s1Meas.add(sm3);
+
+        BodyMeasurement sm4 = new BodyMeasurement(today.minusDays(28), 66.5, 168.0);
+        sm4.setId(UUID.randomUUID().toString());
+        sm4.setUserId(s1Id);
+        sm4.setWaistCm(73.0);
+        s1Meas.add(sm4);
         mockMeasurements.put(s1Id, s1Meas);
 
         List<NutritionEntry> s1Nut = new ArrayList<>();
-        NutritionEntry sn1 = new NutritionEntry("Avocado Toast & Egg Whites", "BREAKFAST", 410, 24.0, 38.0, 15.0, today);
+        NutritionEntry sn1 = new NutritionEntry("Avocado Toast & Scrambled Egg Whites", "BREAKFAST", 410, 24.0, 38.0, 15.0, today);
         sn1.setId(UUID.randomUUID().toString());
         sn1.setUserId(s1Id);
         s1Nut.add(sn1);
-        NutritionEntry sn2 = new NutritionEntry("Grilled Salmon Salad", "LUNCH", 560, 42.0, 22.0, 28.0, today);
+
+        NutritionEntry sn2 = new NutritionEntry("Grilled Salmon Quinoa Bowl", "LUNCH", 560, 42.0, 40.0, 22.0, today);
         sn2.setId(UUID.randomUUID().toString());
         sn2.setUserId(s1Id);
         s1Nut.add(sn2);
+
+        NutritionEntry sn3 = new NutritionEntry("Greek Yogurt with Mixed Berries", "SNACK", 220, 20.0, 22.0, 4.0, today);
+        sn3.setId(UUID.randomUUID().toString());
+        sn3.setUserId(s1Id);
+        s1Nut.add(sn3);
+
+        NutritionEntry sn4 = new NutritionEntry("Lemon Herb Chicken Breast & Broccoli", "DINNER", 480, 46.0, 28.0, 12.0, today);
+        sn4.setId(UUID.randomUUID().toString());
+        sn4.setUserId(s1Id);
+        s1Nut.add(sn4);
         mockNutrition.put(s1Id, s1Nut);
 
-        // Student 2: Marcus Vance
+        List<WaterIntake> s1Water = new ArrayList<>();
+        s1Water.add(new WaterIntake(500, today, LocalTime.of(8, 0)));
+        s1Water.add(new WaterIntake(1000, today, LocalTime.of(12, 30)));
+        s1Water.add(new WaterIntake(750, today, LocalTime.of(16, 45)));
+        for (WaterIntake wi : s1Water) {
+            wi.setId(UUID.randomUUID().toString());
+            wi.setUserId(s1Id);
+        }
+        mockWater.put(s1Id, s1Water);
+
+        List<SleepRecord> s1Sleep = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            OffsetDateTime bed = OffsetDateTime.now().minusDays(i + 1).withHour(23).withMinute(0);
+            OffsetDateTime wake = OffsetDateTime.now().minusDays(i).withHour(7).withMinute(15);
+            SleepRecord sr = new SleepRecord(today.minusDays(i), bed, wake, 5, "Optimal rest & recovery");
+            sr.setId(UUID.randomUUID().toString());
+            sr.setUserId(s1Id);
+            s1Sleep.add(sr);
+        }
+        mockSleep.put(s1Id, s1Sleep);
+
+        // -------------------------------------------------------------------------
+        // DEMO ATHLETE 2: Marcus Vance (PG-MARCUS) - Strength & Cutting Focus
+        // -------------------------------------------------------------------------
         String s2Id = "student-marcus-102";
         UserProfile pMarcus = new UserProfile(s2Id, "marcus.vance@example.com", "Marcus Vance", UserProfile.ROLE_MEMBER);
         pMarcus.setUserCode("PG-MARCUS");
@@ -542,15 +614,40 @@ public class SupabaseClient {
         pMarcus.setDailyCalorieTarget(2700);
         pMarcus.setDailyWaterTargetMl(3500);
         mockProfiles.put(s2Id, pMarcus);
+        mockProfiles.put("marcus@demo.com", pMarcus);
 
         List<Workout> s2Workouts = new ArrayList<>();
-        Workout mw1 = new Workout("Heavy Back & Biceps", "Strength", today.minusDays(2), 65, 520);
+        Workout mw1 = new Workout("Heavy Back & Deadlift Power", "Strength", today.minusDays(1), 65, 520);
         mw1.setId(UUID.randomUUID().toString());
         mw1.setUserId(s2Id);
         mw1.addExercise(new WorkoutExercise("Conventional Deadlift", 4, 6, 140.0));
-        mw1.addExercise(new WorkoutExercise("Pull-Ups", 4, 10, 0.0));
-        mw1.addExercise(new WorkoutExercise("Barbell Bicep Curl", 3, 12, 35.0));
+        mw1.addExercise(new WorkoutExercise("Weighted Pull-Ups", 4, 8, 15.0));
+        mw1.addExercise(new WorkoutExercise("Barbell Bent-Over Row", 4, 8, 85.0));
+        mw1.addExercise(new WorkoutExercise("Barbell Bicep Curl", 3, 10, 35.0));
         s2Workouts.add(mw1);
+
+        Workout mw2 = new Workout("Chest & Triceps Hypertrophy", "Strength", today.minusDays(2), 60, 480);
+        mw2.setId(UUID.randomUUID().toString());
+        mw2.setUserId(s2Id);
+        mw2.addExercise(new WorkoutExercise("Barbell Bench Press", 4, 8, 100.0));
+        mw2.addExercise(new WorkoutExercise("Incline Dumbbell Press", 3, 10, 36.0));
+        mw2.addExercise(new WorkoutExercise("Parallel Bar Dips", 3, 12, 0.0));
+        s2Workouts.add(mw2);
+
+        Workout mw3 = new Workout("Leg Power & Squats", "Strength", today.minusDays(4), 65, 540);
+        mw3.setId(UUID.randomUUID().toString());
+        mw3.setUserId(s2Id);
+        mw3.addExercise(new WorkoutExercise("Barbell Back Squat", 4, 6, 130.0));
+        mw3.addExercise(new WorkoutExercise("Romanian Deadlift", 3, 8, 110.0));
+        mw3.addExercise(new WorkoutExercise("Leg Press", 4, 10, 260.0));
+        s2Workouts.add(mw3);
+
+        Workout mw4 = new Workout("Boulder Shoulders & Core", "Strength", today.minusDays(5), 50, 420);
+        mw4.setId(UUID.randomUUID().toString());
+        mw4.setUserId(s2Id);
+        mw4.addExercise(new WorkoutExercise("Overhead Barbell Press", 4, 6, 65.0));
+        mw4.addExercise(new WorkoutExercise("Dumbbell Lateral Raise", 4, 15, 14.0));
+        s2Workouts.add(mw4);
         mockWorkouts.put(s2Id, s2Workouts);
 
         List<Goal> s2Goals = new ArrayList<>();
@@ -558,22 +655,112 @@ public class SupabaseClient {
         mg1.setId(UUID.randomUUID().toString());
         mg1.setUserId(s2Id);
         s2Goals.add(mg1);
+
+        Goal mg2 = new Goal("Deadlift 160kg for 5 Reps", "Strength", 160.0, 140.0, "kg", today.plusMonths(2));
+        mg2.setId(UUID.randomUUID().toString());
+        mg2.setUserId(s2Id);
+        s2Goals.add(mg2);
+
+        Goal mg3 = new Goal("Maintain 200g+ Daily Protein", "Nutrition", 200.0, 198.0, "grams", today.plusDays(30));
+        mg3.setId(UUID.randomUUID().toString());
+        mg3.setUserId(s2Id);
+        s2Goals.add(mg3);
         mockGoals.put(s2Id, s2Goals);
 
         List<BodyMeasurement> s2Meas = new ArrayList<>();
         BodyMeasurement mm1 = new BodyMeasurement(today, 87.2, 183.0);
         mm1.setId(UUID.randomUUID().toString());
         mm1.setUserId(s2Id);
+        mm1.setWaistCm(87.0);
+        mm1.setChestCm(112.0);
+        mm1.setArmCm(41.5);
         s2Meas.add(mm1);
+
+        BodyMeasurement mm2 = new BodyMeasurement(today.minusDays(7), 88.0, 183.0);
+        mm2.setId(UUID.randomUUID().toString());
+        mm2.setUserId(s2Id);
+        mm2.setWaistCm(88.5);
+        s2Meas.add(mm2);
+
+        BodyMeasurement mm3 = new BodyMeasurement(today.minusDays(14), 89.2, 183.0);
+        mm3.setId(UUID.randomUUID().toString());
+        mm3.setUserId(s2Id);
+        mm3.setWaistCm(90.0);
+        s2Meas.add(mm3);
+
+        BodyMeasurement mm4 = new BodyMeasurement(today.minusDays(21), 90.5, 183.0);
+        mm4.setId(UUID.randomUUID().toString());
+        mm4.setUserId(s2Id);
+        mm4.setWaistCm(91.5);
+        s2Meas.add(mm4);
+
+        BodyMeasurement mm5 = new BodyMeasurement(today.minusDays(28), 92.0, 183.0);
+        mm5.setId(UUID.randomUUID().toString());
+        mm5.setUserId(s2Id);
+        mm5.setWaistCm(93.0);
+        s2Meas.add(mm5);
         mockMeasurements.put(s2Id, s2Meas);
 
-        // Pre-enroll Sarah Connor for demo user so trainer roster is immediately interactive
-        List<TrainerStudent> demoTrainerRoster = new ArrayList<>();
-        TrainerStudent tsSarah = new TrainerStudent(demoUserId, s1Id, "Goal: Lean muscle definition & 5k speed");
-        tsSarah.setId(UUID.randomUUID().toString());
-        tsSarah.setStudentProfile(pSarah);
-        demoTrainerRoster.add(tsSarah);
-        mockTrainerStudents.put(demoUserId, demoTrainerRoster);
+        List<NutritionEntry> s2Nut = new ArrayList<>();
+        NutritionEntry mn1 = new NutritionEntry("6 Egg Whites + 2 Whole Eggs & Oats", "BREAKFAST", 580, 46.0, 52.0, 16.0, today);
+        mn1.setId(UUID.randomUUID().toString());
+        mn1.setUserId(s2Id);
+        s2Nut.add(mn1);
+
+        NutritionEntry mn2 = new NutritionEntry("Top Sirloin Steak & Jasmine Rice", "LUNCH", 780, 58.0, 68.0, 22.0, today);
+        mn2.setId(UUID.randomUUID().toString());
+        mn2.setUserId(s2Id);
+        s2Nut.add(mn2);
+
+        NutritionEntry mn3 = new NutritionEntry("Cream of Rice & Whey Isolate", "SNACK", 440, 38.0, 62.0, 4.0, today);
+        mn3.setId(UUID.randomUUID().toString());
+        mn3.setUserId(s2Id);
+        s2Nut.add(mn3);
+
+        NutritionEntry mn4 = new NutritionEntry("Grilled Chicken Breast & Sweet Potato", "DINNER", 680, 56.0, 54.0, 18.0, today);
+        mn4.setId(UUID.randomUUID().toString());
+        mn4.setUserId(s2Id);
+        s2Nut.add(mn4);
+        mockNutrition.put(s2Id, s2Nut);
+
+        List<WaterIntake> s2Water = new ArrayList<>();
+        s2Water.add(new WaterIntake(750, today, LocalTime.of(7, 30)));
+        s2Water.add(new WaterIntake(1000, today, LocalTime.of(12, 0)));
+        s2Water.add(new WaterIntake(750, today, LocalTime.of(15, 30)));
+        s2Water.add(new WaterIntake(750, today, LocalTime.of(19, 0)));
+        for (WaterIntake wi : s2Water) {
+            wi.setId(UUID.randomUUID().toString());
+            wi.setUserId(s2Id);
+        }
+        mockWater.put(s2Id, s2Water);
+
+        List<SleepRecord> s2Sleep = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            OffsetDateTime bed = OffsetDateTime.now().minusDays(i + 1).withHour(23).withMinute(15);
+            OffsetDateTime wake = OffsetDateTime.now().minusDays(i).withHour(7).withMinute(30);
+            SleepRecord sr = new SleepRecord(today.minusDays(i), bed, wake, 5, "Deep restorative recovery");
+            sr.setId(UUID.randomUUID().toString());
+            sr.setUserId(s2Id);
+            s2Sleep.add(sr);
+        }
+        mockSleep.put(s2Id, s2Sleep);
+
+        // -------------------------------------------------------------------------
+        // DEMO TRAINER ACCOUNT: Coach David Miller (PG-COACH9)
+        // -------------------------------------------------------------------------
+        String coachId = "trainer-coach-99";
+        UserProfile pCoach = new UserProfile(coachId, "coach@demo.com", "Coach David Miller", UserProfile.ROLE_TRAINER);
+        pCoach.setUserCode("PG-COACH9");
+        pCoach.setGender("Male");
+        pCoach.setDateOfBirth(LocalDate.of(1989, 4, 12));
+        pCoach.setHeightCm(180.0);
+        pCoach.setTargetWeightKg(80.0);
+        pCoach.setRole(UserProfile.ROLE_TRAINER);
+        mockProfiles.put(coachId, pCoach);
+
+        // Clean initial roster for coach & demoUser so students can be enrolled live during presentation
+        mockTrainerStudents.put(demoUserId, new ArrayList<>());
+        mockTrainerStudents.put(coachId, new ArrayList<>());
 
         // Set default session to demo user
         this.currentSession = new UserSession(demoUserId, demoProfile.getEmail(), "demo-token", "demo-refresh", 3600);

@@ -236,7 +236,7 @@ public class TrainerPanel extends JPanel {
             demoRow.add(demoLabel);
 
             demoRow.add(createDemoEnrollChip("PG-SARAH7", "Sarah Connor"));
-            demoRow.add(createDemoEnrollChip("PG-MARCUS", "Marcus Wright"));
+            demoRow.add(createDemoEnrollChip("PG-MARCUS", "Marcus Vance"));
             emptyCard.add(demoRow);
             emptyCard.add(Box.createVerticalStrut(16));
 
@@ -420,7 +420,7 @@ public class TrainerPanel extends JPanel {
         if (session == null) return;
 
         JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Enroll Student by Unique Code", Dialog.ModalityType.APPLICATION_MODAL);
-        dlg.setSize(440, 290);
+        dlg.setSize(450, 315);
         dlg.setLocationRelativeTo(this);
         dlg.setResizable(false);
         dlg.getContentPane().setBackground(ThemeConfig.BG_DARK);
@@ -447,11 +447,37 @@ public class TrainerPanel extends JPanel {
         p.add(txtCode);
         p.add(Box.createVerticalStrut(8));
 
-        JLabel hint = new JLabel("Format: PG-XXXXXX (case-insensitive). Demo: PG-SARAH7 or PG-MARCUS");
-        hint.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        hint.setForeground(ThemeConfig.TEXT_MUTED);
-        p.add(hint);
-        p.add(Box.createVerticalStrut(20));
+        // Quick demo athlete chips
+        JPanel chipRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        chipRow.setOpaque(false);
+        JButton btnSarah = new JButton("+ PG-SARAH7 (Sarah Connor)");
+        btnSarah.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        btnSarah.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        btnSarah.setBackground(ThemeConfig.BG_CARD);
+        btnSarah.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
+                BorderFactory.createEmptyBorder(3, 8, 3, 8)
+        ));
+        btnSarah.setFocusPainted(false);
+        btnSarah.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnSarah.addActionListener(e -> txtCode.setText("PG-SARAH7"));
+        chipRow.add(btnSarah);
+
+        JButton btnMarcus = new JButton("+ PG-MARCUS (Marcus Vance)");
+        btnMarcus.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        btnMarcus.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        btnMarcus.setBackground(ThemeConfig.BG_CARD);
+        btnMarcus.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
+                BorderFactory.createEmptyBorder(3, 8, 3, 8)
+        ));
+        btnMarcus.setFocusPainted(false);
+        btnMarcus.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnMarcus.addActionListener(e -> txtCode.setText("PG-MARCUS"));
+        chipRow.add(btnMarcus);
+
+        p.add(chipRow);
+        p.add(Box.createVerticalStrut(14));
 
         JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         btnBar.setOpaque(false);

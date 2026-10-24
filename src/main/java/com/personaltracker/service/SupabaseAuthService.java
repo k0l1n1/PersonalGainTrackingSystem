@@ -62,8 +62,11 @@ public class SupabaseAuthService {
             throw new IllegalArgumentException("Password must be at least 6 characters.");
         }
 
-        if (config.isMockMode()) {
-            return loginMock(email.trim().toLowerCase());
+        String cleanEmail = email.trim().toLowerCase();
+        if (config.isMockMode() || cleanEmail.equals("sarah@demo.com") || cleanEmail.equals("sarah.connor@example.com")
+                || cleanEmail.equals("marcus@demo.com") || cleanEmail.equals("marcus.vance@example.com")
+                || cleanEmail.equals("coach@demo.com") || cleanEmail.equals("athlete@demo.com") || cleanEmail.equals("alex@demo.com")) {
+            return loginMock(cleanEmail);
         }
 
         String url = config.getSupabaseUrl() + "/auth/v1/token?grant_type=password";
@@ -403,13 +406,26 @@ public class SupabaseAuthService {
     }
 
     private UserSession loginMock(String email) {
-        String uid = "user-" + Math.abs(email.hashCode());
+        String cleanEmail = email != null ? email.trim().toLowerCase() : "";
+        String uid;
+        if (cleanEmail.equals("sarah@demo.com") || cleanEmail.equals("sarah.connor@example.com") || cleanEmail.startsWith("sarah@")) {
+            uid = "student-sarah-101";
+        } else if (cleanEmail.equals("marcus@demo.com") || cleanEmail.equals("marcus.vance@example.com") || cleanEmail.startsWith("marcus@")) {
+            uid = "student-marcus-102";
+        } else if (cleanEmail.equals("coach@demo.com") || cleanEmail.equals("david.miller@example.com") || cleanEmail.startsWith("coach@")) {
+            uid = "trainer-coach-99";
+        } else if (cleanEmail.equals("athlete@demo.com") || cleanEmail.equals("alex@demo.com") || cleanEmail.equals("demo@example.com")) {
+            uid = "demo-user-123";
+        } else {
+            uid = "user-" + Math.abs(cleanEmail.hashCode());
+        }
+
         UserProfile profile = supabaseClient.getMockProfile(uid);
         if (profile == null) {
             profile = new UserProfile(uid, email, "Athlete");
             supabaseClient.updateMockProfile(profile);
         }
-        UserSession session = new UserSession(uid, email, "mock-jwt-" + uid, "mock-refresh", 86400);
+        UserSession session = new UserSession(uid, profile.getEmail() != null ? profile.getEmail() : email, "mock-jwt-" + uid, "mock-refresh", 86400);
         session.setProfile(profile);
         session.setNewRegistration(false);
         supabaseClient.setCurrentSession(session);

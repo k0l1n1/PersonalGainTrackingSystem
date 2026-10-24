@@ -107,10 +107,12 @@ public class ExistingUserLoginTest {
         assertTrue(newSession.isNewRegistration(), "Brand new person joining must have newRegistration = true");
         assertTrue(OnboardingDialog.isNewUser(newSession.getProfile()), "Profile must be flagged as new user needing data filling");
 
-        // Verify that dialog instantiation works cleanly without error
-        OnboardingDialog dialog = new OnboardingDialog(null, newSession.getProfile(), true);
-        assertNotNull(dialog);
-        assertTrue(dialog.isMandatory());
-        dialog.dispose();
+        // Verify that dialog instantiation works cleanly in non-headless mode
+        if (!java.awt.GraphicsEnvironment.isHeadless()) {
+            OnboardingDialog dialog = new OnboardingDialog(null, newSession.getProfile(), true);
+            assertNotNull(dialog);
+            assertTrue(dialog.isMandatory());
+            dialog.dispose();
+        }
     }
 }
