@@ -18,6 +18,19 @@ public class ExistingUserLoginTest {
     private SupabaseAuthService authService;
     private SupabaseClient client;
 
+    @org.junit.jupiter.api.BeforeAll
+    static void initTestConfig() {
+        AppConfig.setConfigFile("target/test_personal_tracker.properties");
+    }
+
+    @org.junit.jupiter.api.AfterAll
+    static void cleanupTestConfig() {
+        AppConfig.setConfigFile("personal_tracker.properties");
+        try {
+            new java.io.File("target/test_personal_tracker.properties").delete();
+        } catch (Exception ignored) {}
+    }
+
     @BeforeEach
     void setUp() {
         AppConfig.getInstance().setMockMode(true);

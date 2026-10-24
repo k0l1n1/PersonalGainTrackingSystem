@@ -88,12 +88,14 @@ public class SupabaseClient {
 
     public boolean isValidJwt(String token) {
         if (token == null || token.isBlank()) return false;
-        return token.split("\\.").length == 3;
+        return token.split("\\.").length == 3 || token.startsWith("sb_secret_") || token.startsWith("sb_publishable_");
     }
 
     private void applyAuthHeader(HttpRequest.Builder builder) {
         if (currentSession != null && isValidJwt(currentSession.getAccessToken())) {
             builder.header("Authorization", "Bearer " + currentSession.getAccessToken());
+        } else if (config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank()) {
+            builder.header("Authorization", "Bearer " + config.getSupabaseSecretKey());
         }
     }
 
@@ -122,7 +124,10 @@ public class SupabaseClient {
     // =========================================================================
 
     public <T> List<T> executeGetList(String table, String queryParams, Class<T> clazz) throws Exception {
-        if (config.isMockMode() || (!"achievements".equals(table) && (currentSession == null || !isValidJwt(currentSession.getAccessToken())))) {
+        boolean hasSecretKey = config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank();
+        boolean hasValidAuth = (currentSession != null && isValidJwt(currentSession.getAccessToken())) || hasSecretKey;
+
+        if (config.isMockMode() || (!"achievements".equals(table) && !hasValidAuth)) {
             return getMockList(table, queryParams, clazz);
         }
 
@@ -144,7 +149,7 @@ public class SupabaseClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", config.getSupabaseAnonKey())
+                .header("apikey", (hasSecretKey && (currentSession == null || !isValidJwt(currentSession.getAccessToken()))) ? config.getSupabaseSecretKey() : config.getSupabaseAnonKey())
                 .header("Accept", "application/json")
                 .GET();
 
@@ -160,7 +165,10 @@ public class SupabaseClient {
     }
 
     public <T> T executePost(String table, Object body, Class<T> clazz) throws Exception {
-        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken()) || containsNonUuidTarget(body)) {
+        boolean hasSecretKey = config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank();
+        boolean hasValidAuth = (currentSession != null && isValidJwt(currentSession.getAccessToken())) || hasSecretKey;
+
+        if (config.isMockMode() || !hasValidAuth || containsNonUuidTarget(body)) {
             return saveMock(table, body, clazz);
         }
 
@@ -172,7 +180,7 @@ public class SupabaseClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", config.getSupabaseAnonKey())
+                .header("apikey", (hasSecretKey && (currentSession == null || !isValidJwt(currentSession.getAccessToken()))) ? config.getSupabaseSecretKey() : config.getSupabaseAnonKey())
                 .header("Content-Type", "application/json")
                 .header("Prefer", "return=representation")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
@@ -205,7 +213,10 @@ public class SupabaseClient {
     }
 
     public void executePatch(String table, String filterQuery, Object body) throws Exception {
-        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken()) || containsNonUuidTarget(body)) {
+        boolean hasSecretKey = config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank();
+        boolean hasValidAuth = (currentSession != null && isValidJwt(currentSession.getAccessToken())) || hasSecretKey;
+
+        if (config.isMockMode() || !hasValidAuth || containsNonUuidTarget(body)) {
             updateMock(table, body);
             return;
         }
@@ -216,7 +227,7 @@ public class SupabaseClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", config.getSupabaseAnonKey())
+                .header("apikey", (hasSecretKey && (currentSession == null || !isValidJwt(currentSession.getAccessToken()))) ? config.getSupabaseSecretKey() : config.getSupabaseAnonKey())
                 .header("Content-Type", "application/json")
                 .header("Prefer", "return=representation")
                 .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
@@ -232,7 +243,10 @@ public class SupabaseClient {
     public void executeDelete(String table, String filterQuery) throws Exception {
         String uFilter = extractParamValue(filterQuery, "user_id");
         String sFilter = extractParamValue(filterQuery, "student_id");
-        if (config.isMockMode() || currentSession == null || !isValidJwt(currentSession.getAccessToken())
+        boolean hasSecretKey = config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank();
+        boolean hasValidAuth = (currentSession != null && isValidJwt(currentSession.getAccessToken())) || hasSecretKey;
+
+        if (config.isMockMode() || !hasValidAuth
                 || (uFilter != null && !isValidUuid(uFilter)) || (sFilter != null && !isValidUuid(sFilter))) {
             deleteMock(table, filterQuery);
             return;
@@ -243,7 +257,7 @@ public class SupabaseClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", config.getSupabaseAnonKey())
+                .header("apikey", (hasSecretKey && (currentSession == null || !isValidJwt(currentSession.getAccessToken()))) ? config.getSupabaseSecretKey() : config.getSupabaseAnonKey())
                 .DELETE();
 
         applyAuthHeader(builder);

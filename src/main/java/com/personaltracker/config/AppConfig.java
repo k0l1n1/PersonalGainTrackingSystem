@@ -29,7 +29,15 @@ public class AppConfig {
     private String dbPassword = "";
     private boolean mockMode = false;
 
-    private static final String CONFIG_FILE = "personal_tracker.properties";
+    private static String configFile = "personal_tracker.properties";
+
+    public static void setConfigFile(String customFile) {
+        configFile = (customFile != null && !customFile.isBlank()) ? customFile : "personal_tracker.properties";
+    }
+
+    public static String getConfigFile() {
+        return configFile;
+    }
 
     private AppConfig() {
         loadConfiguration();
@@ -70,7 +78,7 @@ public class AppConfig {
         this.dbPassword = getEnvValue("DB_PASSWORD", dotenv, "");
 
         // Load overrides from user property file if present
-        File propFile = new File(CONFIG_FILE);
+        File propFile = new File(configFile);
         if (propFile.exists()) {
             Properties props = new Properties();
             try (FileInputStream in = new FileInputStream(propFile)) {
@@ -102,7 +110,7 @@ public class AppConfig {
 
     private Properties loadExistingProps() {
         Properties props = new Properties();
-        File propFile = new File(CONFIG_FILE);
+        File propFile = new File(configFile);
         if (propFile.exists()) {
             try (FileInputStream in = new FileInputStream(propFile)) {
                 props.load(in);
@@ -121,7 +129,7 @@ public class AppConfig {
         Properties props = loadExistingProps();
         props.setProperty("SUPABASE_URL", this.supabaseUrl);
         props.setProperty("SUPABASE_ANON_KEY", this.supabaseAnonKey);
-        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
+        try (FileOutputStream out = new FileOutputStream(configFile)) {
             props.store(out, "Personal Gain Tracking System Runtime Config");
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not persist credentials to file: " + e.getMessage());
@@ -136,7 +144,7 @@ public class AppConfig {
         if (refreshToken != null) props.setProperty("AUTH_REFRESH_TOKEN", refreshToken);
         props.setProperty("AUTH_SAVED_AT", String.valueOf(System.currentTimeMillis()));
 
-        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
+        try (FileOutputStream out = new FileOutputStream(configFile)) {
             props.store(out, "Personal Gain Tracking System Runtime Config");
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not persist auth session: " + e.getMessage());
@@ -151,7 +159,7 @@ public class AppConfig {
         props.remove("AUTH_REFRESH_TOKEN");
         props.remove("AUTH_SAVED_AT");
 
-        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
+        try (FileOutputStream out = new FileOutputStream(configFile)) {
             props.store(out, "Personal Gain Tracking System Runtime Config");
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not clear auth session: " + e.getMessage());

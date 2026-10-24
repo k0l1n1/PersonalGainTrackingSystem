@@ -12,7 +12,7 @@ public class ProfileDAO {
     private final SupabaseClient client = SupabaseClient.getInstance();
 
     public UserProfile getProfile(String userId) throws Exception {
-        if (client.getCurrentSession() == null) return null;
+        if (userId == null || userId.isBlank()) return null;
         List<UserProfile> list = client.executeGetList("profiles", "id=eq." + userId, UserProfile.class);
         if (list != null && !list.isEmpty()) {
             UserProfile p = list.get(0);
@@ -20,6 +20,15 @@ public class ProfileDAO {
                 client.getCurrentSession().setProfile(p);
             }
             return p;
+        }
+        return null;
+    }
+
+    public UserProfile getProfileByEmail(String email) throws Exception {
+        if (email == null || email.isBlank()) return null;
+        List<UserProfile> list = client.executeGetList("profiles", "email=ilike." + email.trim().toLowerCase(), UserProfile.class);
+        if (list != null && !list.isEmpty()) {
+            return list.get(0);
         }
         return null;
     }
