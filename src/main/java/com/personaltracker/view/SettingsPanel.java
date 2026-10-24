@@ -116,6 +116,7 @@ public class SettingsPanel extends JPanel {
         // 2. Main Balanced 2-Column Dashboard Grid (Fits fully on 1 screen frame without scrolling)
         JPanel grid = new JPanel(new GridLayout(1, 2, 14, 0));
         grid.setOpaque(false);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 440));
 
         // Left Column: Personal Identity & ID + Fitness & Health Reports
         JPanel leftCol = new JPanel();
@@ -124,6 +125,7 @@ public class SettingsPanel extends JPanel {
         leftCol.add(createPersonalInfoCard());
         leftCol.add(Box.createVerticalStrut(10));
         leftCol.add(createDataReportsCard());
+        leftCol.add(Box.createVerticalGlue());
         grid.add(leftCol);
 
         // Right Column: Weight Journey & Goal Progress + Metabolic Health & Clinical Benchmarks
@@ -133,9 +135,11 @@ public class SettingsPanel extends JPanel {
         rightCol.add(createWeightJourneyCard());
         rightCol.add(Box.createVerticalStrut(10));
         rightCol.add(createMetabolicHealthCard());
+        rightCol.add(Box.createVerticalGlue());
         grid.add(rightCol);
 
         content.add(grid);
+        content.add(Box.createVerticalGlue());
 
         JScrollPane scrollPane = new JScrollPane(content);
         scrollPane.setBorder(null);
@@ -273,6 +277,8 @@ public class SettingsPanel extends JPanel {
     private JPanel createPersonalInfoCard() {
         ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
+        card.setPreferredSize(new Dimension(450, 215));
 
         JLabel title = new JLabel("Personal Information & Unique ID");
         title.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -331,6 +337,7 @@ public class SettingsPanel extends JPanel {
         JPanel grid = new JPanel(new GridLayout(3, 2, 6, 6));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 125));
 
         grid.add(createInfoTile("FULL NAME", valFullName, ThemeConfig.TEXT_PRIMARY));
         grid.add(createInfoTile("ACCOUNT ROLE", valRole, ThemeConfig.PRIMARY_ACCENT));
@@ -346,10 +353,13 @@ public class SettingsPanel extends JPanel {
     private JPanel createWeightJourneyCard() {
         ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
+        card.setPreferredSize(new Dimension(450, 215));
 
         // Header Row: Title on left, Adjust Target button on right
         JPanel headerRow = new JPanel(new BorderLayout());
         headerRow.setOpaque(false);
+        headerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
         headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel title = new JLabel("Weight Journey & Progress");
@@ -371,6 +381,7 @@ public class SettingsPanel extends JPanel {
         // 3 Milestone Cards: Starting -> Current -> Target
         JPanel milestoneGrid = new JPanel(new GridLayout(1, 3, 6, 0));
         milestoneGrid.setOpaque(false);
+        milestoneGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 54));
         milestoneGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         milestoneGrid.add(createMetricBox("STARTING WEIGHT", valStartingWeight, ThemeConfig.TEXT_SECONDARY));
@@ -382,6 +393,7 @@ public class SettingsPanel extends JPanel {
         // Goal Status text
         JPanel statusRow = new JPanel(new BorderLayout());
         statusRow.setOpaque(false);
+        statusRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         statusRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         valGoalStatus.setFont(new Font("Segoe UI", Font.BOLD, 11));
@@ -396,6 +408,7 @@ public class SettingsPanel extends JPanel {
 
         // Modern Progress Bar
         barWeightProgress.setPreferredSize(new Dimension(Integer.MAX_VALUE, 7));
+        barWeightProgress.setMaximumSize(new Dimension(Integer.MAX_VALUE, 7));
         barWeightProgress.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(barWeightProgress);
         card.add(Box.createVerticalStrut(6));
@@ -403,6 +416,7 @@ public class SettingsPanel extends JPanel {
         // Contextual Footer Row
         JPanel footerRow = new JPanel(new BorderLayout());
         footerRow.setOpaque(false);
+        footerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         footerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel hint = new JLabel("Baseline check-in → Latest check-in");
@@ -431,6 +445,8 @@ public class SettingsPanel extends JPanel {
     private JPanel createMetabolicHealthCard() {
         ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
+        card.setPreferredSize(new Dimension(450, 215));
 
         JLabel title = new JLabel("Metabolic Health & Clinical Benchmarks");
         title.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -449,6 +465,7 @@ public class SettingsPanel extends JPanel {
         JPanel grid = new JPanel(new GridLayout(2, 2, 6, 6));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 125));
 
         grid.add(createMetricBox("BODY MASS INDEX", valBmi, ThemeConfig.PRIMARY_ACCENT));
         grid.add(createMetricBox("BASAL METABOLIC RATE", valBmr, ThemeConfig.PRIMARY_ACCENT));
@@ -1050,9 +1067,13 @@ public class SettingsPanel extends JPanel {
     private JPanel createDataReportsCard() {
         ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
+        card.setPreferredSize(new Dimension(450, 215));
 
-        JPanel header = new JPanel(new BorderLayout());
+        // Header: Title on left, Badge on right in a FlowLayout wrapper so it NEVER stretches
+        JPanel header = new JPanel(new BorderLayout(8, 0));
         header.setOpaque(false);
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
         header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel title = new JLabel("Fitness & Health Reports");
@@ -1060,15 +1081,28 @@ public class SettingsPanel extends JPanel {
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         header.add(title, BorderLayout.WEST);
 
+        // Badge wrapped in FlowLayout so it stays compact and never stretches vertically
+        JPanel badgeWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        badgeWrapper.setOpaque(false);
+
         JLabel badge = new JLabel("CSV EXPORT");
         badge.setFont(new Font("Segoe UI", Font.BOLD, 9));
         badge.setForeground(ThemeConfig.PRIMARY_ACCENT);
         badge.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xF0, 0x44, 0x44, 100), 1, true),
-                BorderFactory.createEmptyBorder(2, 5, 2, 5)
+                BorderFactory.createLineBorder(new Color(0xF0, 0x44, 0x44, 120), 1, true),
+                BorderFactory.createEmptyBorder(2, 6, 2, 6)
         ));
-        header.add(badge, BorderLayout.EAST);
+        badgeWrapper.add(badge);
+        header.add(badgeWrapper, BorderLayout.EAST);
         card.add(header);
+        card.add(Box.createVerticalStrut(4));
+
+        JLabel sub = new JLabel("Export full logs or individual datasets for coaching & backups.");
+        sub.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        sub.setForeground(ThemeConfig.TEXT_MUTED);
+        sub.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sub.setMaximumSize(new Dimension(Integer.MAX_VALUE, 16));
+        card.add(sub);
         card.add(Box.createVerticalStrut(8));
 
         // Full Comprehensive Archive Button (prominent)
@@ -1077,6 +1111,7 @@ public class SettingsPanel extends JPanel {
         btnFullExport.setIconTextGap(7);
         btnFullExport.setFont(new Font("Segoe UI", Font.BOLD, 11));
         btnFullExport.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        btnFullExport.setPreferredSize(new Dimension(400, 32));
         btnFullExport.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnFullExport.addActionListener(e -> exportFullPackage());
         card.add(btnFullExport);
@@ -1087,6 +1122,7 @@ public class SettingsPanel extends JPanel {
         row1.setOpaque(false);
         row1.setAlignmentX(Component.LEFT_ALIGNMENT);
         row1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        row1.setPreferredSize(new Dimension(400, 28));
 
         row1.add(createQuickExportBtn("Workouts", IconFactory.IconType.WORKOUT, () -> exportReport("Workouts")));
         row1.add(createQuickExportBtn("Measurements", IconFactory.IconType.MEASUREMENT, () -> exportReport("Measurements")));
@@ -1098,11 +1134,21 @@ public class SettingsPanel extends JPanel {
         row2.setOpaque(false);
         row2.setAlignmentX(Component.LEFT_ALIGNMENT);
         row2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        row2.setPreferredSize(new Dimension(400, 28));
 
         row2.add(createQuickExportBtn("Water Intake", IconFactory.IconType.WATER, () -> exportReport("Water")));
         row2.add(createQuickExportBtn("Sleep & Recovery", IconFactory.IconType.SLEEP, () -> exportReport("Sleep")));
         row2.add(createQuickExportBtn("Custom Dialog", IconFactory.IconType.ANALYTICS, this::promptExportReport));
         card.add(row2);
+        card.add(Box.createVerticalStrut(6));
+
+        // Local privacy note at bottom
+        JLabel note = new JLabel("🔒 Exports are saved directly as clean CSV spreadsheets.");
+        note.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        note.setForeground(ThemeConfig.TEXT_MUTED);
+        note.setAlignmentX(Component.LEFT_ALIGNMENT);
+        note.setMaximumSize(new Dimension(Integer.MAX_VALUE, 16));
+        card.add(note);
 
         return card;
     }
