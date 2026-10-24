@@ -159,12 +159,13 @@ public class StudentDetailDialog extends JDialog {
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
 
-        String[] cols = {"Date", "Title", "Type", "Duration", "Calories", "Status", "Exercises"};
+        String[] cols = {"Date", "Title", "Type", "Duration", "Calories", "Status", "Source / Coach", "Exercises"};
         DefaultTableModel model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) { return false; }
         };
 
+        long coachAssignedCount = 0;
         for (Workout w : detail.getWorkouts()) {
             StringBuilder exDesc = new StringBuilder();
             if (w.getExercises() != null && !w.getExercises().isEmpty()) {
@@ -179,6 +180,12 @@ public class StudentDetailDialog extends JDialog {
                 exDesc.append("General workout session");
             }
 
+            String source = "Athlete Logged";
+            if (w.getNotes() != null && (w.getNotes().contains("[Coach") || w.getNotes().contains("[Trainer"))) {
+                source = "🏋️ Coach Assigned";
+                coachAssignedCount++;
+            }
+
             model.addRow(new Object[]{
                     DateUtil.formatDate(w.getWorkoutDate()),
                     w.getTitle(),
@@ -186,19 +193,77 @@ public class StudentDetailDialog extends JDialog {
                     w.getDurationMinutes() + " mins",
                     w.getCaloriesBurned() + " kcal",
                     w.getStatus(),
+                    source,
                     exDesc.toString()
             });
         }
 
         JTable table = new JTable(model);
         styleTable(table);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+
         table.getColumnModel().getColumn(0).setPreferredWidth(90);
         table.getColumnModel().getColumn(1).setPreferredWidth(160);
-        table.getColumnModel().getColumn(2).setPreferredWidth(90);
-        table.getColumnModel().getColumn(3).setPreferredWidth(80);
-        table.getColumnModel().getColumn(4).setPreferredWidth(80);
-        table.getColumnModel().getColumn(5).setPreferredWidth(90);
-        table.getColumnModel().getColumn(6).setPreferredWidth(340);
+        table.getColumnModel().getColumn(2).setPreferredWidth(85);
+        table.getColumnModel().getColumn(3).setPreferredWidth(75);
+        table.getColumnModel().getColumn(4).setPreferredWidth(75);
+        table.getColumnModel().getColumn(5).setPreferredWidth(85);
+        table.getColumnModel().getColumn(6).setPreferredWidth(130);
+        table.getColumnModel().getColumn(7).setPreferredWidth(280);
+
+        // Filter toolbar at the top of the workouts tab
+        JPanel filterBar = new JPanel(new BorderLayout(8, 0));
+        filterBar.setOpaque(false);
+
+        JLabel lblCount = new JLabel(String.format("Logged Workouts: %d total", detail.getWorkouts().size()));
+        lblCount.setFont(ThemeConfig.FONT_SMALL);
+        lblCount.setForeground(ThemeConfig.TEXT_SECONDARY);
+        filterBar.add(lblCount, BorderLayout.WEST);
+
+        JPanel filterBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        filterBtns.setOpaque(false);
+
+        JButton btnAll = new JButton("All Workouts (" + detail.getWorkouts().size() + ")");
+        btnAll.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnAll.setForeground(Color.WHITE);
+        btnAll.setBackground(ThemeConfig.PRIMARY_ACCENT);
+        btnAll.setFocusPainted(false);
+        btnAll.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
+                BorderFactory.createEmptyBorder(4, 10, 4, 10)
+        ));
+
+        JButton btnCoachOnly = new JButton("🏋️ Assigned by Coach (" + coachAssignedCount + ")");
+        btnCoachOnly.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btnCoachOnly.setForeground(ThemeConfig.TEXT_SECONDARY);
+        btnCoachOnly.setBackground(ThemeConfig.BG_CARD);
+        btnCoachOnly.setFocusPainted(false);
+        btnCoachOnly.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(4, 10, 4, 10)
+        ));
+
+        btnAll.addActionListener(e -> {
+            sorter.setRowFilter(null);
+            btnAll.setBackground(ThemeConfig.PRIMARY_ACCENT);
+            btnAll.setForeground(Color.WHITE);
+            btnCoachOnly.setBackground(ThemeConfig.BG_CARD);
+            btnCoachOnly.setForeground(ThemeConfig.TEXT_SECONDARY);
+        });
+
+        btnCoachOnly.addActionListener(e -> {
+            sorter.setRowFilter(RowFilter.regexFilter("Coach Assigned", 6));
+            btnCoachOnly.setBackground(ThemeConfig.PRIMARY_ACCENT);
+            btnCoachOnly.setForeground(Color.WHITE);
+            btnAll.setBackground(ThemeConfig.BG_CARD);
+            btnAll.setForeground(ThemeConfig.TEXT_SECONDARY);
+        });
+
+        filterBtns.add(btnAll);
+        filterBtns.add(btnCoachOnly);
+        filterBar.add(filterBtns, BorderLayout.EAST);
+        panel.add(filterBar, BorderLayout.NORTH);
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setOpaque(false);

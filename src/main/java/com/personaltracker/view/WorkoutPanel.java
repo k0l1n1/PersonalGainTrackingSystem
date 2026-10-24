@@ -437,7 +437,8 @@ public class WorkoutPanel extends JPanel {
     // Workouts Log Components
     private final ModernTextField txtSearch = new ModernTextField("", "Search workouts by title or type...");
     private final JComboBox<String> cmbTypeFilter = new JComboBox<>(new String[]{"All Types", "Strength", "Cardio", "HIIT", "Yoga", "Flexibility", "Endurance", "Recovery", "Other"});
-    private final JComboBox<String> cmbStatusFilter = new JComboBox<>(new String[]{"All Statuses", "COMPLETED", "PLANNED", "REST DAY"});
+    private final JComboBox<String> cmbStatusFilter = new JComboBox<>(new String[]{"All Statuses", "Coach Assigned", "COMPLETED", "PLANNED", "REST DAY"});
+    private final ModernButton btnFilterCoachAssigned = new ModernButton("🏋️ Coach Assigned", ModernButton.ButtonStyle.SECONDARY);
 
     private final DefaultTableModel tableModel;
     private final ModernTable table;
@@ -482,18 +483,42 @@ public class WorkoutPanel extends JPanel {
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 lbl.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
                 String val = value != null ? value.toString() : "";
+
+                // Check if this row was assigned by a coach/trainer via column 6 notes
+                int mRow = table.convertRowIndexToModel(row);
+                Object notesObj = mRow < table.getModel().getRowCount() ? table.getModel().getValueAt(mRow, 6) : "";
+                String notesStr = notesObj != null ? notesObj.toString() : "";
+                boolean isCoachAssigned = notesStr.contains("[Coach") || notesStr.contains("[Trainer");
+
                 if ("COMPLETED".equalsIgnoreCase(val)) {
-                    lbl.setText("COMPLETED");
-                    lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 11, ThemeConfig.SUCCESS));
-                    lbl.setForeground(ThemeConfig.SUCCESS);
+                    if (isCoachAssigned) {
+                        lbl.setText("✓ COACH DONE");
+                        lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 11, ThemeConfig.SUCCESS));
+                        lbl.setForeground(ThemeConfig.SUCCESS);
+                        lbl.setToolTipText("Coach-assigned workout completed! Notes: " + notesStr);
+                    } else {
+                        lbl.setText("COMPLETED");
+                        lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 11, ThemeConfig.SUCCESS));
+                        lbl.setForeground(ThemeConfig.SUCCESS);
+                        lbl.setToolTipText(null);
+                    }
                 } else if ("REST DAY".equalsIgnoreCase(val)) {
                     lbl.setText("REST DAY");
                     lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.SLEEP, 11, new Color(0x94, 0xA3, 0xB8)));
                     lbl.setForeground(new Color(0x94, 0xA3, 0xB8)); // Modern cool slate
+                    lbl.setToolTipText(null);
                 } else {
-                    lbl.setText("PLANNED");
-                    lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.TIMER, 11, ThemeConfig.WARNING));
-                    lbl.setForeground(ThemeConfig.WARNING);
+                    if (isCoachAssigned) {
+                        lbl.setText("⏱ COACH PLANNED");
+                        lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 12, new Color(0xFF, 0x7A, 0x59)));
+                        lbl.setForeground(new Color(0xFF, 0x7A, 0x59));
+                        lbl.setToolTipText("Assigned by Coach! Notes: " + notesStr);
+                    } else {
+                        lbl.setText("PLANNED");
+                        lbl.setIcon(IconFactory.createIcon(IconFactory.IconType.TIMER, 11, ThemeConfig.WARNING));
+                        lbl.setForeground(ThemeConfig.WARNING);
+                        lbl.setToolTipText(null);
+                    }
                 }
                 lbl.setIconTextGap(5);
                 lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
@@ -907,9 +932,22 @@ public class WorkoutPanel extends JPanel {
         JPanel filters = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         filters.setOpaque(false);
 
-        cmbTypeFilter.setPreferredSize(new Dimension(120, 32));
-        cmbStatusFilter.setPreferredSize(new Dimension(120, 32));
+        btnFilterCoachAssigned.setPreferredSize(new Dimension(165, 32));
+        btnFilterCoachAssigned.setIcon(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 12, ThemeConfig.PRIMARY_ACCENT));
+        btnFilterCoachAssigned.setIconTextGap(5);
+        btnFilterCoachAssigned.setVisible(false); // shown when coach workouts exist
+        btnFilterCoachAssigned.addActionListener(e -> {
+            if ("Coach Assigned".equalsIgnoreCase((String) cmbStatusFilter.getSelectedItem())) {
+                cmbStatusFilter.setSelectedItem("All Statuses");
+            } else {
+                cmbStatusFilter.setSelectedItem("Coach Assigned");
+            }
+        });
 
+        cmbTypeFilter.setPreferredSize(new Dimension(115, 32));
+        cmbStatusFilter.setPreferredSize(new Dimension(135, 32));
+
+        filters.add(btnFilterCoachAssigned);
         filters.add(cmbTypeFilter);
         filters.add(cmbStatusFilter);
         panel.add(filters, BorderLayout.EAST);
@@ -934,6 +972,19 @@ public class WorkoutPanel extends JPanel {
         btnGoReminders.setPreferredSize(new Dimension(185, 30));
         btnGoReminders.addActionListener(e -> selectRemindersTab());
 
+        ModernButton btnViewCoach = new ModernButton("View Coach Assigned", ModernButton.ButtonStyle.SECONDARY);
+        btnViewCoach.setIcon(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 12, ThemeConfig.PRIMARY_ACCENT));
+        btnViewCoach.setIconTextGap(5);
+        btnViewCoach.setPreferredSize(new Dimension(175, 30));
+        btnViewCoach.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                editSelectedWorkout();
+            } else {
+                cmbStatusFilter.setSelectedItem("Coach Assigned");
+            }
+        });
+
         ModernButton btnEdit = new ModernButton("Edit Selected", ModernButton.ButtonStyle.SECONDARY);
         btnEdit.setPreferredSize(new Dimension(105, 30));
         btnEdit.addActionListener(e -> editSelectedWorkout());
@@ -943,6 +994,7 @@ public class WorkoutPanel extends JPanel {
         btnDelete.addActionListener(e -> deleteSelectedWorkout());
 
         actions.add(btnGoReminders);
+        actions.add(btnViewCoach);
         actions.add(btnEdit);
         actions.add(btnDelete);
         bar.add(actions, BorderLayout.EAST);
@@ -950,10 +1002,18 @@ public class WorkoutPanel extends JPanel {
         return bar;
     }
 
+    public void filterByCoachAssigned() {
+        cmbStatusFilter.setSelectedItem("Coach Assigned");
+        applyFilters();
+    }
+
     private void applyFilters() {
         String search = txtSearch.getText().trim().toLowerCase();
         String selectedType = (String) cmbTypeFilter.getSelectedItem();
         String selectedStatus = (String) cmbStatusFilter.getSelectedItem();
+
+        boolean isCoachFilter = "Coach Assigned".equalsIgnoreCase(selectedStatus);
+        btnFilterCoachAssigned.setStyle(isCoachFilter ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY);
 
         sorter.setRowFilter(new RowFilter<>() {
             @Override
@@ -961,15 +1021,19 @@ public class WorkoutPanel extends JPanel {
                 String title = entry.getStringValue(1).toLowerCase();
                 String type = entry.getStringValue(2);
                 String status = entry.getStringValue(5);
-                String notes = entry.getStringValue(6).toLowerCase();
+                String notes = entry.getStringValue(6);
+                String notesLower = notes.toLowerCase();
 
-                if (!search.isEmpty() && !title.contains(search) && !type.toLowerCase().contains(search) && !notes.contains(search)) {
+                if (!search.isEmpty() && !title.contains(search) && !type.toLowerCase().contains(search) && !notesLower.contains(search)) {
                     return false;
                 }
                 if (!"All Types".equals(selectedType) && !type.equalsIgnoreCase(selectedType)) {
                     return false;
                 }
-                if (!"All Statuses".equals(selectedStatus) && !status.equalsIgnoreCase(selectedStatus)) {
+                if ("Coach Assigned".equalsIgnoreCase(selectedStatus)) {
+                    boolean isCoach = notesLower.contains("[coach") || notesLower.contains("[trainer");
+                    if (!isCoach) return false;
+                } else if (!"All Statuses".equals(selectedStatus) && !status.equalsIgnoreCase(selectedStatus)) {
                     return false;
                 }
                 return true;
@@ -1121,6 +1185,12 @@ public class WorkoutPanel extends JPanel {
 
                     int streak = HealthCalculator.calculateWorkoutStreak(currentWorkouts);
                     lblKpiStreak.setText(streak + (streak == 1 ? " Day" : " Days"));
+
+                    long coachCount = currentWorkouts.stream().filter(w -> w.getNotes() != null && (w.getNotes().contains("[Coach") || w.getNotes().contains("[Trainer"))).count();
+                    btnFilterCoachAssigned.setText("🏋️ Coach Assigned (" + coachCount + ")");
+                    btnFilterCoachAssigned.setVisible(coachCount > 0);
+                    btnFilterCoachAssigned.getParent().revalidate();
+                    btnFilterCoachAssigned.getParent().repaint();
                 } catch (Exception e) {
                     lblSummaryStats.setText("Failed to load workouts: " + e.getMessage());
                 }
@@ -1314,6 +1384,45 @@ public class WorkoutPanel extends JPanel {
                 refreshDialogChips.run();
 
                 main.add(tplRow);
+                main.add(Box.createVerticalStrut(10));
+            }
+
+            // Coach Assigned Notification Banner
+            if (workout != null && workout.getNotes() != null && (workout.getNotes().contains("[Coach") || workout.getNotes().contains("[Trainer"))) {
+                ModernCard coachCard = new ModernCard(10, new Insets(10, 14, 10, 14));
+                coachCard.setLayout(new BorderLayout(10, 0));
+                coachCard.setBorder(BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true));
+
+                JLabel coachIcon = new JLabel(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 20, ThemeConfig.PRIMARY_ACCENT));
+                coachCard.add(coachIcon, BorderLayout.WEST);
+
+                JPanel coachText = new JPanel(new GridLayout(2, 1, 0, 3));
+                coachText.setOpaque(false);
+
+                JLabel coachTitle = new JLabel("ASSIGNED BY YOUR PERSONAL TRAINER / COACH");
+                coachTitle.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                coachTitle.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                coachText.add(coachTitle);
+
+                JLabel coachNotes = new JLabel(workout.getNotes());
+                coachNotes.setFont(ThemeConfig.FONT_SMALL);
+                coachNotes.setForeground(ThemeConfig.TEXT_PRIMARY);
+                coachText.add(coachNotes);
+
+                coachCard.add(coachText, BorderLayout.CENTER);
+
+                if ("PLANNED".equalsIgnoreCase(workout.getStatus())) {
+                    ModernButton btnQuickDone = new ModernButton("✓ Complete Workout", ModernButton.ButtonStyle.SUCCESS);
+                    btnQuickDone.setPreferredSize(new Dimension(150, 30));
+                    btnQuickDone.addActionListener(ev -> {
+                        cmbStatus.setSelectedItem("COMPLETED");
+                        txtDate.setText(LocalDate.now().toString());
+                        saveWorkoutData();
+                    });
+                    coachCard.add(btnQuickDone, BorderLayout.EAST);
+                }
+
+                main.add(coachCard);
                 main.add(Box.createVerticalStrut(10));
             }
 
