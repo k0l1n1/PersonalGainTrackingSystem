@@ -37,7 +37,8 @@ public class IconFactory {
         COPY,
         CLOSE,
         INFO,
-        STAR
+        STAR,
+        BELL
     }
 
     public static Icon createIcon(IconType type, int size, Color color) {
@@ -298,6 +299,22 @@ public class IconFactory {
                     }
                     star.closePath();
                     g2.fill(star);
+                    break;
+
+                case BELL:
+                    Path2D bellGlyph = new Path2D.Float();
+                    bellGlyph.moveTo(s * 0.5f, s * 0.16f);
+                    bellGlyph.curveTo(s * 0.35f, s * 0.16f, s * 0.28f, s * 0.36f, s * 0.25f, s * 0.60f);
+                    bellGlyph.lineTo(s * 0.16f, s * 0.72f);
+                    bellGlyph.lineTo(s * 0.84f, s * 0.72f);
+                    bellGlyph.lineTo(s * 0.75f, s * 0.60f);
+                    bellGlyph.curveTo(s * 0.72f, s * 0.36f, s * 0.65f, s * 0.16f, s * 0.5f, s * 0.16f);
+                    bellGlyph.closePath();
+                    g2.draw(bellGlyph);
+                    // Clapper
+                    g2.draw(new Arc2D.Float(s * 0.42f, s * 0.72f, s * 0.16f, s * 0.16f, 180, 180, Arc2D.OPEN));
+                    // Top loop
+                    g2.fill(new Ellipse2D.Float(s * 0.45f, s * 0.08f, s * 0.1f, s * 0.1f));
                     break;
             }
 

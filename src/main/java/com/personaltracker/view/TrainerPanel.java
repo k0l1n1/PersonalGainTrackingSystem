@@ -367,6 +367,13 @@ public class TrainerPanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 16));
         actions.setOpaque(false);
 
+        ModernButton btnAssign = new ModernButton("Assign Task / Goal", ModernButton.ButtonStyle.SECONDARY);
+        btnAssign.setIcon(IconFactory.createIcon(IconFactory.IconType.PLUS, 12, ThemeConfig.PRIMARY_ACCENT));
+        btnAssign.setIconTextGap(6);
+        btnAssign.setPreferredSize(new Dimension(175, 38));
+        btnAssign.addActionListener(e -> openAssignTaskDialog(ts.getStudentProfile()));
+        actions.add(btnAssign);
+
         ModernButton btnView = new ModernButton("View Full Progress", ModernButton.ButtonStyle.PRIMARY);
         btnView.setIcon(IconFactory.createIcon(IconFactory.IconType.ANALYTICS, 13, Color.WHITE));
         btnView.setIconTextGap(6);
@@ -546,6 +553,16 @@ public class TrainerPanel extends JPanel {
             }
         };
         worker.execute();
+    }
+
+    private void openAssignTaskDialog(UserProfile studentProfile) {
+        if (studentProfile == null) return;
+        AssignTaskDialog dlg = new AssignTaskDialog(
+                SwingUtilities.getWindowAncestor(this),
+                studentProfile,
+                this::loadData
+        );
+        dlg.setVisible(true);
     }
 
     private void confirmRemoveStudent(TrainerStudent ts) {

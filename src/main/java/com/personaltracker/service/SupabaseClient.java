@@ -53,6 +53,7 @@ public class SupabaseClient {
     private final Map<String, List<Reminder>> mockReminders = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> mockUserAchievements = new ConcurrentHashMap<>();
     private final Map<String, List<TrainerStudent>> mockTrainerStudents = new ConcurrentHashMap<>();
+    private final Map<String, List<TrainerAssignment>> mockTrainerAssignments = new ConcurrentHashMap<>();
 
     private SupabaseClient() {
         this.config = AppConfig.getInstance();
@@ -762,6 +763,28 @@ public class SupabaseClient {
         mockTrainerStudents.put(demoUserId, new ArrayList<>());
         mockTrainerStudents.put(coachId, new ArrayList<>());
 
+        // Pre-seed demo coaching assignments for presentation demo
+        List<TrainerAssignment> s1Assigns = new ArrayList<>();
+        TrainerAssignment ta1 = new TrainerAssignment(coachId, "Coach David Miller", s1Id, "WORKOUT",
+                "5K Interval Conditioning Drill",
+                "10 min warm-up jog, then 6x 400m intervals at 4:50/km pace. Cool down 10 mins with hip stretches.",
+                today.plusDays(1), LocalTime.of(17, 30));
+        ta1.setId("assign-sarah-01");
+        s1Assigns.add(ta1);
+        mockTrainerAssignments.put(s1Id, s1Assigns);
+
+        List<TrainerAssignment> s2Assigns = new ArrayList<>();
+        TrainerAssignment ta2 = new TrainerAssignment(coachId, "Coach David Miller", s2Id, "GOAL",
+                "Deadlift 160kg Peak Milestone",
+                "Focus on explosive hip drive from the floor. Aim for 5 clean reps at 160kg next Friday!",
+                today.plusWeeks(2), null);
+        ta2.setId("assign-marcus-01");
+        s2Assigns.add(ta2);
+        mockTrainerAssignments.put(s2Id, s2Assigns);
+
+        // Alex Hunter has no pending assignments initially (demonstrates "All caught up" clean state)
+        mockTrainerAssignments.put(demoUserId, new ArrayList<>());
+
         // Set default session to demo user
         this.currentSession = new UserSession(demoUserId, demoProfile.getEmail(), "demo-token", "demo-refresh", 3600);
         this.currentSession.setProfile(demoProfile);
@@ -837,6 +860,11 @@ public class SupabaseClient {
                 String tid = trainerId != null ? trainerId : uid;
                 return (List<T>) new ArrayList<>(mockTrainerStudents.computeIfAbsent(tid, k -> new ArrayList<>()));
             }
+            case "trainer_assignments": {
+                String studentId = extractParamValue(queryParams, "student_id");
+                String sid = studentId != null ? studentId : uid;
+                return (List<T>) new ArrayList<>(mockTrainerAssignments.computeIfAbsent(sid, k -> new ArrayList<>()));
+            }
             case "user_achievements": {
                 Set<String> unlocked = mockUserAchievements.get(uid);
                 List<UserAchievement> uasList = new ArrayList<>();
@@ -894,44 +922,51 @@ public class SupabaseClient {
         if (body instanceof Workout) {
             Workout w = (Workout) body;
             if (w.getId() == null || w.getId().isEmpty()) w.setId(newId);
-            w.setUserId(uid);
-            mockWorkouts.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, w);
+            String targetUid = (w.getUserId() != null && !w.getUserId().isBlank()) ? w.getUserId() : uid;
+            w.setUserId(targetUid);
+            mockWorkouts.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, w);
             return (T) w;
         } else if (body instanceof Goal) {
             Goal g = (Goal) body;
             if (g.getId() == null || g.getId().isEmpty()) g.setId(newId);
-            g.setUserId(uid);
-            mockGoals.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, g);
+            String targetUid = (g.getUserId() != null && !g.getUserId().isBlank()) ? g.getUserId() : uid;
+            g.setUserId(targetUid);
+            mockGoals.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, g);
             return (T) g;
         } else if (body instanceof BodyMeasurement) {
             BodyMeasurement m = (BodyMeasurement) body;
             if (m.getId() == null || m.getId().isEmpty()) m.setId(newId);
-            m.setUserId(uid);
-            mockMeasurements.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, m);
+            String targetUid = (m.getUserId() != null && !m.getUserId().isBlank()) ? m.getUserId() : uid;
+            m.setUserId(targetUid);
+            mockMeasurements.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, m);
             return (T) m;
         } else if (body instanceof NutritionEntry) {
             NutritionEntry n = (NutritionEntry) body;
             if (n.getId() == null || n.getId().isEmpty()) n.setId(newId);
-            n.setUserId(uid);
-            mockNutrition.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, n);
+            String targetUid = (n.getUserId() != null && !n.getUserId().isBlank()) ? n.getUserId() : uid;
+            n.setUserId(targetUid);
+            mockNutrition.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, n);
             return (T) n;
         } else if (body instanceof WaterIntake) {
             WaterIntake wi = (WaterIntake) body;
             if (wi.getId() == null || wi.getId().isEmpty()) wi.setId(newId);
-            wi.setUserId(uid);
-            mockWater.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, wi);
+            String targetUid = (wi.getUserId() != null && !wi.getUserId().isBlank()) ? wi.getUserId() : uid;
+            wi.setUserId(targetUid);
+            mockWater.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, wi);
             return (T) wi;
         } else if (body instanceof SleepRecord) {
             SleepRecord sr = (SleepRecord) body;
             if (sr.getId() == null || sr.getId().isEmpty()) sr.setId(newId);
-            sr.setUserId(uid);
-            mockSleep.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, sr);
+            String targetUid = (sr.getUserId() != null && !sr.getUserId().isBlank()) ? sr.getUserId() : uid;
+            sr.setUserId(targetUid);
+            mockSleep.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, sr);
             return (T) sr;
         } else if (body instanceof Reminder) {
             Reminder r = (Reminder) body;
             if (r.getId() == null || r.getId().isEmpty()) r.setId(newId);
-            r.setUserId(uid);
-            mockReminders.computeIfAbsent(uid, k -> new ArrayList<>()).add(0, r);
+            String targetUid = (r.getUserId() != null && !r.getUserId().isBlank()) ? r.getUserId() : uid;
+            r.setUserId(targetUid);
+            mockReminders.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, r);
             return (T) r;
         } else if (body instanceof UserAchievement) {
             UserAchievement ua = (UserAchievement) body;
@@ -948,6 +983,12 @@ public class SupabaseClient {
             if (ts.getTrainerId() == null) ts.setTrainerId(uid);
             mockTrainerStudents.computeIfAbsent(ts.getTrainerId(), k -> new ArrayList<>()).add(0, ts);
             return (T) ts;
+        } else if (body instanceof TrainerAssignment) {
+            TrainerAssignment ta = (TrainerAssignment) body;
+            if (ta.getId() == null || ta.getId().isEmpty()) ta.setId(newId);
+            String targetUid = (ta.getStudentId() != null && !ta.getStudentId().isBlank()) ? ta.getStudentId() : uid;
+            mockTrainerAssignments.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, ta);
+            return (T) ta;
         }
         return (T) body;
     }
@@ -1038,6 +1079,9 @@ public class SupabaseClient {
             } else {
                 mockProfiles.put(uid, prof);
             }
+        } else if (body instanceof TrainerAssignment) {
+            TrainerAssignment ta = (TrainerAssignment) body;
+            updateMockTrainerAssignment(ta);
         }
     }
 
@@ -1155,6 +1199,33 @@ public class SupabaseClient {
         List<TrainerStudent> list = mockTrainerStudents.get(trainerId);
         if (list != null && studentId != null) {
             list.removeIf(ts -> studentId.equalsIgnoreCase(ts.getStudentId()));
+        }
+    }
+
+    public List<TrainerAssignment> getTrainerAssignments(String studentId) {
+        if (studentId == null) return new ArrayList<>();
+        return new ArrayList<>(mockTrainerAssignments.computeIfAbsent(studentId, k -> new ArrayList<>()));
+    }
+
+    public void addMockTrainerAssignment(TrainerAssignment assignment) {
+        if (assignment != null && assignment.getStudentId() != null) {
+            if (assignment.getId() == null || assignment.getId().isBlank()) {
+                assignment.setId(UUID.randomUUID().toString());
+            }
+            mockTrainerAssignments.computeIfAbsent(assignment.getStudentId(), k -> new ArrayList<>()).add(0, assignment);
+        }
+    }
+
+    public void updateMockTrainerAssignment(TrainerAssignment assignment) {
+        if (assignment == null || assignment.getStudentId() == null || assignment.getId() == null) return;
+        List<TrainerAssignment> list = mockTrainerAssignments.get(assignment.getStudentId());
+        if (list != null) {
+            for (int i = 0; i < list.size(); i++) {
+                if (assignment.getId().equals(list.get(i).getId())) {
+                    list.set(i, assignment);
+                    return;
+                }
+            }
         }
     }
 }

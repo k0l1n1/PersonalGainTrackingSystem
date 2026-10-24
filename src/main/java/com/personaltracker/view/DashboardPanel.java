@@ -89,6 +89,12 @@ public class DashboardPanel extends JPanel {
     private final JPanel pnlRecentActivity = new JPanel();
     private final JPanel pnlReminders = new JPanel();
 
+    // Trainer Assignments & Coaching Notifications
+    private final TrainerAssignmentDAO assignmentDAO = new TrainerAssignmentDAO();
+    private final JPanel pnlTrainerAssignmentsList = new JPanel();
+    private final JLabel lblAssignmentsBadge = new JLabel("");
+    private boolean hasNotifiedAssignmentsThisSession = false;
+
     // Analytics & Trends components
     private final JComboBox<String> cmbAnalyticsDateRange = new JComboBox<>(new String[]{"Last 7 Days", "Last 30 Days", "Last 90 Days", "All Time"});
     private final StatCard cardAnalyticsWorkouts = new StatCard("WORKOUT SESSIONS", "0", "0 mins total", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_ACCENT);
@@ -138,6 +144,10 @@ public class DashboardPanel extends JPanel {
 
         // 2. Interactive Metric Cards Grid
         contentPanel.add(createStatsGrid());
+        contentPanel.add(Box.createVerticalStrut(18));
+
+        // 2.5 Trainer Assignments & Coaching Notifications
+        contentPanel.add(createTrainerAssignmentsSection());
         contentPanel.add(Box.createVerticalStrut(18));
 
         // 3. Middle Section: Charts Grid (Weekly Workout Activity & Weight Progression)
@@ -564,6 +574,263 @@ public class DashboardPanel extends JPanel {
         return btn;
     }
 
+    private JPanel createTrainerAssignmentsSection() {
+        ModernCard card = new ModernCard(14, new Insets(16, 20, 16, 20));
+        card.setLayout(new BorderLayout(0, 12));
+
+        // Header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        left.setOpaque(false);
+        JLabel iconLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.BELL, 18, ThemeConfig.PRIMARY_ACCENT));
+        left.add(iconLbl);
+
+        JPanel text = new JPanel(new GridLayout(2, 1, 0, 2));
+        text.setOpaque(false);
+        JLabel title = new JLabel("TRAINER COACHING NOTIFICATIONS & ASSIGNMENTS");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        text.add(title);
+
+        JLabel sub = new JLabel("Personalized goals, scheduled workouts, and coaching tasks from your trainer");
+        sub.setFont(ThemeConfig.FONT_SMALL);
+        sub.setForeground(ThemeConfig.TEXT_MUTED);
+        text.add(sub);
+        left.add(text);
+        header.add(left, BorderLayout.WEST);
+
+        lblAssignmentsBadge.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblAssignmentsBadge.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        header.add(lblAssignmentsBadge, BorderLayout.EAST);
+
+        card.add(header, BorderLayout.NORTH);
+
+        pnlTrainerAssignmentsList.setLayout(new BoxLayout(pnlTrainerAssignmentsList, BoxLayout.Y_AXIS));
+        pnlTrainerAssignmentsList.setOpaque(false);
+        card.add(pnlTrainerAssignmentsList, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private void updateTrainerAssignments(List<TrainerAssignment> assignments) {
+        pnlTrainerAssignmentsList.removeAll();
+
+        UserSession session = SupabaseClient.getInstance().getCurrentSession();
+        boolean isTrainer = session != null && session.getProfile() != null && session.getProfile().isTrainer();
+
+        if (isTrainer) {
+            lblAssignmentsBadge.setText("Trainer Portal Active");
+            lblAssignmentsBadge.setForeground(ThemeConfig.PRIMARY_ACCENT);
+
+            JPanel info = new JPanel(new BorderLayout(14, 0));
+            info.setOpaque(false);
+            info.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                    BorderFactory.createEmptyBorder(12, 16, 12, 16)
+            ));
+
+            JLabel lbl = new JLabel("<html><b>Coaching Roster Active:</b> You are logged in as a Trainer. Manage enrolled athletes and dispatch custom workouts, goals, or check-in tasks anytime.</html>");
+            lbl.setFont(ThemeConfig.FONT_BODY);
+            lbl.setForeground(ThemeConfig.TEXT_SECONDARY);
+            info.add(lbl, BorderLayout.CENTER);
+
+            ModernButton btnGo = new ModernButton("Open Student Roster →", ModernButton.ButtonStyle.PRIMARY);
+            btnGo.setPreferredSize(new Dimension(190, 34));
+            btnGo.addActionListener(e -> {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.STUDENTS);
+            });
+            info.add(btnGo, BorderLayout.EAST);
+
+            pnlTrainerAssignmentsList.add(info);
+            pnlTrainerAssignmentsList.revalidate();
+            pnlTrainerAssignmentsList.repaint();
+            return;
+        }
+
+        if (assignments == null || assignments.isEmpty()) {
+            lblAssignmentsBadge.setText("✓ All Caught Up");
+            lblAssignmentsBadge.setForeground(ThemeConfig.SUCCESS);
+
+            JPanel empty = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 10));
+            empty.setOpaque(false);
+            empty.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                    BorderFactory.createEmptyBorder(8, 12, 8, 12)
+            ));
+
+            JLabel ic = new JLabel(IconFactory.createIcon(IconFactory.IconType.CHECK, 16, ThemeConfig.SUCCESS));
+            empty.add(ic);
+
+            JLabel msg = new JLabel("No pending trainer assignments. You are completely up to date with your coach!");
+            msg.setFont(ThemeConfig.FONT_BODY);
+            msg.setForeground(ThemeConfig.TEXT_SECONDARY);
+            empty.add(msg);
+
+            pnlTrainerAssignmentsList.add(empty);
+            pnlTrainerAssignmentsList.revalidate();
+            pnlTrainerAssignmentsList.repaint();
+            return;
+        }
+
+        long pendingCount = assignments.stream().filter(TrainerAssignment::isPending).count();
+        if (pendingCount > 0) {
+            lblAssignmentsBadge.setText(pendingCount + " Pending Action");
+            lblAssignmentsBadge.setForeground(ThemeConfig.PRIMARY_ACCENT);
+
+            // Pop toast alert once per session
+            if (!hasNotifiedAssignmentsThisSession) {
+                hasNotifiedAssignmentsThisSession = true;
+                TrainerAssignment first = assignments.stream().filter(TrainerAssignment::isPending).findFirst().orElse(assignments.get(0));
+                String coach = first.getTrainerName() != null ? first.getTrainerName() : "Coach";
+                ToastNotification.showToast(this,
+                        "🔔 New Assignment from " + coach + ": " + first.getTitle(),
+                        ToastNotification.ToastType.INFO);
+            }
+        } else {
+            lblAssignmentsBadge.setText("✓ " + assignments.size() + " Acknowledged");
+            lblAssignmentsBadge.setForeground(ThemeConfig.SUCCESS);
+        }
+
+        // Render up to 5 most recent assignments
+        int count = 0;
+        for (TrainerAssignment a : assignments) {
+            if (count++ >= 5) break;
+            pnlTrainerAssignmentsList.add(createAssignmentCard(a));
+            pnlTrainerAssignmentsList.add(Box.createVerticalStrut(8));
+        }
+
+        pnlTrainerAssignmentsList.revalidate();
+        pnlTrainerAssignmentsList.repaint();
+    }
+
+    private JPanel createAssignmentCard(TrainerAssignment a) {
+        ModernCard card = new ModernCard(10, new Insets(12, 16, 12, 16));
+        card.setLayout(new BorderLayout(14, 0));
+
+        // Left: Type badge & Details
+        JPanel left = new JPanel();
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        left.setOpaque(false);
+
+        // Top tag row
+        JPanel tagRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        tagRow.setOpaque(false);
+
+        Color badgeColor;
+        String typeLabel;
+        if (a.isWorkout()) {
+            badgeColor = ThemeConfig.PRIMARY_ACCENT;
+            typeLabel = "🏋️ WORKOUT ROUTINE";
+        } else if (a.isGoal()) {
+            badgeColor = ThemeConfig.SUCCESS;
+            typeLabel = "🎯 FITNESS GOAL";
+        } else {
+            badgeColor = new Color(0xA8, 0x55, 0xF7);
+            typeLabel = "⏰ SCHEDULED TASK";
+        }
+
+        JLabel lblType = new JLabel(typeLabel);
+        lblType.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        lblType.setForeground(badgeColor);
+        lblType.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(badgeColor, 1, true),
+                BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        ));
+        tagRow.add(lblType);
+
+        String coachName = a.getTrainerName() != null ? a.getTrainerName() : "Coach";
+        JLabel lblCoach = new JLabel("From " + coachName);
+        lblCoach.setFont(ThemeConfig.FONT_SMALL);
+        lblCoach.setForeground(ThemeConfig.TEXT_MUTED);
+        tagRow.add(lblCoach);
+
+        if (a.getTargetDate() != null) {
+            String timeStr = a.getTargetTime() != null ? " at " + a.getTargetTime().toString() : "";
+            JLabel lblDue = new JLabel("• Due: " + DateUtil.formatDate(a.getTargetDate()) + timeStr);
+            lblDue.setFont(ThemeConfig.FONT_SMALL);
+            lblDue.setForeground(ThemeConfig.TEXT_MUTED);
+            tagRow.add(lblDue);
+        }
+
+        left.add(tagRow);
+        left.add(Box.createVerticalStrut(4));
+
+        JLabel lblTitle = new JLabel(a.getTitle());
+        lblTitle.setFont(ThemeConfig.FONT_BODY_BOLD);
+        lblTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
+        left.add(lblTitle);
+
+        if (a.getDescription() != null && !a.getDescription().isBlank()) {
+            left.add(Box.createVerticalStrut(2));
+            JLabel lblDesc = new JLabel("<html><body style='width: 480px;'>" + a.getDescription() + "</body></html>");
+            lblDesc.setFont(ThemeConfig.FONT_SMALL);
+            lblDesc.setForeground(new Color(0xD0, 0xD0, 0xD0));
+            left.add(lblDesc);
+        }
+
+        card.add(left, BorderLayout.CENTER);
+
+        // Right: Status & Action buttons
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        actions.setOpaque(false);
+
+        if (a.isPending()) {
+            JLabel lblPending = new JLabel("PENDING");
+            lblPending.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            lblPending.setForeground(ThemeConfig.WARNING);
+            lblPending.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(ThemeConfig.WARNING, 1, true),
+                    BorderFactory.createEmptyBorder(2, 6, 2, 6)
+            ));
+            actions.add(lblPending);
+
+            ModernButton btnAck = new ModernButton("✓ Acknowledge", ModernButton.ButtonStyle.SECONDARY);
+            btnAck.setPreferredSize(new Dimension(125, 30));
+            btnAck.addActionListener(e -> {
+                String uid = SupabaseClient.getInstance().getCurrentUserId();
+                assignmentDAO.acknowledgeAssignment(uid, a.getId());
+                ToastNotification.showToast(DashboardPanel.this, "Assignment acknowledged! Ready to crush it!", ToastNotification.ToastType.SUCCESS);
+                refreshDashboardData();
+            });
+            actions.add(btnAck);
+        } else {
+            JLabel lblAck = new JLabel("✓ ACKNOWLEDGED");
+            lblAck.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            lblAck.setForeground(ThemeConfig.SUCCESS);
+            lblAck.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(ThemeConfig.SUCCESS, 1, true),
+                    BorderFactory.createEmptyBorder(2, 6, 2, 6)
+            ));
+            actions.add(lblAck);
+        }
+
+        if (a.isWorkout()) {
+            ModernButton btnGo = new ModernButton("View Workout →", ModernButton.ButtonStyle.PRIMARY);
+            btnGo.setPreferredSize(new Dimension(135, 30));
+            btnGo.addActionListener(e -> {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.WORKOUTS);
+            });
+            actions.add(btnGo);
+        } else if (a.isGoal()) {
+            ModernButton btnGo = new ModernButton("View Goals →", ModernButton.ButtonStyle.PRIMARY);
+            btnGo.setPreferredSize(new Dimension(120, 30));
+            btnGo.addActionListener(e -> {
+                if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.GOALS);
+            });
+            actions.add(btnGo);
+        } else {
+            ModernButton btnGo = new ModernButton("View Tasks →", ModernButton.ButtonStyle.PRIMARY);
+            btnGo.setPreferredSize(new Dimension(115, 30));
+            btnGo.addActionListener(e -> openRemindersView());
+            actions.add(btnGo);
+        }
+
+        card.add(actions, BorderLayout.EAST);
+        return card;
+    }
+
     public void refreshDashboardData() {
         updateHeaderGreeting();
 
@@ -575,6 +842,7 @@ public class DashboardPanel extends JPanel {
             private List<WaterIntake> allWater;
             private List<SleepRecord> sleepRecords;
             private List<Reminder> reminders;
+            private List<TrainerAssignment> assignments;
 
             @Override
             protected Void doInBackground() throws Exception {
@@ -593,6 +861,11 @@ public class DashboardPanel extends JPanel {
                 allWater = waterDAO.getAllEntries();
                 sleepRecords = sleepDAO.getAllRecords();
                 reminders = reminderDAO.getAllReminders();
+
+                String uid = SupabaseClient.getInstance().getCurrentUserId();
+                if (uid != null) {
+                    assignments = assignmentDAO.getAssignmentsForStudent(uid);
+                }
 
                 return null;
             }
@@ -617,6 +890,7 @@ public class DashboardPanel extends JPanel {
                             : List.of();
 
                     updateMetrics(workouts, goals, measurements, todayNutrition, todayWater, sleepRecords, reminders);
+                    updateTrainerAssignments(assignments);
                     updateAnalyticsSection();
                 } catch (Exception e) {
                     System.err.println("Dashboard refresh error: " + e.getMessage());

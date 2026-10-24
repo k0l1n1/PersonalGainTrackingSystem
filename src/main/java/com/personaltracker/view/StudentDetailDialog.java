@@ -59,6 +59,16 @@ public class StudentDetailDialog extends JDialog {
         bottomBar.setBackground(ThemeConfig.BG_CARD);
         bottomBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, ThemeConfig.BORDER_COLOR));
 
+        ModernButton btnAssign = new ModernButton("➕ Assign Goal or Schedule Routine", ModernButton.ButtonStyle.PRIMARY);
+        btnAssign.setPreferredSize(new Dimension(260, 36));
+        btnAssign.addActionListener(e -> {
+            if (detail.getProfile() != null) {
+                AssignTaskDialog dlg = new AssignTaskDialog(StudentDetailDialog.this, detail.getProfile(), null);
+                dlg.setVisible(true);
+            }
+        });
+        bottomBar.add(btnAssign);
+
         ModernButton btnClose = new ModernButton("Close Inspector", ModernButton.ButtonStyle.SECONDARY);
         btnClose.setPreferredSize(new Dimension(140, 36));
         btnClose.addActionListener(e -> dispose());

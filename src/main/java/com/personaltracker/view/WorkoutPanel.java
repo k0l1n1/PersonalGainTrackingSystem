@@ -2238,6 +2238,16 @@ public class WorkoutPanel extends JPanel {
             if (statusTag != null) {
                 titleRow.add(statusTag);
             }
+
+            if (r.getDescription() != null && r.getDescription().contains("Coach")) {
+                JLabel coachTag = new JLabel("🛡️ COACH ASSIGNED");
+                coachTag.setFont(new Font("Segoe UI", Font.BOLD, 9));
+                coachTag.setForeground(new Color(0x60, 0xA5, 0xFA));
+                coachTag.setOpaque(true);
+                coachTag.setBackground(new Color(0x3B, 0x82, 0xF6, 40));
+                coachTag.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+                titleRow.add(coachTag);
+            }
             center.add(titleRow);
 
             String descText = (r.getDescription() != null && !r.getDescription().isBlank()) ? r.getDescription() + " • " : "";

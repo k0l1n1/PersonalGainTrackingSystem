@@ -169,7 +169,20 @@ public class GoalPanel extends JPanel {
         catTag.setOpaque(true);
         catTag.setBackground(new Color(0xF0, 0x44, 0x44, 30));
         catTag.setForeground(ThemeConfig.PRIMARY_ACCENT);
-        top.add(catTag, BorderLayout.WEST);
+
+        JPanel leftTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        leftTop.setOpaque(false);
+        leftTop.add(catTag);
+        if (goal.getNotes() != null && goal.getNotes().contains("Coach")) {
+            JLabel coachTag = new JLabel("🛡️ COACH ASSIGNED");
+            coachTag.setFont(new Font("Segoe UI", Font.BOLD, 9));
+            coachTag.setOpaque(true);
+            coachTag.setBackground(new Color(0x3B, 0x82, 0xF6, 40));
+            coachTag.setForeground(new Color(0x60, 0xA5, 0xFA));
+            coachTag.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+            leftTop.add(coachTag);
+        }
+        top.add(leftTop, BorderLayout.WEST);
 
         JLabel statusTag = new JLabel(goal.getStatus());
         statusTag.setFont(ThemeConfig.FONT_SMALL);
