@@ -96,4 +96,21 @@ public class ExistingUserLoginTest {
         assertTrue(SupabaseAuthService.isUserAlreadyExistsError("", "user_already_exists"));
         assertFalse(SupabaseAuthService.isUserAlreadyExistsError("Invalid login credentials", ""));
     }
+
+    @Test
+    @DisplayName("New person creating an account receives newRegistration true and is directed to data filling")
+    void testNewPersonAccountCreationRequiresOnboarding() throws Exception {
+        String newEmail = "brandnew.athlete." + System.currentTimeMillis() + "@example.com";
+        UserSession newSession = authService.register(newEmail, "pass123456", "New Athlete", UserProfile.ROLE_MEMBER);
+
+        assertNotNull(newSession);
+        assertTrue(newSession.isNewRegistration(), "Brand new person joining must have newRegistration = true");
+        assertTrue(OnboardingDialog.isNewUser(newSession.getProfile()), "Profile must be flagged as new user needing data filling");
+
+        // Verify that dialog instantiation works cleanly without error
+        OnboardingDialog dialog = new OnboardingDialog(null, newSession.getProfile(), true);
+        assertNotNull(dialog);
+        assertTrue(dialog.isMandatory());
+        dialog.dispose();
+    }
 }

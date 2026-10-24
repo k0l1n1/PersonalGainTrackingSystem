@@ -416,7 +416,9 @@ public class AuthDialog extends JDialog {
                             } else {
                                 authService.clearSavedSession();
                             }
-                            AppConfig.getInstance().setMockMode(false);
+                            if (AppConfig.getInstance().isSupabaseConfigured()) {
+                                AppConfig.getInstance().setMockMode(false);
+                            }
                             authenticated = true;
                             dispose();
                         }
@@ -466,7 +468,9 @@ public class AuthDialog extends JDialog {
                             } else {
                                 authService.clearSavedSession();
                             }
-                            AppConfig.getInstance().setMockMode(false);
+                            if (AppConfig.getInstance().isSupabaseConfigured()) {
+                                AppConfig.getInstance().setMockMode(false);
+                            }
                             authenticated = true;
                             dispose();
                         }
@@ -505,7 +509,9 @@ public class AuthDialog extends JDialog {
                         } else {
                             authService.clearSavedSession();
                         }
-                        AppConfig.getInstance().setMockMode(false);
+                        if (AppConfig.getInstance().isSupabaseConfigured()) {
+                            AppConfig.getInstance().setMockMode(false);
+                        }
                         authenticated = true;
                         dispose();
                     }

@@ -17,11 +17,14 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+
+import java.text.DecimalFormat;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -258,6 +261,33 @@ public class MeasurementPanel extends JPanel {
 
         DateAxis axis = (DateAxis) plot.getDomainAxis();
         axis.setDateFormatOverride(new java.text.SimpleDateFormat("dd MMM"));
+        axis.setLowerMargin(0.15);
+        axis.setUpperMargin(0.15);
+
+        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        if (rangeAxis != null) {
+            rangeAxis.setAutoRangeIncludesZero(false);
+            rangeAxis.setNumberFormatOverride(new DecimalFormat("#,##0.#"));
+            rangeAxis.setAutoRangeMinimumSize(4.0);
+            rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+            rangeAxis.setLowerMargin(0.15);
+            rangeAxis.setUpperMargin(0.15);
+
+            if (!currentMeasurements.isEmpty()) {
+                double latestWeight = currentMeasurements.get(0).getWeightKg();
+                boolean allSame = true;
+                for (BodyMeasurement m : currentMeasurements) {
+                    if (Math.abs(m.getWeightKg() - latestWeight) > 0.05) {
+                        allSame = false;
+                        break;
+                    }
+                }
+                if (allSame) {
+                    double pad = Math.max(3.0, latestWeight * 0.05);
+                    rangeAxis.setRange(Math.max(0, latestWeight - pad), latestWeight + pad);
+                }
+            }
+        }
 
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setOpaque(false);

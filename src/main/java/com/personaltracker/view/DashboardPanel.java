@@ -38,6 +38,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -910,6 +911,33 @@ public class DashboardPanel extends JPanel {
 
         DateAxis axis = (DateAxis) plot.getDomainAxis();
         axis.setDateFormatOverride(new java.text.SimpleDateFormat("dd MMM"));
+        axis.setLowerMargin(0.15);
+        axis.setUpperMargin(0.15);
+
+        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        if (rangeAxis != null) {
+            rangeAxis.setAutoRangeIncludesZero(false);
+            rangeAxis.setNumberFormatOverride(new DecimalFormat("#,##0.#"));
+            rangeAxis.setAutoRangeMinimumSize(4.0);
+            rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+            rangeAxis.setLowerMargin(0.15);
+            rangeAxis.setUpperMargin(0.15);
+
+            if (measurements != null && !measurements.isEmpty()) {
+                double latestW = measurements.get(0).getWeightKg();
+                boolean allSame = true;
+                for (BodyMeasurement m : measurements) {
+                    if (Math.abs(m.getWeightKg() - latestW) > 0.05) {
+                        allSame = false;
+                        break;
+                    }
+                }
+                if (allSame) {
+                    double pad = Math.max(3.0, latestW * 0.05);
+                    rangeAxis.setRange(Math.max(0, latestW - pad), latestW + pad);
+                }
+            }
+        }
 
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setOpaque(false);
@@ -1000,6 +1028,9 @@ public class DashboardPanel extends JPanel {
                 range.setTickMarksVisible(false);
                 range.setTickLabelPaint(new Color(0xCC, 0xCC, 0xCC));
                 range.setTickLabelFont(new Font("Segoe UI", Font.BOLD, 10));
+                range.setNumberFormatOverride(new DecimalFormat("#,##0.#"));
+                range.setAutoRangeMinimumSize(2.0);
+                range.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
             }
 
             if (plot.getRenderer() instanceof BarRenderer) {
@@ -1027,6 +1058,13 @@ public class DashboardPanel extends JPanel {
                 plot.getRangeAxis().setTickMarksVisible(false);
                 plot.getRangeAxis().setTickLabelPaint(new Color(0xCC, 0xCC, 0xCC));
                 plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.BOLD, 10));
+                if (plot.getRangeAxis() instanceof NumberAxis) {
+                    NumberAxis numAxis = (NumberAxis) plot.getRangeAxis();
+                    numAxis.setAutoRangeIncludesZero(false);
+                    numAxis.setNumberFormatOverride(new DecimalFormat("#,##0.#"));
+                    numAxis.setAutoRangeMinimumSize(2.0);
+                    numAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+                }
             }
 
             if (plot.getRenderer() instanceof XYLineAndShapeRenderer) {

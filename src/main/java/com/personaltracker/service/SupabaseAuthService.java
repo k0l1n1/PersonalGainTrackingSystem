@@ -179,10 +179,22 @@ public class SupabaseAuthService {
             }
 
             if (accessToken == null || accessToken.isBlank()) {
-                // Check if account already exists and can be logged in directly
+                // In Supabase, newly registered users may require login to retrieve an access token
                 try {
                     UserSession session = login(email, password);
-                    session.setNewRegistration(false);
+                    // This was a new account registration (identities was not empty).
+                    // Mark as new registration so they are guided through the data filling process!
+                    session.setNewRegistration(true);
+                    if (session.getProfile() == null) {
+                        session.setProfile(new UserProfile(session.getUserId(), session.getEmail(), fullName, userRole));
+                    } else {
+                        if (fullName != null && !fullName.isBlank()) {
+                            session.getProfile().setFullName(fullName);
+                        }
+                        if (userRole != null && !userRole.isBlank()) {
+                            session.getProfile().setRole(userRole);
+                        }
+                    }
                     return session;
                 } catch (Exception loginEx) {
                     throw new IOException("Registration successful! Please check your email inbox to confirm your account before logging in.");

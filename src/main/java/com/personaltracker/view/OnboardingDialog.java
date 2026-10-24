@@ -11,6 +11,7 @@ import com.personaltracker.model.BodyMeasurement;
 import com.personaltracker.model.Goal;
 import com.personaltracker.model.UserProfile;
 import com.personaltracker.model.UserSession;
+import com.personaltracker.service.SupabaseAuthService;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
@@ -22,6 +23,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.YearMonth;
@@ -113,20 +116,65 @@ public class OnboardingDialog extends JDialog {
             } catch (Exception ignored) {}
         }
 
+        // Double check: if profile already has height and target weight filled,
+        // it is an existing account with completed data - do not force onboarding!
+        if (profile != null && !isNewUser(profile)) {
+            session.setNewRegistration(false);
+            return;
+        }
+
         if (profile == null) {
             profile = new UserProfile(session.getUserId(), session.getEmail(), "");
             session.setProfile(profile);
         }
 
-        if (isNewUser(profile)) {
-            OnboardingDialog dialog = new OnboardingDialog(owner, profile);
-            dialog.setVisible(true);
+        if (GraphicsEnvironment.isHeadless()) {
+            return;
         }
+
+        // A new person created an account: make them do the data filling process!
+        OnboardingDialog dialog = new OnboardingDialog(owner, profile, true);
+        dialog.setVisible(true);
+    }
+
+    private final boolean mandatory;
+
+    public boolean isMandatory() {
+        return mandatory;
     }
 
     public OnboardingDialog(Window owner, UserProfile userProfile) {
+        this(owner, userProfile, false);
+    }
+
+    public OnboardingDialog(Window owner, UserProfile userProfile, boolean mandatory) {
         super(owner, "Welcome to Personal Gain - Profile Setup", ModalityType.APPLICATION_MODAL);
         this.profile = userProfile != null ? userProfile : new UserProfile();
+        this.mandatory = mandatory;
+
+        if (mandatory) {
+            setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    int choice = JOptionPane.showConfirmDialog(
+                            OnboardingDialog.this,
+                            "Initial profile setup is required to configure your fitness metrics.\n" +
+                            "Would you like to sign out and exit?",
+                            "Setup Incomplete",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    if (choice == JOptionPane.YES_OPTION) {
+                        SupabaseAuthService.getInstance().logout();
+                        dispose();
+                        System.exit(0);
+                    }
+                }
+            });
+        } else {
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        }
 
         setSize(580, 720);
         setLocationRelativeTo(owner);
