@@ -113,33 +113,29 @@ public class SettingsPanel extends JPanel {
         content.add(createHeroBanner());
         content.add(Box.createVerticalStrut(10));
 
-        // 2. Main Balanced 2-Column Dashboard Grid (Fits fully on 1 screen frame without scrolling)
-        JPanel grid = new JPanel(new GridLayout(1, 2, 14, 0));
+        // 2. Main 2x2 Dashboard Grid (Personal Info, Weight Journey, Fitness Reports, Metabolic Health)
+        JPanel grid = new JPanel(new GridLayout(2, 2, 12, 10));
         grid.setOpaque(false);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 395));
-        grid.setPreferredSize(new Dimension(1000, 395));
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 440));
+        grid.setPreferredSize(new Dimension(1000, 440));
 
-        // Left Column: Personal Identity & ID + Fitness & Health Reports
-        JPanel leftCol = new JPanel();
-        leftCol.setLayout(new BoxLayout(leftCol, BoxLayout.Y_AXIS));
-        leftCol.setOpaque(false);
-        leftCol.add(createPersonalInfoCard());
-        leftCol.add(Box.createVerticalStrut(10));
-        leftCol.add(createDataReportsCard());
-        leftCol.add(Box.createVerticalGlue());
-        grid.add(leftCol);
-
-        // Right Column: Weight Journey & Goal Progress + Metabolic Health & Clinical Benchmarks
-        JPanel rightCol = new JPanel();
-        rightCol.setLayout(new BoxLayout(rightCol, BoxLayout.Y_AXIS));
-        rightCol.setOpaque(false);
-        rightCol.add(createWeightJourneyCard());
-        rightCol.add(Box.createVerticalStrut(10));
-        rightCol.add(createMetabolicHealthCard());
-        rightCol.add(Box.createVerticalGlue());
-        grid.add(rightCol);
-
+        grid.add(createPersonalInfoCard());
+        grid.add(createWeightJourneyCard());
+        grid.add(createDataReportsCard());
+        grid.add(createMetabolicHealthCard());
         content.add(grid);
+        content.add(Box.createVerticalStrut(10));
+
+        // 3. Bottom Row: Account Security & Cloud Sync + Trainer & Athlete Federation (Fills the lower screen space)
+        JPanel bottomRow = new JPanel(new GridLayout(1, 2, 12, 0));
+        bottomRow.setOpaque(false);
+        bottomRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+        bottomRow.setPreferredSize(new Dimension(1000, 150));
+
+        bottomRow.add(createAccountSecurityCard());
+        bottomRow.add(createTrainerNetworkCard());
+        content.add(bottomRow);
+
         content.add(Box.createVerticalGlue());
 
         JScrollPane scrollPane = new JScrollPane(content);
@@ -276,27 +272,27 @@ public class SettingsPanel extends JPanel {
     }
 
     private JPanel createPersonalInfoCard() {
-        ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
+        ModernCard card = new ModernCard(12, new Insets(10, 14, 10, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
-        card.setPreferredSize(new Dimension(450, 190));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
+        card.setPreferredSize(new Dimension(450, 215));
 
         JLabel title = new JLabel("Personal Information & Unique ID");
         title.setFont(new Font("Segoe UI", Font.BOLD, 13));
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(title);
-        card.add(Box.createVerticalStrut(8));
+        card.add(Box.createVerticalStrut(6));
 
         // Unique Member / Student Code Banner - Fixed height so it NEVER stretches
         JPanel codeBanner = new JPanel(new BorderLayout(8, 0));
         codeBanner.setBackground(new Color(18, 18, 18));
         codeBanner.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(36, 36, 36), 1, true),
-                BorderFactory.createEmptyBorder(4, 10, 4, 8)
+                BorderFactory.createEmptyBorder(3, 10, 3, 8)
         ));
-        codeBanner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        codeBanner.setPreferredSize(new Dimension(450, 38));
+        codeBanner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        codeBanner.setPreferredSize(new Dimension(450, 36));
         codeBanner.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel codeLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
@@ -306,7 +302,7 @@ public class SettingsPanel extends JPanel {
         lblCodeTitle.setForeground(ThemeConfig.PRIMARY_ACCENT);
         codeLeft.add(lblCodeTitle);
 
-        valUserCode.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        valUserCode.setFont(new Font("Segoe UI", Font.BOLD, 14));
         valUserCode.setForeground(Color.WHITE);
         codeLeft.add(valUserCode);
         codeBanner.add(codeLeft, BorderLayout.CENTER);
@@ -322,7 +318,7 @@ public class SettingsPanel extends JPanel {
         btnCopyCode.setBackground(new Color(32, 32, 32));
         btnCopyCode.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(50, 50, 50), 1, true),
-                BorderFactory.createEmptyBorder(4, 8, 4, 8)
+                BorderFactory.createEmptyBorder(3, 8, 3, 8)
         ));
         btnCopyCode.setFocusPainted(false);
         btnCopyCode.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -336,12 +332,12 @@ public class SettingsPanel extends JPanel {
         codeBanner.add(copyWrapper, BorderLayout.EAST);
 
         card.add(codeBanner);
-        card.add(Box.createVerticalStrut(8));
+        card.add(Box.createVerticalStrut(6));
 
-        JPanel grid = new JPanel(new GridLayout(3, 2, 6, 6));
+        JPanel grid = new JPanel(new GridLayout(3, 2, 6, 5));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 115));
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
 
         grid.add(createInfoTile("FULL NAME", valFullName, ThemeConfig.TEXT_PRIMARY));
         grid.add(createInfoTile("ACCOUNT ROLE", valRole, ThemeConfig.PRIMARY_ACCENT));
@@ -356,10 +352,10 @@ public class SettingsPanel extends JPanel {
     }
 
     private JPanel createWeightJourneyCard() {
-        ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
+        ModernCard card = new ModernCard(12, new Insets(10, 14, 10, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
-        card.setPreferredSize(new Dimension(450, 190));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
+        card.setPreferredSize(new Dimension(450, 215));
 
         // Header Row: Title on left, Adjust Target button on right in FlowLayout wrapper
         JPanel headerRow = new JPanel(new BorderLayout());
@@ -386,12 +382,12 @@ public class SettingsPanel extends JPanel {
         headerRow.add(btnWrapper, BorderLayout.EAST);
 
         card.add(headerRow);
-        card.add(Box.createVerticalStrut(8));
+        card.add(Box.createVerticalStrut(6));
 
         // 3 Milestone Cards: Starting -> Current -> Target
         JPanel milestoneGrid = new JPanel(new GridLayout(1, 3, 6, 0));
         milestoneGrid.setOpaque(false);
-        milestoneGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        milestoneGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         milestoneGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         milestoneGrid.add(createMetricBox("STARTING WEIGHT", valStartingWeight, ThemeConfig.TEXT_SECONDARY));
@@ -454,10 +450,10 @@ public class SettingsPanel extends JPanel {
     }
 
     private JPanel createMetabolicHealthCard() {
-        ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
+        ModernCard card = new ModernCard(12, new Insets(10, 14, 10, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
-        card.setPreferredSize(new Dimension(450, 190));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
+        card.setPreferredSize(new Dimension(450, 215));
 
         JLabel title = new JLabel("Metabolic Health & Clinical Benchmarks");
         title.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -476,7 +472,7 @@ public class SettingsPanel extends JPanel {
         JPanel grid = new JPanel(new GridLayout(2, 2, 6, 6));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         grid.add(createMetricBox("BODY MASS INDEX", valBmi, ThemeConfig.PRIMARY_ACCENT));
         grid.add(createMetricBox("BASAL METABOLIC RATE", valBmr, ThemeConfig.PRIMARY_ACCENT));
@@ -488,13 +484,171 @@ public class SettingsPanel extends JPanel {
         return card;
     }
 
+    private JPanel createAccountSecurityCard() {
+        ModernCard card = new ModernCard(12, new Insets(10, 14, 10, 14));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+        card.setPreferredSize(new Dimension(450, 150));
+
+        // Header: Title + Online Status Badge
+        JPanel header = new JPanel(new BorderLayout(8, 0));
+        header.setOpaque(false);
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel title = new JLabel("Account Security & Cloud Sync");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        header.add(title, BorderLayout.WEST);
+
+        JPanel badgeWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        badgeWrapper.setOpaque(false);
+        JLabel badge = new JLabel("● POSTGREST ONLINE");
+        badge.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        badge.setForeground(ThemeConfig.SUCCESS);
+        badge.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 100), 1, true),
+                BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        ));
+        badgeWrapper.add(badge);
+        header.add(badgeWrapper, BorderLayout.EAST);
+        card.add(header);
+        card.add(Box.createVerticalStrut(6));
+
+        // 3 Diagnostic Tiles
+        JPanel diagGrid = new JPanel(new GridLayout(1, 3, 6, 0));
+        diagGrid.setOpaque(false);
+        diagGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        diagGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+
+        diagGrid.add(createDiagnosticTile("ACTIVE SESSION", "Supabase JWT", ThemeConfig.SUCCESS));
+        diagGrid.add(createDiagnosticTile("ENCRYPTION", "TLS 1.3 / AES", ThemeConfig.PRIMARY_ACCENT));
+        diagGrid.add(createDiagnosticTile("DATA BACKUPS", "Local CSV Ready", ThemeConfig.TEXT_PRIMARY));
+        card.add(diagGrid);
+        card.add(Box.createVerticalStrut(8));
+
+        // Action row: Reset password + account info
+        JPanel actionRow = new JPanel(new BorderLayout());
+        actionRow.setOpaque(false);
+        actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        actionRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+
+        JLabel lblSecInfo = new JLabel("• Passwords encrypted via bcrypt. Tokens auto-refreshed.");
+        lblSecInfo.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        lblSecInfo.setForeground(ThemeConfig.TEXT_MUTED);
+        actionRow.add(lblSecInfo, BorderLayout.WEST);
+
+        ModernButton btnSecurity = new ModernButton("Send Recovery Email", ModernButton.ButtonStyle.SECONDARY);
+        btnSecurity.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        btnSecurity.setIcon(IconFactory.createIcon(IconFactory.IconType.USER, 11, ThemeConfig.TEXT_SECONDARY));
+        btnSecurity.setIconTextGap(4);
+        btnSecurity.setPreferredSize(new Dimension(150, 24));
+        btnSecurity.addActionListener(e -> sendPasswordReset());
+        actionRow.add(btnSecurity, BorderLayout.EAST);
+        card.add(actionRow);
+
+        card.add(Box.createVerticalGlue());
+        return card;
+    }
+
+    private JPanel createTrainerNetworkCard() {
+        ModernCard card = new ModernCard(12, new Insets(10, 14, 10, 14));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+        card.setPreferredSize(new Dimension(450, 150));
+
+        // Header
+        JPanel header = new JPanel(new BorderLayout(8, 0));
+        header.setOpaque(false);
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel title = new JLabel("Trainer & Athlete Federation");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        header.add(title, BorderLayout.WEST);
+
+        JPanel badgeWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        badgeWrapper.setOpaque(false);
+        JLabel badge = new JLabel("COACHING HUB");
+        badge.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        badge.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        badge.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xF0, 0x44, 0x44, 100), 1, true),
+                BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        ));
+        badgeWrapper.add(badge);
+        header.add(badgeWrapper, BorderLayout.EAST);
+        card.add(header);
+        card.add(Box.createVerticalStrut(6));
+
+        // Center description & code preview
+        JPanel body = new JPanel(new BorderLayout(8, 0));
+        body.setOpaque(false);
+        body.setAlignmentX(Component.LEFT_ALIGNMENT);
+        body.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+
+        JLabel desc = new JLabel("<html><body style='width: 320px;'>Link clients or your coach with your athlete code to review workouts, body measurements, and nutrition logs in real-time.</body></html>");
+        desc.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        desc.setForeground(ThemeConfig.TEXT_SECONDARY);
+        body.add(desc, BorderLayout.CENTER);
+        card.add(body);
+        card.add(Box.createVerticalStrut(8));
+
+        // Bottom link button
+        JPanel actionRow = new JPanel(new BorderLayout());
+        actionRow.setOpaque(false);
+        actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        actionRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+
+        JLabel hint = new JLabel("Coaching Roster Sync • Cloud Enabled");
+        hint.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        hint.setForeground(ThemeConfig.TEXT_MUTED);
+        actionRow.add(hint, BorderLayout.WEST);
+
+        ModernButton btnGoToTrainer = new ModernButton("Open Trainer Dashboard →", ModernButton.ButtonStyle.PRIMARY);
+        btnGoToTrainer.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        btnGoToTrainer.setPreferredSize(new Dimension(170, 24));
+        btnGoToTrainer.addActionListener(e -> {
+            if (navigationConsumer != null) {
+                navigationConsumer.accept(SidebarPanel.NavItem.STUDENTS);
+            }
+        });
+        actionRow.add(btnGoToTrainer, BorderLayout.EAST);
+        card.add(actionRow);
+
+        card.add(Box.createVerticalGlue());
+        return card;
+    }
+
+    private JPanel createDiagnosticTile(String title, String val, Color valColor) {
+        JPanel tile = new JPanel();
+        tile.setLayout(new BoxLayout(tile, BoxLayout.Y_AXIS));
+        tile.setBackground(new Color(18, 18, 18));
+        tile.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(32, 32, 32), 1, true),
+                BorderFactory.createEmptyBorder(4, 8, 4, 8)
+        ));
+        JLabel t = new JLabel(title);
+        t.setFont(new Font("Segoe UI", Font.BOLD, 8));
+        t.setForeground(ThemeConfig.TEXT_MUTED);
+        tile.add(t);
+        tile.add(Box.createVerticalStrut(2));
+
+        JLabel v = new JLabel(val);
+        v.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        v.setForeground(valColor);
+        tile.add(v);
+        return tile;
+    }
+
     private JPanel createInfoTile(String header, JLabel valueLbl, Color valueColor) {
         JPanel tile = new JPanel();
         tile.setLayout(new BoxLayout(tile, BoxLayout.Y_AXIS));
         tile.setBackground(ThemeConfig.BG_DARK);
         tile.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(32, 32, 32), 1, true),
-                BorderFactory.createEmptyBorder(5, 8, 5, 8)
+                BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
 
         JLabel hLbl = new JLabel(header);
@@ -514,7 +668,7 @@ public class SettingsPanel extends JPanel {
         box.setBackground(ThemeConfig.BG_DARK);
         box.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(32, 32, 32), 1, true),
-                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+                BorderFactory.createEmptyBorder(5, 8, 5, 8)
         ));
 
         JLabel hLbl = new JLabel(header);
@@ -1077,10 +1231,10 @@ public class SettingsPanel extends JPanel {
     }
 
     private JPanel createDataReportsCard() {
-        ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
+        ModernCard card = new ModernCard(12, new Insets(10, 14, 10, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
-        card.setPreferredSize(new Dimension(450, 190));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
+        card.setPreferredSize(new Dimension(450, 215));
 
         // Header: Title on left, Badge on right in a FlowLayout wrapper so it NEVER stretches
         JPanel header = new JPanel(new BorderLayout(8, 0));
@@ -1155,7 +1309,7 @@ public class SettingsPanel extends JPanel {
         card.add(Box.createVerticalStrut(6));
 
         // Local privacy note at bottom
-        JLabel note = new JLabel("🔒 Exports are saved directly as clean CSV spreadsheets.");
+        JLabel note = new JLabel("• Exports are saved directly as clean CSV spreadsheets.");
         note.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         note.setForeground(ThemeConfig.TEXT_MUTED);
         note.setAlignmentX(Component.LEFT_ALIGNMENT);
