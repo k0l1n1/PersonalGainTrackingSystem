@@ -83,4 +83,51 @@ public class GoalCalculationTest {
         assertTrue(Math.abs(currentWithinTolerance - target) <= 0.3);
         assertFalse(Math.abs(currentOutsideTolerance - target) <= 0.3);
     }
+
+    @Test
+    @DisplayName("Should remove completed goal when new active goal of same type is added")
+    void testRemoveCompletedGoalWhenNewSameGoalAdded() {
+        com.personaltracker.dao.GoalDAO dao = new com.personaltracker.dao.GoalDAO();
+
+        // 1. Old completed weight goal (75.0 / 70.0 kg, completed Jan 19)
+        Goal completedGoal = new Goal("Reach Target Weight", "Weight", 70.0, 75.0, "kg", LocalDate.of(2027, 1, 19));
+        completedGoal.setStatus("COMPLETED");
+
+        // 2. New active weight goal (64.0 / 78.0 kg, in progress Jan 24)
+        Goal newActiveGoal = new Goal("Reach Target Weight", "Weight", 78.0, 64.0, "kg", LocalDate.of(2027, 1, 24));
+        newActiveGoal.setStatus("IN_PROGRESS");
+
+        java.util.List<Goal> goals = java.util.List.of(completedGoal, newActiveGoal);
+        java.util.List<Goal> cleaned = dao.deduplicateGoals(goals);
+
+        // The completed goal should be removed; only the new active goal should remain
+        assertEquals(1, cleaned.size());
+        assertEquals(78.0, cleaned.get(0).getTargetValue());
+        assertEquals("IN_PROGRESS", cleaned.get(0).getStatus());
+    }
+
+    @Test
+    @DisplayName("Should retain distinct goals and only remove completed duplicate of same thing")
+    void testRetainDistinctGoals() {
+        com.personaltracker.dao.GoalDAO dao = new com.personaltracker.dao.GoalDAO();
+
+        Goal completedWeight = new Goal("Reach Target Weight", "Weight", 70.0, 75.0, "kg", LocalDate.of(2027, 1, 19));
+        completedWeight.setStatus("COMPLETED");
+
+        Goal newActiveWeight = new Goal("Reach Target Weight", "Weight", 78.0, 64.0, "kg", LocalDate.of(2027, 1, 24));
+        newActiveWeight.setStatus("IN_PROGRESS");
+
+        Goal completedBench = new Goal("Bench Press 100kg", "Strength", 100.0, 100.0, "kg", LocalDate.of(2027, 2, 1));
+        completedBench.setStatus("COMPLETED");
+
+        java.util.List<Goal> goals = java.util.List.of(completedWeight, newActiveWeight, completedBench);
+        java.util.List<Goal> cleaned = dao.deduplicateGoals(goals);
+
+        // Bench Press is distinct and completed -> retained.
+        // Completed weight goal has an active counterpart -> removed.
+        assertEquals(2, cleaned.size());
+        assertTrue(cleaned.stream().anyMatch(g -> g.getTitle().equals("Bench Press 100kg")));
+        assertTrue(cleaned.stream().anyMatch(g -> g.getTargetValue() == 78.0 && g.getStatus().equals("IN_PROGRESS")));
+        assertFalse(cleaned.stream().anyMatch(g -> g.getTargetValue() == 70.0));
+    }
 }
