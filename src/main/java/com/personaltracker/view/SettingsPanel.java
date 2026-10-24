@@ -116,7 +116,8 @@ public class SettingsPanel extends JPanel {
         // 2. Main Balanced 2-Column Dashboard Grid (Fits fully on 1 screen frame without scrolling)
         JPanel grid = new JPanel(new GridLayout(1, 2, 14, 0));
         grid.setOpaque(false);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 440));
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 395));
+        grid.setPreferredSize(new Dimension(1000, 395));
 
         // Left Column: Personal Identity & ID + Fitness & Health Reports
         JPanel leftCol = new JPanel();
@@ -277,8 +278,8 @@ public class SettingsPanel extends JPanel {
     private JPanel createPersonalInfoCard() {
         ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
-        card.setPreferredSize(new Dimension(450, 215));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
+        card.setPreferredSize(new Dimension(450, 190));
 
         JLabel title = new JLabel("Personal Information & Unique ID");
         title.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -310,6 +311,8 @@ public class SettingsPanel extends JPanel {
         codeLeft.add(valUserCode);
         codeBanner.add(codeLeft, BorderLayout.CENTER);
 
+        JPanel copyWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        copyWrapper.setOpaque(false);
         JButton btnCopyCode = new JButton("Copy Code");
         btnCopyCode.setIcon(IconFactory.createIcon(IconFactory.IconType.COPY, 11, Color.WHITE));
         btnCopyCode.setIconTextGap(4);
@@ -329,7 +332,8 @@ public class SettingsPanel extends JPanel {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
             ToastNotification.showToast(SettingsPanel.this, "Copied code: " + code, ToastNotification.ToastType.SUCCESS);
         });
-        codeBanner.add(btnCopyCode, BorderLayout.EAST);
+        copyWrapper.add(btnCopyCode);
+        codeBanner.add(copyWrapper, BorderLayout.EAST);
 
         card.add(codeBanner);
         card.add(Box.createVerticalStrut(8));
@@ -337,7 +341,7 @@ public class SettingsPanel extends JPanel {
         JPanel grid = new JPanel(new GridLayout(3, 2, 6, 6));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 125));
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 115));
 
         grid.add(createInfoTile("FULL NAME", valFullName, ThemeConfig.TEXT_PRIMARY));
         grid.add(createInfoTile("ACCOUNT ROLE", valRole, ThemeConfig.PRIMARY_ACCENT));
@@ -347,19 +351,20 @@ public class SettingsPanel extends JPanel {
         grid.add(createInfoTile("RECORDED HEIGHT", valHeight, ThemeConfig.SUCCESS));
 
         card.add(grid);
+        card.add(Box.createVerticalGlue());
         return card;
     }
 
     private JPanel createWeightJourneyCard() {
         ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
-        card.setPreferredSize(new Dimension(450, 215));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
+        card.setPreferredSize(new Dimension(450, 190));
 
-        // Header Row: Title on left, Adjust Target button on right
+        // Header Row: Title on left, Adjust Target button on right in FlowLayout wrapper
         JPanel headerRow = new JPanel(new BorderLayout());
         headerRow.setOpaque(false);
-        headerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        headerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
         headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel title = new JLabel("Weight Journey & Progress");
@@ -367,13 +372,18 @@ public class SettingsPanel extends JPanel {
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         headerRow.add(title, BorderLayout.WEST);
 
+        JPanel btnWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        btnWrapper.setOpaque(false);
+
         ModernButton btnAdjust = new ModernButton("Adjust Target", ModernButton.ButtonStyle.SECONDARY);
         btnAdjust.setFont(new Font("Segoe UI", Font.BOLD, 10));
         btnAdjust.setIcon(IconFactory.createIcon(IconFactory.IconType.EDIT, 11, ThemeConfig.TEXT_SECONDARY));
         btnAdjust.setIconTextGap(4);
-        btnAdjust.setPreferredSize(new Dimension(110, 26));
+        btnAdjust.setPreferredSize(new Dimension(120, 26));
         btnAdjust.addActionListener(e -> openQuickTargetDialog());
-        headerRow.add(btnAdjust, BorderLayout.EAST);
+        btnWrapper.add(btnAdjust);
+
+        headerRow.add(btnWrapper, BorderLayout.EAST);
 
         card.add(headerRow);
         card.add(Box.createVerticalStrut(8));
@@ -381,7 +391,7 @@ public class SettingsPanel extends JPanel {
         // 3 Milestone Cards: Starting -> Current -> Target
         JPanel milestoneGrid = new JPanel(new GridLayout(1, 3, 6, 0));
         milestoneGrid.setOpaque(false);
-        milestoneGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 54));
+        milestoneGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         milestoneGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         milestoneGrid.add(createMetricBox("STARTING WEIGHT", valStartingWeight, ThemeConfig.TEXT_SECONDARY));
@@ -438,6 +448,7 @@ public class SettingsPanel extends JPanel {
         });
         footerRow.add(lnkCheckIns, BorderLayout.EAST);
         card.add(footerRow);
+        card.add(Box.createVerticalGlue());
 
         return card;
     }
@@ -445,8 +456,8 @@ public class SettingsPanel extends JPanel {
     private JPanel createMetabolicHealthCard() {
         ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
-        card.setPreferredSize(new Dimension(450, 215));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
+        card.setPreferredSize(new Dimension(450, 190));
 
         JLabel title = new JLabel("Metabolic Health & Clinical Benchmarks");
         title.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -465,7 +476,7 @@ public class SettingsPanel extends JPanel {
         JPanel grid = new JPanel(new GridLayout(2, 2, 6, 6));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 125));
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
 
         grid.add(createMetricBox("BODY MASS INDEX", valBmi, ThemeConfig.PRIMARY_ACCENT));
         grid.add(createMetricBox("BASAL METABOLIC RATE", valBmr, ThemeConfig.PRIMARY_ACCENT));
@@ -473,6 +484,7 @@ public class SettingsPanel extends JPanel {
         grid.add(createMetricBox("HEALTHY WEIGHT RANGE", valIdealRange, ThemeConfig.WARNING));
 
         card.add(grid);
+        card.add(Box.createVerticalGlue());
         return card;
     }
 
@@ -1067,8 +1079,8 @@ public class SettingsPanel extends JPanel {
     private JPanel createDataReportsCard() {
         ModernCard card = new ModernCard(12, new Insets(12, 14, 12, 14));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 215));
-        card.setPreferredSize(new Dimension(450, 215));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
+        card.setPreferredSize(new Dimension(450, 190));
 
         // Header: Title on left, Badge on right in a FlowLayout wrapper so it NEVER stretches
         JPanel header = new JPanel(new BorderLayout(8, 0));
@@ -1149,6 +1161,7 @@ public class SettingsPanel extends JPanel {
         note.setAlignmentX(Component.LEFT_ALIGNMENT);
         note.setMaximumSize(new Dimension(Integer.MAX_VALUE, 16));
         card.add(note);
+        card.add(Box.createVerticalGlue());
 
         return card;
     }
