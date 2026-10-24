@@ -29,9 +29,18 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         super("Personal Gain Tracking System - Desktop Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1320, 840);
-        setMinimumSize(new Dimension(1080, 680));
-        setLocationRelativeTo(null);
+
+        // Dynamically size within screen bounds and launch maximized to fit in one frame without side clipping
+        Rectangle maxBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        int targetWidth = Math.min(1240, maxBounds.width);
+        int targetHeight = Math.min(780, maxBounds.height);
+        setSize(targetWidth, targetHeight);
+        setMinimumSize(new Dimension(Math.min(900, maxBounds.width), Math.min(560, maxBounds.height)));
+        setLocation(
+                maxBounds.x + Math.max(0, (maxBounds.width - targetWidth) / 2),
+                maxBounds.y + Math.max(0, (maxBounds.height - targetHeight) / 2)
+        );
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         getContentPane().setBackground(ThemeConfig.BG_DARK);
 
         setLayout(new BorderLayout());

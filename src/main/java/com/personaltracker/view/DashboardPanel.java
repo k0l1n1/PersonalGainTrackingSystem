@@ -133,7 +133,7 @@ public class DashboardPanel extends JPanel {
         setOpaque(false);
         setLayout(new BorderLayout());
 
-        JPanel contentPanel = new JPanel();
+        ScrollableContentPanel contentPanel = new ScrollableContentPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setOpaque(false);
         contentPanel.setBorder(BorderFactory.createEmptyBorder(22, 28, 28, 28));
@@ -165,6 +165,7 @@ public class DashboardPanel extends JPanel {
         scrollPane.setBorder(null);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -247,7 +248,7 @@ public class DashboardPanel extends JPanel {
         lblFocusQuote.setForeground(new Color(0xA8, 0xA8, 0xA8));
         textPanel.add(lblFocusQuote);
 
-        header.add(textPanel, BorderLayout.WEST);
+        header.add(textPanel, BorderLayout.CENTER);
 
         // Minimalist Quick Action Pills Bar
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 4));
@@ -599,7 +600,7 @@ public class DashboardPanel extends JPanel {
         sub.setForeground(ThemeConfig.TEXT_MUTED);
         text.add(sub);
         left.add(text);
-        header.add(left, BorderLayout.WEST);
+        header.add(left, BorderLayout.CENTER);
 
         lblAssignmentsBadge.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblAssignmentsBadge.setForeground(ThemeConfig.PRIMARY_ACCENT);
@@ -1686,5 +1687,38 @@ public class DashboardPanel extends JPanel {
             }
         };
         worker.execute();
+    }
+
+    /**
+     * Inner helper panel that tracks the JViewport width to guarantee the dashboard
+     * always stays neatly within one frame with zero horizontal overflow or clipping.
+     */
+    private static class ScrollableContentPanel extends JPanel implements Scrollable {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 16;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 64;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
     }
 }
