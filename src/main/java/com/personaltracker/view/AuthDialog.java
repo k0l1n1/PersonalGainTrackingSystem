@@ -51,6 +51,8 @@ public class AuthDialog extends JDialog {
 
     private final JLabel lblSwitchMode = new JLabel("Don't have an account? Sign Up");
     private final JLabel lblForgotPwd = new JLabel("Forgot password?");
+    private final JCheckBox chkRememberMe = new JCheckBox("Remember me", true);
+    private final JPanel pnlOptions = new JPanel(new BorderLayout());
 
     public AuthDialog(Frame owner) {
         super(owner, "Sign In - Personal Gain Tracking System", true);
@@ -176,21 +178,33 @@ public class AuthDialog extends JDialog {
 
         mainPanel.add(formPanel);
 
+        // Options row: Remember Me on left, Forgot Password on right
+        pnlOptions.setOpaque(false);
+        pnlOptions.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+
+        chkRememberMe.setFont(ThemeConfig.FONT_SMALL);
+        chkRememberMe.setForeground(ThemeConfig.TEXT_SECONDARY);
+        chkRememberMe.setOpaque(false);
+        chkRememberMe.setFocusPainted(false);
+        chkRememberMe.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        pnlOptions.add(chkRememberMe, BorderLayout.WEST);
+
         // Forgot Password link
         lblForgotPwd.setFont(ThemeConfig.FONT_SMALL);
         lblForgotPwd.setForeground(ThemeConfig.PRIMARY_ACCENT);
         lblForgotPwd.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        lblForgotPwd.setAlignmentX(Component.RIGHT_ALIGNMENT);
         lblForgotPwd.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 switchToResetMode();
             }
         });
-        mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(lblForgotPwd);
+        pnlOptions.add(lblForgotPwd, BorderLayout.EAST);
 
-        mainPanel.add(Box.createVerticalStrut(16));
+        mainPanel.add(Box.createVerticalStrut(8));
+        mainPanel.add(pnlOptions);
+
+        mainPanel.add(Box.createVerticalStrut(14));
 
         // Primary action button
         btnPrimary.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -205,6 +219,13 @@ public class AuthDialog extends JDialog {
         btnDemo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         btnDemo.addActionListener(e -> {
             SupabaseClient.getInstance().enableDemoMode();
+            UserSession demoSession = SupabaseClient.getInstance().getCurrentSession();
+            if (demoSession != null) {
+                demoSession.setNewRegistration(false);
+                if (chkRememberMe.isSelected()) {
+                    authService.saveSession(demoSession);
+                }
+            }
             authenticated = true;
             dispose();
         });
@@ -271,6 +292,8 @@ public class AuthDialog extends JDialog {
         pnlRoleRow.setVisible(false);
         pnlNameRow.setVisible(false);
         pnlPassRow.setVisible(true);
+        pnlOptions.setVisible(true);
+        chkRememberMe.setVisible(true);
         lblForgotPwd.setVisible(true);
         btnPrimary.setText("Sign In");
         lblSwitchMode.setText("Don't have an account? Sign Up");
@@ -288,6 +311,8 @@ public class AuthDialog extends JDialog {
         pnlRoleRow.setVisible(true);
         pnlNameRow.setVisible(true);
         pnlPassRow.setVisible(true);
+        pnlOptions.setVisible(true);
+        chkRememberMe.setVisible(true);
         lblForgotPwd.setVisible(false);
         btnPrimary.setText("Create Account");
         lblSwitchMode.setText("Already have an account? Sign In");
@@ -305,7 +330,7 @@ public class AuthDialog extends JDialog {
         pnlRoleRow.setVisible(false);
         pnlNameRow.setVisible(false);
         pnlPassRow.setVisible(false);
-        lblForgotPwd.setVisible(false);
+        pnlOptions.setVisible(false);
         btnPrimary.setText("Send Reset Link");
         lblSwitchMode.setText("Back to Sign In");
         setSize(420, 440);
@@ -386,12 +411,24 @@ public class AuthDialog extends JDialog {
                     try {
                         UserSession session = get();
                         if (session != null) {
+                            if (chkRememberMe.isSelected()) {
+                                authService.saveSession(session);
+                            } else {
+                                authService.clearSavedSession();
+                            }
                             AppConfig.getInstance().setMockMode(false);
                             authenticated = true;
                             dispose();
                         }
                     } catch (Exception ex) {
-                        showError(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+                        Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+                        String errMsg = cause.getMessage() != null ? cause.getMessage() : "";
+                        // If user has already created an account, directly log into their account!
+                        if (SupabaseAuthService.isUserAlreadyExistsError(errMsg, "")) {
+                            attemptDirectLogin(email, password);
+                        } else {
+                            showError(errMsg);
+                        }
                     }
                 }
             };
@@ -424,6 +461,11 @@ public class AuthDialog extends JDialog {
                     try {
                         UserSession session = get();
                         if (session != null) {
+                            if (chkRememberMe.isSelected()) {
+                                authService.saveSession(session);
+                            } else {
+                                authService.clearSavedSession();
+                            }
                             AppConfig.getInstance().setMockMode(false);
                             authenticated = true;
                             dispose();
@@ -435,6 +477,44 @@ public class AuthDialog extends JDialog {
             };
             worker.execute();
         }
+    }
+
+    private void attemptDirectLogin(String email, String password) {
+        btnPrimary.setEnabled(false);
+        btnPrimary.setText("Signing into existing account...");
+
+        SwingWorker<UserSession, Void> worker = new SwingWorker<>() {
+            @Override
+            protected UserSession doInBackground() throws Exception {
+                UserSession session = authService.login(email, password);
+                if (session != null) {
+                    session.setNewRegistration(false);
+                }
+                return session;
+            }
+
+            @Override
+            protected void done() {
+                btnPrimary.setEnabled(true);
+                btnPrimary.setText(isRegisterMode ? "Create Account" : "Sign In");
+                try {
+                    UserSession session = get();
+                    if (session != null) {
+                        if (chkRememberMe.isSelected()) {
+                            authService.saveSession(session);
+                        } else {
+                            authService.clearSavedSession();
+                        }
+                        AppConfig.getInstance().setMockMode(false);
+                        authenticated = true;
+                        dispose();
+                    }
+                } catch (Exception ex) {
+                    showError("An account already exists for this email, but the password entered was incorrect.");
+                }
+            }
+        };
+        worker.execute();
     }
 
     private void showError(String msg) {

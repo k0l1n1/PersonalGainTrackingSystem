@@ -95,12 +95,25 @@ public class AppConfig {
         }
     }
 
-    public void saveRuntimeCredentials(String url, String anonKey) {
+    private Properties loadExistingProps() {
+        Properties props = new Properties();
+        File propFile = new File(CONFIG_FILE);
+        if (propFile.exists()) {
+            try (FileInputStream in = new FileInputStream(propFile)) {
+                props.load(in);
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Failed to read property file: " + e.getMessage());
+            }
+        }
+        return props;
+    }
+
+    public synchronized void saveRuntimeCredentials(String url, String anonKey) {
         this.supabaseUrl = url != null ? url.trim() : "";
         this.supabaseAnonKey = anonKey != null ? anonKey.trim() : "";
         this.mockMode = isPlaceholderOrEmpty(this.supabaseUrl) || isPlaceholderOrEmpty(this.supabaseAnonKey);
 
-        Properties props = new Properties();
+        Properties props = loadExistingProps();
         props.setProperty("SUPABASE_URL", this.supabaseUrl);
         props.setProperty("SUPABASE_ANON_KEY", this.supabaseAnonKey);
         try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
@@ -108,6 +121,52 @@ public class AppConfig {
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not persist credentials to file: " + e.getMessage());
         }
+    }
+
+    public synchronized void saveAuthSession(String userId, String email, String accessToken, String refreshToken) {
+        Properties props = loadExistingProps();
+        if (userId != null) props.setProperty("AUTH_USER_ID", userId);
+        if (email != null) props.setProperty("AUTH_EMAIL", email);
+        if (accessToken != null) props.setProperty("AUTH_ACCESS_TOKEN", accessToken);
+        if (refreshToken != null) props.setProperty("AUTH_REFRESH_TOKEN", refreshToken);
+        props.setProperty("AUTH_SAVED_AT", String.valueOf(System.currentTimeMillis()));
+
+        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
+            props.store(out, "Personal Gain Tracking System Runtime Config");
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not persist auth session: " + e.getMessage());
+        }
+    }
+
+    public synchronized void clearAuthSession() {
+        Properties props = loadExistingProps();
+        props.remove("AUTH_USER_ID");
+        props.remove("AUTH_EMAIL");
+        props.remove("AUTH_ACCESS_TOKEN");
+        props.remove("AUTH_REFRESH_TOKEN");
+        props.remove("AUTH_SAVED_AT");
+
+        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
+            props.store(out, "Personal Gain Tracking System Runtime Config");
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not clear auth session: " + e.getMessage());
+        }
+    }
+
+    public String getSavedUserId() {
+        return loadExistingProps().getProperty("AUTH_USER_ID");
+    }
+
+    public String getSavedEmail() {
+        return loadExistingProps().getProperty("AUTH_EMAIL");
+    }
+
+    public String getSavedAccessToken() {
+        return loadExistingProps().getProperty("AUTH_ACCESS_TOKEN");
+    }
+
+    public String getSavedRefreshToken() {
+        return loadExistingProps().getProperty("AUTH_REFRESH_TOKEN");
     }
 
     private String getEnvValue(String key, Dotenv dotenv, String defaultValue) {

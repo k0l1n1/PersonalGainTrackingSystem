@@ -25,6 +25,7 @@ import java.awt.event.KeyEvent;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.YearMonth;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -78,16 +79,37 @@ public class OnboardingDialog extends JDialog {
 
     /**
      * Checks the current session and displays the onboarding dialog if the user is new.
+     * If the user has already created an account, bypasses the filling process and
+     * directly loads their account profile.
      */
     public static void showIfNewUser(Window owner) {
         UserSession session = SupabaseClient.getInstance().getCurrentSession();
         if (session == null) return;
 
+        // If user already created an account (not a brand new registration),
+        // directly bypass onboarding form filling and ensure their existing profile is loaded.
+        if (!session.isNewRegistration()) {
+            if (session.getProfile() == null || session.getProfile().getHeightCm() == null) {
+                try {
+                    ProfileDAO dao = new ProfileDAO();
+                    UserProfile p = dao.getProfile(session.getUserId());
+                    if (p != null) {
+                        session.setProfile(p);
+                    }
+                } catch (Exception ignored) {}
+            }
+            return;
+        }
+
         UserProfile profile = session.getProfile();
-        if (profile == null) {
+        if (profile == null || profile.getHeightCm() == null) {
             try {
                 ProfileDAO dao = new ProfileDAO();
-                profile = dao.getProfile(session.getUserId());
+                UserProfile remote = dao.getProfile(session.getUserId());
+                if (remote != null) {
+                    profile = remote;
+                    session.setProfile(profile);
+                }
             } catch (Exception ignored) {}
         }
 
@@ -954,18 +976,50 @@ public class OnboardingDialog extends JDialog {
 
                 // 2. Save Day-1 initial body measurement so charts & metrics have baseline data immediately
                 try {
-                    BodyMeasurement baseline = new BodyMeasurement(LocalDate.now(), weight, height);
-                    measurementDAO.saveMeasurement(baseline);
+                    List<BodyMeasurement> existingMeasurements = measurementDAO.getAllMeasurements();
+                    boolean hasToday = false;
+                    if (existingMeasurements != null) {
+                        for (BodyMeasurement m : existingMeasurements) {
+                            if (LocalDate.now().equals(m.getRecordedDate())) {
+                                hasToday = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!hasToday) {
+                        BodyMeasurement baseline = new BodyMeasurement(LocalDate.now(), weight, height);
+                        measurementDAO.saveMeasurement(baseline);
+                    }
                 } catch (Exception ex) {
                     System.err.println("Notice: Could not log initial measurement: " + ex.getMessage());
                 }
 
-                // 3. Save initial goal (Target Weight)
+                // 3. Save or update initial goal (Target Weight) - avoids creating duplicate goals
                 try {
-                    Goal weightGoal = new Goal("Reach Target Weight", "Weight", targetWeight, weight, "kg", LocalDate.now().plusMonths(3));
-                    goalDAO.saveGoal(weightGoal);
+                    List<Goal> existingGoals = goalDAO.getAllGoals();
+                    Goal existingWeightGoal = null;
+                    if (existingGoals != null) {
+                        for (Goal g : existingGoals) {
+                            if ("Weight".equalsIgnoreCase(g.getCategory()) ||
+                                    (g.getTitle() != null && g.getTitle().equalsIgnoreCase("Reach Target Weight"))) {
+                                existingWeightGoal = g;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (existingWeightGoal != null) {
+                        // Update existing weight goal target and current values
+                        existingWeightGoal.setTargetValue(targetWeight);
+                        existingWeightGoal.setCurrentValue(weight);
+                        existingWeightGoal.setTargetDate(LocalDate.now().plusMonths(3));
+                        goalDAO.updateGoal(existingWeightGoal);
+                    } else {
+                        Goal weightGoal = new Goal("Reach Target Weight", "Weight", targetWeight, weight, "kg", LocalDate.now().plusMonths(3));
+                        goalDAO.saveGoal(weightGoal);
+                    }
                 } catch (Exception ex) {
-                    System.err.println("Notice: Could not log initial goal: " + ex.getMessage());
+                    System.err.println("Notice: Could not log or update initial goal: " + ex.getMessage());
                 }
 
                 // 4. Try unlocking welcome achievement
@@ -986,6 +1040,7 @@ public class OnboardingDialog extends JDialog {
                     UserSession session = SupabaseClient.getInstance().getCurrentSession();
                     if (session != null) {
                         session.setProfile(profile);
+                        session.setNewRegistration(false);
                     }
                     dispose();
                 } catch (Exception e) {

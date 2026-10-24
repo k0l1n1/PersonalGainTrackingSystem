@@ -20,7 +20,58 @@ public class GoalDAO {
                 "user_id=eq." + uid + "&order=target_date.asc,created_at.desc",
                 Goal.class);
 
-        return goals != null ? goals : Collections.emptyList();
+        if (goals == null || goals.isEmpty()) return Collections.emptyList();
+
+        return deduplicateWeightGoals(goals);
+    }
+
+    private List<Goal> deduplicateWeightGoals(List<Goal> goals) {
+        if (goals == null || goals.isEmpty()) return Collections.emptyList();
+
+        List<Goal> cleaned = new java.util.ArrayList<>();
+        List<Goal> duplicatesToDelete = new java.util.ArrayList<>();
+        Goal latestWeightGoal = null;
+
+        for (Goal g : goals) {
+            boolean isReachTargetWeight = "Weight".equalsIgnoreCase(g.getCategory()) &&
+                    (g.getTitle() != null && g.getTitle().equalsIgnoreCase("Reach Target Weight"));
+
+            if (isReachTargetWeight && !g.isCompleted()) {
+                if (latestWeightGoal == null) {
+                    latestWeightGoal = g;
+                } else {
+                    // Choose the more recent target weight goal
+                    if (g.getTargetDate() != null &&
+                            (latestWeightGoal.getTargetDate() == null || g.getTargetDate().isAfter(latestWeightGoal.getTargetDate()))) {
+                        duplicatesToDelete.add(latestWeightGoal);
+                        latestWeightGoal = g;
+                    } else {
+                        duplicatesToDelete.add(g);
+                    }
+                }
+            } else {
+                cleaned.add(g);
+            }
+        }
+
+        if (latestWeightGoal != null) {
+            cleaned.add(0, latestWeightGoal);
+        }
+
+        // Clean up redundant duplicates from backend asynchronously
+        if (!duplicatesToDelete.isEmpty()) {
+            new Thread(() -> {
+                for (Goal dup : duplicatesToDelete) {
+                    if (dup.getId() != null) {
+                        try {
+                            deleteGoal(dup.getId());
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }).start();
+        }
+
+        return cleaned;
     }
 
     public Goal saveGoal(Goal goal) throws Exception {

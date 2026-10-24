@@ -12,6 +12,7 @@ public class UserSession {
     private String refreshToken;
     private Instant expiresAt;
     private UserProfile profile;
+    private boolean newRegistration = false;
 
     public UserSession(String userId, String email, String accessToken, String refreshToken, long expiresInSeconds) {
         this.userId = userId;
@@ -20,6 +21,15 @@ public class UserSession {
         this.refreshToken = refreshToken;
         this.expiresAt = Instant.now().plusSeconds(expiresInSeconds);
         this.profile = new UserProfile(userId, email, "");
+        this.newRegistration = false;
+    }
+
+    public boolean isNewRegistration() {
+        return newRegistration;
+    }
+
+    public void setNewRegistration(boolean newRegistration) {
+        this.newRegistration = newRegistration;
     }
 
     public boolean isAuthenticated() {

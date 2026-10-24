@@ -3,6 +3,7 @@ package com.personaltracker.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.personaltracker.config.AppConfig;
+import com.personaltracker.dao.ProfileDAO;
 import com.personaltracker.model.UserProfile;
 import com.personaltracker.model.UserSession;
 import com.personaltracker.util.ValidationUtil;
@@ -92,7 +93,19 @@ public class SupabaseAuthService {
             String userEmail = userNode.path("email").asText();
 
             UserSession session = new UserSession(userId, userEmail, accessToken, refreshToken, expiresIn);
+            session.setNewRegistration(false);
+            try {
+                ProfileDAO profileDao = new ProfileDAO();
+                UserProfile profile = profileDao.getProfile(userId);
+                if (profile != null) {
+                    session.setProfile(profile);
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.FINE, "Profile fetch during login notice: " + e.getMessage());
+            }
+
             supabaseClient.setCurrentSession(session);
+            saveSession(session);
             return session;
         } else {
             JsonNode errNode = objectMapper.readTree(response.body());
@@ -108,6 +121,8 @@ public class SupabaseAuthService {
 
     /**
      * Registers a new user with email, password, full name, and selected role (MEMBER or TRAINER).
+     * If the account already exists, automatically attempts to directly log in so the user
+     * doesn't have to restart or redo the filling process.
      */
     public UserSession register(String email, String password, String fullName, String role) throws Exception {
         if (!ValidationUtil.isValidEmail(email)) {
@@ -154,19 +169,49 @@ public class SupabaseAuthService {
             String userId = userNode.path("id").asText();
             String userEmail = userNode.path("email").asText();
 
+            // When a user already created an account, Supabase can return 200 with an empty identities list
+            JsonNode identities = userNode.path("identities");
+            if (identities.isArray() && identities.isEmpty()) {
+                LOGGER.info("Supabase reported empty identities (account already exists). Directly logging in...");
+                UserSession session = login(email, password);
+                session.setNewRegistration(false);
+                return session;
+            }
+
             if (accessToken == null || accessToken.isBlank()) {
-                // If email confirmation is enabled on Supabase, an access token won't be returned yet
-                throw new IOException("Registration successful! Please check your email inbox to confirm your account before logging in.");
+                // Check if account already exists and can be logged in directly
+                try {
+                    UserSession session = login(email, password);
+                    session.setNewRegistration(false);
+                    return session;
+                } catch (Exception loginEx) {
+                    throw new IOException("Registration successful! Please check your email inbox to confirm your account before logging in.");
+                }
             }
 
             UserSession session = new UserSession(userId, userEmail, accessToken, refreshToken, expiresIn);
+            session.setNewRegistration(true);
             UserProfile profile = new UserProfile(userId, userEmail, fullName, userRole);
             session.setProfile(profile);
             supabaseClient.setCurrentSession(session);
+            saveSession(session);
             return session;
         } else {
             JsonNode errNode = objectMapper.readTree(response.body());
             String msg = errNode.path("msg").asText(errNode.path("error_description").asText("Registration failed."));
+            String errorCode = errNode.path("error_code").asText("");
+
+            // If account already exists, directly login to their account!
+            if (isUserAlreadyExistsError(msg, errorCode)) {
+                LOGGER.info("User already created an account (" + msg + "). Directly logging into their account...");
+                try {
+                    UserSession session = login(email, password);
+                    session.setNewRegistration(false);
+                    return session;
+                } catch (Exception ex) {
+                    throw new IOException("An account with this email already exists, but the password was incorrect. Please check your password.");
+                }
+            }
             throw new IOException(msg);
         }
     }
@@ -221,7 +266,128 @@ public class SupabaseAuthService {
                 LOGGER.log(Level.WARNING, "Error on remote logout: " + e.getMessage());
             }
         }
+        clearSavedSession();
         supabaseClient.setCurrentSession(null);
+    }
+
+    /**
+     * Attempts to automatically restore a previously saved user session.
+     * Directly signs in without making the user perform the filling process again.
+     */
+    public UserSession restoreSession() {
+        String refreshToken = config.getSavedRefreshToken();
+        String accessToken = config.getSavedAccessToken();
+        String userId = config.getSavedUserId();
+        String email = config.getSavedEmail();
+
+        if ((refreshToken == null || refreshToken.isBlank()) && (accessToken == null || accessToken.isBlank())) {
+            return null;
+        }
+
+        if (config.isMockMode()) {
+            return loginMock(email != null && !email.isBlank() ? email : "athlete@demo.com");
+        }
+
+        // 1. Try refreshing with saved refresh token
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            try {
+                String url = config.getSupabaseUrl() + "/auth/v1/token?grant_type=refresh_token";
+                Map<String, String> body = new HashMap<>();
+                body.put("refresh_token", refreshToken);
+
+                String jsonBody = objectMapper.writeValueAsString(body);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofSeconds(8))
+                        .header("apikey", config.getSupabaseAnonKey())
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200) {
+                    JsonNode root = objectMapper.readTree(response.body());
+                    String newAccess = root.path("access_token").asText();
+                    String newRefresh = root.path("refresh_token").asText(refreshToken);
+                    long expiresIn = root.path("expires_in").asLong(3600);
+                    JsonNode userNode = root.path("user");
+                    String uId = userNode.path("id").asText(userId != null ? userId : "");
+                    String uEmail = userNode.path("email").asText(email != null ? email : "");
+
+                    UserSession session = new UserSession(uId, uEmail, newAccess, newRefresh, expiresIn);
+                    session.setNewRegistration(false);
+
+                    try {
+                        ProfileDAO profileDao = new ProfileDAO();
+                        UserProfile p = profileDao.getProfile(uId);
+                        if (p != null) session.setProfile(p);
+                    } catch (Exception ignored) {}
+
+                    supabaseClient.setCurrentSession(session);
+                    saveSession(session);
+                    return session;
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.FINE, "Token refresh restoration notice: " + e.getMessage());
+            }
+        }
+
+        // 2. Try validating existing access token
+        if (accessToken != null && !accessToken.isBlank()) {
+            try {
+                String url = config.getSupabaseUrl() + "/auth/v1/user";
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofSeconds(6))
+                        .header("apikey", config.getSupabaseAnonKey())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .GET()
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200) {
+                    JsonNode userNode = objectMapper.readTree(response.body());
+                    String uId = userNode.path("id").asText(userId);
+                    String uEmail = userNode.path("email").asText(email);
+
+                    UserSession session = new UserSession(uId, uEmail, accessToken, refreshToken, 3600);
+                    session.setNewRegistration(false);
+
+                    try {
+                        ProfileDAO profileDao = new ProfileDAO();
+                        UserProfile p = profileDao.getProfile(uId);
+                        if (p != null) session.setProfile(p);
+                    } catch (Exception ignored) {}
+
+                    supabaseClient.setCurrentSession(session);
+                    return session;
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.FINE, "Access token validation notice: " + e.getMessage());
+            }
+        }
+
+        clearSavedSession();
+        return null;
+    }
+
+    public void saveSession(UserSession session) {
+        if (session == null) return;
+        config.saveAuthSession(session.getUserId(), session.getEmail(), session.getAccessToken(), session.getRefreshToken());
+    }
+
+    public void clearSavedSession() {
+        config.clearAuthSession();
+    }
+
+    public static boolean isUserAlreadyExistsError(String msg, String errorCode) {
+        if (errorCode != null && errorCode.toLowerCase().contains("already_exists")) return true;
+        if (msg == null) return false;
+        String m = msg.toLowerCase();
+        return (m.contains("already") && (m.contains("register") || m.contains("exist"))) ||
+               m.contains("already in use") ||
+               m.contains("already taken") ||
+               m.contains("user_already_exists");
     }
 
     private UserSession loginMock(String email) {
@@ -233,18 +399,29 @@ public class SupabaseAuthService {
         }
         UserSession session = new UserSession(uid, email, "mock-jwt-" + uid, "mock-refresh", 86400);
         session.setProfile(profile);
+        session.setNewRegistration(false);
         supabaseClient.setCurrentSession(session);
+        saveSession(session);
         return session;
     }
 
     private UserSession registerMock(String email, String fullName, String role) {
         String uid = "user-" + Math.abs(email.hashCode());
+        UserProfile existing = supabaseClient.getMockProfile(uid);
+        if (existing != null) {
+            LOGGER.info("User already created an account in mock mode. Directly logging into their account...");
+            UserSession session = loginMock(email);
+            session.setNewRegistration(false);
+            return session;
+        }
         UserProfile profile = new UserProfile(uid, email, fullName != null ? fullName : "Athlete", role);
         supabaseClient.updateMockProfile(profile);
 
         UserSession session = new UserSession(uid, email, "mock-jwt-" + uid, "mock-refresh", 86400);
         session.setProfile(profile);
+        session.setNewRegistration(true);
         supabaseClient.setCurrentSession(session);
+        saveSession(session);
         return session;
     }
 }

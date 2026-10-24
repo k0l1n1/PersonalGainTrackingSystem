@@ -1,6 +1,8 @@
 package com.personaltracker;
 
 import com.personaltracker.config.ThemeConfig;
+import com.personaltracker.model.UserSession;
+import com.personaltracker.service.SupabaseAuthService;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.view.AuthDialog;
 import com.personaltracker.view.MainFrame;
@@ -22,6 +24,17 @@ public class Main {
 
                 // 2. Initialize client instance
                 SupabaseClient.getInstance();
+
+                // 2.5. Direct Login for Existing Users:
+                // If user has already created an account and signed in previously,
+                // directly restore their account session and launch the dashboard without
+                // forcing them through the login or onboarding filling process again.
+                UserSession savedSession = SupabaseAuthService.getInstance().restoreSession();
+                if (savedSession != null && savedSession.isAuthenticated()) {
+                    MainFrame mainFrame = new MainFrame();
+                    mainFrame.setVisible(true);
+                    return;
+                }
 
                 // 3. Show Authentication Dialog
                 AuthDialog authDialog = new AuthDialog(null);

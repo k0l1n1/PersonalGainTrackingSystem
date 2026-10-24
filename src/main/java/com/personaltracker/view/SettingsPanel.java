@@ -93,6 +93,12 @@ public class SettingsPanel extends JPanel {
     private final JLabel lblConnectionStatus = new JLabel("Cloud Synced • Active Session");
     private final JLabel lblAccountEmail = new JLabel("--");
 
+    // Navigation Tabs & Segmented Switcher
+    private final CardLayout tabCardLayout = new CardLayout();
+    private final JPanel tabContentPanel = new JPanel(tabCardLayout);
+    private JButton btnTabProfile;
+    private JButton btnTabExports;
+
     private Runnable onProfileUpdatedCallback;
     private java.util.function.Consumer<SidebarPanel.NavItem> navigationConsumer;
 
@@ -109,35 +115,19 @@ public class SettingsPanel extends JPanel {
         content.setOpaque(false);
         content.setBorder(BorderFactory.createEmptyBorder(20, 28, 28, 28));
 
-        // 1. Hero Athlete Header Card with Edit Button
+        // 1. Hero Profile Header Card
         content.add(createHeroBanner());
-        content.add(Box.createVerticalStrut(20));
+        content.add(Box.createVerticalStrut(18));
 
-        // 2. Main Two-Column Tracking Grid
-        JPanel grid = new JPanel(new GridLayout(1, 2, 20, 0));
-        grid.setOpaque(false);
+        // 2. Segmented Navigation Bar
+        content.add(createSegmentedTabRow());
+        content.add(Box.createVerticalStrut(18));
 
-        // Left Column: Personal Identity & Weight Journey Tracker
-        JPanel leftCol = new JPanel();
-        leftCol.setLayout(new BoxLayout(leftCol, BoxLayout.Y_AXIS));
-        leftCol.setOpaque(false);
-        leftCol.add(createPersonalInfoCard());
-        leftCol.add(Box.createVerticalStrut(16));
-        leftCol.add(createWeightJourneyCard());
-        grid.add(leftCol);
-
-        // Right Column: Clinical Metabolic Health & Cloud Backend
-        JPanel rightCol = new JPanel();
-        rightCol.setLayout(new BoxLayout(rightCol, BoxLayout.Y_AXIS));
-        rightCol.setOpaque(false);
-        rightCol.add(createMetabolicHealthCard());
-        rightCol.add(Box.createVerticalStrut(16));
-        rightCol.add(createAccountSecurityCard());
-        rightCol.add(Box.createVerticalStrut(16));
-        rightCol.add(createDataReportsCard());
-        grid.add(rightCol);
-
-        content.add(grid);
+        // 3. Tabbed Content Views (Profile & Health vs Data Exports & Security)
+        tabContentPanel.setOpaque(false);
+        tabContentPanel.add(createProfileHealthTab(), "PROFILE");
+        tabContentPanel.add(createReportsSecurityTab(), "EXPORTS");
+        content.add(tabContentPanel);
 
         JScrollPane scrollPane = new JScrollPane(content);
         scrollPane.setBorder(null);
@@ -145,6 +135,96 @@ public class SettingsPanel extends JPanel {
         scrollPane.getViewport().setOpaque(false);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private JPanel createSegmentedTabRow() {
+        JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        bar.setOpaque(false);
+
+        btnTabProfile = createTabButton("Profile & Health Baseline",
+                IconFactory.createIcon(IconFactory.IconType.USER, 14, Color.WHITE), true);
+        btnTabProfile.addActionListener(e -> switchTab(true));
+
+        btnTabExports = createTabButton("Data Exports & Account Security",
+                IconFactory.createIcon(IconFactory.IconType.ANALYTICS, 14, ThemeConfig.TEXT_MUTED), false);
+        btnTabExports.addActionListener(e -> switchTab(false));
+
+        bar.add(btnTabProfile);
+        bar.add(btnTabExports);
+        return bar;
+    }
+
+    private void switchTab(boolean toProfile) {
+        updateTabButtonStyle(btnTabProfile, toProfile, IconFactory.IconType.USER);
+        updateTabButtonStyle(btnTabExports, !toProfile, IconFactory.IconType.ANALYTICS);
+        tabCardLayout.show(tabContentPanel, toProfile ? "PROFILE" : "EXPORTS");
+    }
+
+    private JButton createTabButton(String text, Icon icon, boolean active) {
+        JButton btn = new JButton(text);
+        if (icon != null) {
+            btn.setIcon(icon);
+            btn.setIconTextGap(8);
+        }
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(true);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 22, 10, 22));
+        applyTabStyle(btn, active);
+        return btn;
+    }
+
+    private void updateTabButtonStyle(JButton btn, boolean active, IconFactory.IconType iconType) {
+        applyTabStyle(btn, active);
+        btn.setIcon(IconFactory.createIcon(iconType, 14, active ? Color.WHITE : ThemeConfig.TEXT_MUTED));
+    }
+
+    private void applyTabStyle(JButton btn, boolean active) {
+        if (active) {
+            btn.setBackground(ThemeConfig.PRIMARY_ACCENT);
+            btn.setForeground(Color.WHITE);
+        } else {
+            btn.setBackground(new Color(24, 24, 24));
+            btn.setForeground(ThemeConfig.TEXT_MUTED);
+        }
+    }
+
+    private JPanel createProfileHealthTab() {
+        JPanel grid = new JPanel(new GridLayout(1, 2, 20, 0));
+        grid.setOpaque(false);
+
+        // Left Column: Personal Identity & Unique Code
+        JPanel leftCol = new JPanel();
+        leftCol.setLayout(new BoxLayout(leftCol, BoxLayout.Y_AXIS));
+        leftCol.setOpaque(false);
+        leftCol.add(createPersonalInfoCard());
+        grid.add(leftCol);
+
+        // Right Column: Weight Journey & Metabolic Health Benchmarks
+        JPanel rightCol = new JPanel();
+        rightCol.setLayout(new BoxLayout(rightCol, BoxLayout.Y_AXIS));
+        rightCol.setOpaque(false);
+        rightCol.add(createWeightJourneyCard());
+        rightCol.add(Box.createVerticalStrut(16));
+        rightCol.add(createMetabolicHealthCard());
+        grid.add(rightCol);
+
+        return grid;
+    }
+
+    private JPanel createReportsSecurityTab() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(false);
+
+        panel.add(createDataReportsCard());
+        panel.add(Box.createVerticalStrut(16));
+        panel.add(createAccountSecurityCard());
+
+        return panel;
     }
 
     public void setOnProfileUpdatedCallback(Runnable callback) {
@@ -249,11 +329,11 @@ public class SettingsPanel extends JPanel {
         JPanel actionBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionBox.setOpaque(false);
 
-        ModernButton btnExportReport = new ModernButton("Export Report", ModernButton.ButtonStyle.SECONDARY);
+        ModernButton btnExportReport = new ModernButton("Export Data", ModernButton.ButtonStyle.SECONDARY);
         btnExportReport.setIcon(IconFactory.createIcon(IconFactory.IconType.ANALYTICS, 13, ThemeConfig.TEXT_SECONDARY));
         btnExportReport.setIconTextGap(6);
-        btnExportReport.setPreferredSize(new Dimension(145, 42));
-        btnExportReport.addActionListener(e -> promptExportReport());
+        btnExportReport.setPreferredSize(new Dimension(140, 42));
+        btnExportReport.addActionListener(e -> switchTab(false));
         actionBox.add(btnExportReport);
 
         ModernButton btnEditProfile = new ModernButton("Edit Profile Info", ModernButton.ButtonStyle.PRIMARY);
@@ -278,22 +358,22 @@ public class SettingsPanel extends JPanel {
         card.add(title);
         card.add(Box.createVerticalStrut(14));
 
-        // Unique Member / Student Code Banner
-        JPanel codeBanner = new JPanel(new BorderLayout(12, 0));
-        codeBanner.setBackground(ThemeConfig.BG_DARK);
+        // Unique Member / Student Code Banner (Sleek dark card, no alarming red border)
+        JPanel codeBanner = new JPanel(new BorderLayout(14, 0));
+        codeBanner.setBackground(new Color(18, 18, 18));
         codeBanner.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
-                BorderFactory.createEmptyBorder(10, 14, 10, 14)
+                BorderFactory.createLineBorder(new Color(40, 40, 40), 1, true),
+                BorderFactory.createEmptyBorder(12, 16, 12, 16)
         ));
 
-        JPanel codeText = new JPanel(new GridLayout(2, 1, 0, 2));
+        JPanel codeText = new JPanel(new GridLayout(2, 1, 0, 4));
         codeText.setOpaque(false);
-        JLabel lblCodeTitle = new JLabel("UNIQUE STUDENT / USER ID CODE");
-        lblCodeTitle.setFont(new Font("Segoe UI", Font.BOLD, 9));
-        lblCodeTitle.setForeground(ThemeConfig.PRIMARY_ACCENT);
+        JLabel lblCodeTitle = new JLabel("UNIQUE ATHLETE / TRAINER ID CODE");
+        lblCodeTitle.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        lblCodeTitle.setForeground(ThemeConfig.TEXT_MUTED);
         codeText.add(lblCodeTitle);
 
-        valUserCode.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        valUserCode.setFont(new Font("Segoe UI", Font.BOLD, 19));
         valUserCode.setForeground(Color.WHITE);
         codeText.add(valUserCode);
         codeBanner.add(codeText, BorderLayout.CENTER);
@@ -304,10 +384,10 @@ public class SettingsPanel extends JPanel {
         btnCopyCode.setHorizontalTextPosition(SwingConstants.RIGHT);
         btnCopyCode.setFont(ThemeConfig.FONT_SMALL);
         btnCopyCode.setForeground(Color.WHITE);
-        btnCopyCode.setBackground(ThemeConfig.BG_CARD);
+        btnCopyCode.setBackground(new Color(32, 32, 32));
         btnCopyCode.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
-                BorderFactory.createEmptyBorder(6, 12, 6, 12)
+                BorderFactory.createLineBorder(new Color(55, 55, 55), 1, true),
+                BorderFactory.createEmptyBorder(7, 14, 7, 14)
         ));
         btnCopyCode.setFocusPainted(false);
         btnCopyCode.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -322,13 +402,13 @@ public class SettingsPanel extends JPanel {
         card.add(codeBanner);
         card.add(Box.createVerticalStrut(10));
 
-        JLabel lblCodeHint = new JLabel("Share this unique code with your trainer so they can monitor your progress in their roster.");
+        JLabel lblCodeHint = new JLabel("Share this unique code with your trainer or athletes so they can link accounts.");
         lblCodeHint.setIcon(IconFactory.createIcon(IconFactory.IconType.INFO, 12, ThemeConfig.TEXT_MUTED));
         lblCodeHint.setIconTextGap(6);
         lblCodeHint.setFont(ThemeConfig.FONT_SMALL);
         lblCodeHint.setForeground(ThemeConfig.TEXT_MUTED);
         card.add(lblCodeHint);
-        card.add(Box.createVerticalStrut(14));
+        card.add(Box.createVerticalStrut(16));
 
         JPanel grid = new JPanel(new GridLayout(3, 2, 14, 14));
         grid.setOpaque(false);
@@ -423,10 +503,10 @@ public class SettingsPanel extends JPanel {
     }
 
     private JPanel createMetabolicHealthCard() {
-        ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
+        ModernCard card = new ModernCard(14, new Insets(20, 22, 20, 22));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        JLabel title = new JLabel("Metabolic Profile & Clinical Benchmarks");
+        JLabel title = new JLabel("Metabolic Health & Clinical Benchmarks");
         title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         card.add(title);
@@ -451,10 +531,10 @@ public class SettingsPanel extends JPanel {
     }
 
     private JPanel createAccountSecurityCard() {
-        ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
+        ModernCard card = new ModernCard(14, new Insets(20, 22, 20, 22));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        JLabel title = new JLabel("Account & Security");
+        JLabel title = new JLabel("Account & Security Settings");
         title.setFont(ThemeConfig.FONT_TITLE);
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         card.add(title);
@@ -480,13 +560,14 @@ public class SettingsPanel extends JPanel {
         card.add(Box.createVerticalStrut(16));
 
         // Actions: Reset Password & Setup Wizard
-        JPanel btnRow = new JPanel(new GridLayout(1, 2, 10, 0));
+        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         btnRow.setOpaque(false);
 
         ModernButton btnReset = new ModernButton("Reset Password", ModernButton.ButtonStyle.SECONDARY);
         btnReset.setFont(ThemeConfig.FONT_SMALL);
         btnReset.setIcon(IconFactory.createIcon(IconFactory.IconType.USER, 13, ThemeConfig.TEXT_SECONDARY));
         btnReset.setIconTextGap(6);
+        btnReset.setPreferredSize(new Dimension(160, 38));
         btnReset.addActionListener(e -> sendPasswordReset());
         btnRow.add(btnReset);
 
@@ -494,6 +575,7 @@ public class SettingsPanel extends JPanel {
         btnWizard.setFont(ThemeConfig.FONT_SMALL);
         btnWizard.setIcon(IconFactory.createIcon(IconFactory.IconType.REFRESH, 13, ThemeConfig.TEXT_SECONDARY));
         btnWizard.setIconTextGap(6);
+        btnWizard.setPreferredSize(new Dimension(160, 38));
         btnWizard.addActionListener(e -> launchOnboardingWizard());
         btnRow.add(btnWizard);
 
@@ -1090,7 +1172,7 @@ public class SettingsPanel extends JPanel {
     }
 
     private JPanel createDataReportsCard() {
-        ModernCard card = new ModernCard(14, new Insets(18, 20, 18, 20));
+        ModernCard card = new ModernCard(14, new Insets(20, 24, 20, 24));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
         JPanel header = new JPanel(new BorderLayout());
@@ -1106,71 +1188,133 @@ public class SettingsPanel extends JPanel {
         badge.setForeground(ThemeConfig.PRIMARY_ACCENT);
         badge.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xF0, 0x44, 0x44, 120), 1, true),
-                BorderFactory.createEmptyBorder(2, 6, 2, 6)
+                BorderFactory.createEmptyBorder(3, 8, 3, 8)
         ));
         header.add(badge, BorderLayout.EAST);
         card.add(header);
         card.add(Box.createVerticalStrut(6));
 
-        JLabel desc = new JLabel("Generate and export your historical fitness, nutrition, body measurements, sleep, and hydration reports.");
+        JLabel desc = new JLabel("Download individual dataset reports or export your entire fitness archive in standardized CSV format.");
         desc.setFont(ThemeConfig.FONT_SMALL);
         desc.setForeground(ThemeConfig.TEXT_MUTED);
         card.add(desc);
-        card.add(Box.createVerticalStrut(14));
+        card.add(Box.createVerticalStrut(16));
 
-        // Quick Export Buttons Grid (5 items)
-        JPanel btnGrid = new JPanel(new GridLayout(1, 5, 8, 0));
+        // Full Comprehensive Archive Hero Banner
+        JPanel fullArchiveBanner = new JPanel(new BorderLayout(16, 0));
+        fullArchiveBanner.setBackground(new Color(18, 18, 18));
+        fullArchiveBanner.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(42, 42, 42), 1, true),
+                BorderFactory.createEmptyBorder(14, 18, 14, 18)
+        ));
+
+        JPanel archiveText = new JPanel(new GridLayout(2, 1, 0, 4));
+        archiveText.setOpaque(false);
+        JLabel lblArchiveTitle = new JLabel("Complete Fitness Archive (All 5 Datasets)");
+        lblArchiveTitle.setFont(ThemeConfig.FONT_BODY_BOLD);
+        lblArchiveTitle.setForeground(ThemeConfig.TEXT_PRIMARY);
+        archiveText.add(lblArchiveTitle);
+
+        JLabel lblArchiveSub = new JLabel("Generates and bundles Workouts, Measurements, Nutrition, Water Intake, and Sleep records into a chosen directory.");
+        lblArchiveSub.setFont(ThemeConfig.FONT_SMALL);
+        lblArchiveSub.setForeground(ThemeConfig.TEXT_MUTED);
+        archiveText.add(lblArchiveSub);
+        fullArchiveBanner.add(archiveText, BorderLayout.CENTER);
+
+        ModernButton btnFullExport = new ModernButton("Export All Reports", ModernButton.ButtonStyle.PRIMARY);
+        btnFullExport.setIcon(IconFactory.createIcon(IconFactory.IconType.COPY, 13, Color.WHITE));
+        btnFullExport.setIconTextGap(8);
+        btnFullExport.setPreferredSize(new Dimension(175, 40));
+        btnFullExport.addActionListener(e -> exportFullPackage());
+        fullArchiveBanner.add(btnFullExport, BorderLayout.EAST);
+
+        card.add(fullArchiveBanner);
+        card.add(Box.createVerticalStrut(20));
+
+        // Subheading
+        JLabel lblDatasetsTitle = new JLabel("INDIVIDUAL DATASET EXPORTS");
+        lblDatasetsTitle.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        lblDatasetsTitle.setForeground(ThemeConfig.TEXT_MUTED);
+        card.add(lblDatasetsTitle);
+        card.add(Box.createVerticalStrut(10));
+
+        // 2x3 Grid of Individual Report Cards
+        JPanel btnGrid = new JPanel(new GridLayout(2, 3, 14, 14));
         btnGrid.setOpaque(false);
 
-        ModernButton btnWorkoutsReport = new ModernButton("Workouts", ModernButton.ButtonStyle.SECONDARY);
-        btnWorkoutsReport.setIcon(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 12, ThemeConfig.TEXT_SECONDARY));
-        btnWorkoutsReport.setIconTextGap(5);
-        btnWorkoutsReport.setFont(ThemeConfig.FONT_SMALL);
-        btnWorkoutsReport.addActionListener(e -> exportReport("Workouts"));
+        btnGrid.add(createReportExportCard("Workouts & Exercises",
+                "Exercise routines, sets, reps, and weights lifted.",
+                IconFactory.IconType.WORKOUT,
+                () -> exportReport("Workouts")));
 
-        ModernButton btnBodyReport = new ModernButton("Measurements", ModernButton.ButtonStyle.SECONDARY);
-        btnBodyReport.setIcon(IconFactory.createIcon(IconFactory.IconType.MEASUREMENT, 12, ThemeConfig.TEXT_SECONDARY));
-        btnBodyReport.setIconTextGap(5);
-        btnBodyReport.setFont(ThemeConfig.FONT_SMALL);
-        btnBodyReport.addActionListener(e -> exportReport("Measurements"));
+        btnGrid.add(createReportExportCard("Body Measurements",
+                "Weigh-ins, body fat %, waist, chest, and arms.",
+                IconFactory.IconType.MEASUREMENT,
+                () -> exportReport("Measurements")));
 
-        ModernButton btnNutritionReport = new ModernButton("Nutrition", ModernButton.ButtonStyle.SECONDARY);
-        btnNutritionReport.setIcon(IconFactory.createIcon(IconFactory.IconType.NUTRITION, 12, ThemeConfig.TEXT_SECONDARY));
-        btnNutritionReport.setIconTextGap(5);
-        btnNutritionReport.setFont(ThemeConfig.FONT_SMALL);
-        btnNutritionReport.addActionListener(e -> exportReport("Nutrition"));
+        btnGrid.add(createReportExportCard("Nutrition & Macros",
+                "Daily meals, calories, protein, carbs, and fats.",
+                IconFactory.IconType.NUTRITION,
+                () -> exportReport("Nutrition")));
 
-        ModernButton btnWaterReport = new ModernButton("Water Intake", ModernButton.ButtonStyle.SECONDARY);
-        btnWaterReport.setIcon(IconFactory.createIcon(IconFactory.IconType.WATER, 12, ThemeConfig.TEXT_SECONDARY));
-        btnWaterReport.setIconTextGap(5);
-        btnWaterReport.setFont(ThemeConfig.FONT_SMALL);
-        btnWaterReport.addActionListener(e -> exportReport("Water"));
+        btnGrid.add(createReportExportCard("Water Intake",
+                "Hydration logs, timestamps, and target progress.",
+                IconFactory.IconType.WATER,
+                () -> exportReport("Water")));
 
-        ModernButton btnSleepReport = new ModernButton("Sleep & Recovery", ModernButton.ButtonStyle.SECONDARY);
-        btnSleepReport.setIcon(IconFactory.createIcon(IconFactory.IconType.SLEEP, 12, ThemeConfig.TEXT_SECONDARY));
-        btnSleepReport.setIconTextGap(5);
-        btnSleepReport.setFont(ThemeConfig.FONT_SMALL);
-        btnSleepReport.addActionListener(e -> exportReport("Sleep"));
+        btnGrid.add(createReportExportCard("Sleep & Recovery",
+                "Sleep duration, bedtimes, and quality scores.",
+                IconFactory.IconType.SLEEP,
+                () -> exportReport("Sleep")));
 
-        btnGrid.add(btnWorkoutsReport);
-        btnGrid.add(btnBodyReport);
-        btnGrid.add(btnNutritionReport);
-        btnGrid.add(btnWaterReport);
-        btnGrid.add(btnSleepReport);
+        btnGrid.add(createReportExportCard("Custom Export Dialog",
+                "Select specific dataset via guided export prompt.",
+                IconFactory.IconType.ANALYTICS,
+                this::promptExportReport));
+
         card.add(btnGrid);
-        card.add(Box.createVerticalStrut(12));
-
-        // Full Comprehensive Export Button
-        ModernButton btnFullExport = new ModernButton("Export Complete Fitness Archive (All 5 Reports)", ModernButton.ButtonStyle.PRIMARY);
-        btnFullExport.setIcon(IconFactory.createIcon(IconFactory.IconType.COPY, 13, Color.WHITE));
-        btnFullExport.setIconTextGap(6);
-        btnFullExport.setFont(ThemeConfig.FONT_SMALL);
-        btnFullExport.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        btnFullExport.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btnFullExport.addActionListener(e -> exportFullPackage());
-        card.add(btnFullExport);
-
         return card;
+    }
+
+    private JPanel createReportExportCard(String title, String description, IconFactory.IconType iconType, Runnable onExport) {
+        JPanel tile = new JPanel();
+        tile.setLayout(new BoxLayout(tile, BoxLayout.Y_AXIS));
+        tile.setBackground(new Color(18, 18, 18));
+        tile.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(36, 36, 36), 1, true),
+                BorderFactory.createEmptyBorder(12, 14, 12, 14)
+        ));
+
+        // Header: Icon + Title
+        JPanel topRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        topRow.setOpaque(false);
+        JLabel iconLbl = new JLabel(IconFactory.createIcon(iconType, 15, ThemeConfig.PRIMARY_ACCENT));
+        JLabel titleLbl = new JLabel(title);
+        titleLbl.setFont(ThemeConfig.FONT_BODY_BOLD);
+        titleLbl.setForeground(ThemeConfig.TEXT_PRIMARY);
+        topRow.add(iconLbl);
+        topRow.add(titleLbl);
+        tile.add(topRow);
+        tile.add(Box.createVerticalStrut(6));
+
+        // Description
+        JLabel descLbl = new JLabel("<html><body style='width: 170px;'>" + description + "</body></html>");
+        descLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        descLbl.setForeground(ThemeConfig.TEXT_MUTED);
+        tile.add(descLbl);
+        tile.add(Box.createVerticalStrut(12));
+
+        // Export Button
+        ModernButton btn = new ModernButton("Export CSV", ModernButton.ButtonStyle.SECONDARY);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btn.setIcon(IconFactory.createIcon(IconFactory.IconType.ANALYTICS, 11, ThemeConfig.TEXT_SECONDARY));
+        btn.setIconTextGap(6);
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.addActionListener(e -> onExport.run());
+        tile.add(btn);
+
+        return tile;
     }
 
     private void promptExportReport() {
