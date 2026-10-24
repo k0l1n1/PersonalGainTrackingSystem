@@ -33,6 +33,10 @@ public class TrainerStudentTest {
         client = SupabaseClient.getInstance();
         client.enableDemoMode();
         dao = new TrainerStudentDAO();
+        dao.clearRosterForTrainer("test-trainer-99");
+        dao.clearRosterForTrainer("trainer-dup-test");
+        dao.clearRosterForTrainer("trainer-remove-test");
+        dao.clearRosterForTrainer("test-persistent-coach-1");
     }
 
     @Test
@@ -179,5 +183,39 @@ public class TrainerStudentTest {
         WorkoutExercise ex = new WorkoutExercise("Squat", 3, 10, 80.0);
         String exJson = mapper.writeValueAsString(ex);
         assertFalse(exJson.contains("volumeLoad"), "Should not serialize volumeLoad");
+    }
+
+    @Test
+    @DisplayName("Enrolled students persist across DAO instances and only deleted on explicit removal")
+    public void testEnrolledStudentsPersistUntilExplicitlyRemoved() throws Exception {
+        String testTrainer = "test-persistent-coach-1";
+
+        // 1. Enroll Marcus
+        dao.enrollStudentByCode(testTrainer, "PG-MARCUS");
+
+        // 2. Query with a new DAO instance to simulate app restart
+        TrainerStudentDAO freshDao = new TrainerStudentDAO();
+        List<TrainerStudent> roster = freshDao.getEnrolledStudents(testTrainer);
+        assertEquals(1, roster.size(), "Student should be saved across DAO instances");
+        assertEquals("student-marcus-102", roster.get(0).getStudentId());
+        assertEquals(4, roster.get(0).getTotalWorkouts(), "Marcus should show 4 logged workouts");
+
+        // 3. Enroll Sarah
+        freshDao.enrollStudentByCode(testTrainer, "PG-SARAH7");
+        roster = freshDao.getEnrolledStudents(testTrainer);
+        assertEquals(2, roster.size(), "Both enrolled students should be saved");
+
+        // 4. Student is ONLY deleted when explicitly removed by trainer
+        freshDao.removeStudent(testTrainer, "student-marcus-102");
+
+        TrainerStudentDAO afterDeleteDao = new TrainerStudentDAO();
+        List<TrainerStudent> remaining = afterDeleteDao.getEnrolledStudents(testTrainer);
+        assertEquals(1, remaining.size(), "Marcus was removed; only Sarah should remain");
+        assertEquals("student-sarah-101", remaining.get(0).getStudentId());
+        assertEquals(4, remaining.get(0).getTotalWorkouts(), "Sarah should show 4 logged workouts");
+
+        // Clean up
+        afterDeleteDao.removeStudent(testTrainer, "student-sarah-101");
+        assertTrue(afterDeleteDao.getEnrolledStudents(testTrainer).isEmpty());
     }
 }

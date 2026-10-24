@@ -1,0 +1,24 @@
+{
+  "e87a32d7-0795-443c-9ee1-d028484d1be7" : [ {
+    "id" : "enroll-sarah-101",
+    "trainer_id" : "e87a32d7-0795-443c-9ee1-d028484d1be7",
+    "student_id" : "student-sarah-101",
+    "enrolled_date" : "2026-10-24"
+  }, {
+    "id" : "enroll-marcus-102",
+    "trainer_id" : "e87a32d7-0795-443c-9ee1-d028484d1be7",
+    "student_id" : "student-marcus-102",
+    "enrolled_date" : "2026-10-24"
+  } ],
+  "trainer-coach-99" : [ {
+    "id" : "enroll-sarah-101",
+    "trainer_id" : "trainer-coach-99",
+    "student_id" : "student-sarah-101",
+    "enrolled_date" : "2026-10-24"
+  }, {
+    "id" : "enroll-marcus-102",
+    "trainer_id" : "trainer-coach-99",
+    "student_id" : "student-marcus-102",
+    "enrolled_date" : "2026-10-24"
+  } ]
+}

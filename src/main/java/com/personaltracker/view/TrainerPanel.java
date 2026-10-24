@@ -381,17 +381,16 @@ public class TrainerPanel extends JPanel {
         btnView.addActionListener(e -> openStudentProgressInspector(ts.getStudentId()));
         actions.add(btnView);
 
-        JButton btnRemove = new JButton("✕");
-        btnRemove.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnRemove.setForeground(ThemeConfig.ERROR);
+        JButton btnRemove = new JButton();
+        btnRemove.setIcon(IconFactory.createIcon(IconFactory.IconType.TRASH, 14, ThemeConfig.ERROR));
         btnRemove.setBackground(ThemeConfig.BG_DARK);
         btnRemove.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(ThemeConfig.ERROR, 1, true),
-                BorderFactory.createEmptyBorder(6, 12, 6, 12)
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
         btnRemove.setFocusPainted(false);
         btnRemove.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnRemove.setToolTipText("Remove from roster");
+        btnRemove.setToolTipText("Remove student from roster");
         btnRemove.addActionListener(e -> confirmRemoveStudent(ts));
         actions.add(btnRemove);
 
