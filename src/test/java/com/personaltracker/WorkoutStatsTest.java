@@ -98,4 +98,33 @@ public class WorkoutStatsTest {
             }
         }
     }
+
+    @Test
+    @DisplayName("Should persist exercises and return them when loading workout")
+    void testSaveAndRetrieveWorkoutExercises() throws Exception {
+        com.personaltracker.dao.WorkoutDAO dao = new com.personaltracker.dao.WorkoutDAO();
+        Workout w = new Workout("Leg Day Heavy", "Strength", LocalDate.now(), 60, 500);
+        w.addExercise(new WorkoutExercise("Squat", 4, 8, 120.0));
+        w.addExercise(new WorkoutExercise("Leg Press", 3, 12, 180.0));
+
+        Workout saved = dao.saveWorkout(w);
+        assertNotNull(saved.getId());
+
+        // Test DAO getExercisesForWorkout
+        java.util.List<WorkoutExercise> fetched = dao.getExercisesForWorkout(saved.getId());
+        assertNotNull(fetched);
+        assertEquals(2, fetched.size());
+        assertEquals("Squat", fetched.get(0).getExerciseName());
+        assertEquals(4, fetched.get(0).getSets());
+        assertEquals(8, fetched.get(0).getReps());
+        assertEquals(120.0, fetched.get(0).getWeightKg());
+
+        // Test updating workout exercises
+        w.getExercises().add(new WorkoutExercise("Calf Raises", 4, 15, 60.0));
+        dao.updateWorkout(w);
+
+        java.util.List<WorkoutExercise> updated = dao.getExercisesForWorkout(saved.getId());
+        assertNotNull(updated);
+        assertEquals(3, updated.size());
+    }
 }

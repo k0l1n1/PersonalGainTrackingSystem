@@ -12,8 +12,8 @@ import java.awt.geom.RoundRectangle2D;
 public class ModernCard extends JPanel {
     private static final long serialVersionUID = 1L;
     private int cornerRadius = 14;
-    private Color backgroundColor = ThemeConfig.BG_CARD;
-    private Color borderColor = ThemeConfig.BORDER_COLOR;
+    private Color backgroundColor = null;
+    private Color borderColor = null;
     private boolean hoverEffect = false;
     private boolean isHovered = false;
 
@@ -67,12 +67,12 @@ public class ModernCard extends JPanel {
         int h = getHeight();
 
         // Background fill
-        Color fill = (hoverEffect && isHovered) ? ThemeConfig.BG_CARD_HOVER : backgroundColor;
+        Color fill = (hoverEffect && isHovered) ? ThemeConfig.BG_CARD_HOVER : (backgroundColor != null ? backgroundColor : ThemeConfig.BG_CARD);
         g2.setColor(fill);
         g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, cornerRadius, cornerRadius));
 
         // Border outline
-        Color border = (hoverEffect && isHovered) ? ThemeConfig.PRIMARY_ACCENT : borderColor;
+        Color border = (hoverEffect && isHovered) ? ThemeConfig.PRIMARY_ACCENT : (borderColor != null ? borderColor : ThemeConfig.BORDER_COLOR);
         g2.setColor(border);
         g2.setStroke(new BasicStroke(1.2f));
         g2.draw(new RoundRectangle2D.Float(0.6f, 0.6f, w - 1.2f, h - 1.2f, cornerRadius, cornerRadius));

@@ -38,7 +38,9 @@ public class IconFactory {
         CLOSE,
         INFO,
         STAR,
-        BELL
+        BELL,
+        SUN,
+        MOON
     }
 
     public static Icon createIcon(IconType type, int size, Color color) {
@@ -315,6 +317,25 @@ public class IconFactory {
                     g2.draw(new Arc2D.Float(s * 0.42f, s * 0.72f, s * 0.16f, s * 0.16f, 180, 180, Arc2D.OPEN));
                     // Top loop
                     g2.fill(new Ellipse2D.Float(s * 0.45f, s * 0.08f, s * 0.1f, s * 0.1f));
+                    break;
+
+                case MOON:
+                    Area moonArea = new Area(new Ellipse2D.Float(s * 0.2f, s * 0.2f, s * 0.6f, s * 0.6f));
+                    moonArea.subtract(new Area(new Ellipse2D.Float(s * 0.38f, s * 0.12f, s * 0.52f, s * 0.52f)));
+                    g2.fill(moonArea);
+                    break;
+
+                case SUN:
+                    float sunR = s * 0.22f;
+                    g2.fill(new Ellipse2D.Float(s * 0.5f - sunR, s * 0.5f - sunR, sunR * 2, sunR * 2));
+                    for (int i = 0; i < 8; i++) {
+                        double a = i * Math.PI / 4.0;
+                        float x1 = (float) (s * 0.5f + Math.cos(a) * s * 0.32f);
+                        float y1 = (float) (s * 0.5f + Math.sin(a) * s * 0.32f);
+                        float x2 = (float) (s * 0.5f + Math.cos(a) * s * 0.44f);
+                        float y2 = (float) (s * 0.5f + Math.sin(a) * s * 0.44f);
+                        g2.draw(new Line2D.Float(x1, y1, x2, y2));
+                    }
                     break;
             }
 

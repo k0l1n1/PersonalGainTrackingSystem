@@ -284,7 +284,7 @@ public class WaterSleepPanel extends JPanel {
         JScrollPane scrollLogs = new JScrollPane(pnlWaterLogs);
         scrollLogs.setOpaque(false);
         scrollLogs.getViewport().setOpaque(false);
-        scrollLogs.setBorder(BorderFactory.createLineBorder(new Color(0x35, 0x35, 0x35, 120), 1, true));
+        scrollLogs.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true));
         scrollLogs.setPreferredSize(new Dimension(0, 200));
         scrollLogs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 280));
         scrollLogs.getVerticalScrollBar().setUnitIncrement(14);
@@ -414,7 +414,7 @@ public class WaterSleepPanel extends JPanel {
         pnlSleepNotes.setOpaque(false);
         pnlSleepNotes.setAlignmentX(Component.LEFT_ALIGNMENT);
         pnlSleepNotes.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0x35, 0x35, 0x35, 120)),
+                BorderFactory.createMatteBorder(1, 0, 0, 0, ThemeConfig.BORDER_COLOR),
                 BorderFactory.createEmptyBorder(4, 2, 0, 2)
         ));
         pnlSleepNotes.setVisible(false);
@@ -475,7 +475,7 @@ public class WaterSleepPanel extends JPanel {
         JScrollPane scrollSleepLogs = new JScrollPane(pnlSleepLogs);
         scrollSleepLogs.setOpaque(false);
         scrollSleepLogs.getViewport().setOpaque(false);
-        scrollSleepLogs.setBorder(BorderFactory.createLineBorder(new Color(0x35, 0x35, 0x35, 120), 1, true));
+        scrollSleepLogs.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true));
         scrollSleepLogs.setPreferredSize(new Dimension(0, 160));
         scrollSleepLogs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
         scrollSleepLogs.getVerticalScrollBar().setUnitIncrement(14);
@@ -516,7 +516,7 @@ public class WaterSleepPanel extends JPanel {
             row.setOpaque(true);
             row.setBackground(ThemeConfig.BG_CARD);
             row.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x35, 0x35, 0x35, 90)),
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, ThemeConfig.BORDER_COLOR),
                     BorderFactory.createEmptyBorder(6, 12, 6, 12)
             ));
 
@@ -722,7 +722,7 @@ public class WaterSleepPanel extends JPanel {
 
         CategoryPlot plot = chart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        renderer.setSeriesPaint(0, ThemeConfig.CHART_SLEEP);
         renderer.setBarPainter(new DashboardPanel.ModernRoundedBarPainter());
         renderer.setMaximumBarWidth(0.13);
         renderer.setShadowVisible(false);
@@ -770,7 +770,7 @@ public class WaterSleepPanel extends JPanel {
             row.setOpaque(true);
             row.setBackground(ThemeConfig.BG_CARD);
             row.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x35, 0x35, 0x35, 90)),
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, ThemeConfig.BORDER_COLOR),
                     BorderFactory.createEmptyBorder(6, 12, 6, 12)
             ));
 
@@ -990,13 +990,13 @@ public class WaterSleepPanel extends JPanel {
 
             btnToday.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().toString());
-                btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                btnYesterday.setBackground(ThemeConfig.BG_CARD);
+                ThemeConfig.styleQuickPill(btnToday, true);
+                ThemeConfig.styleQuickPill(btnYesterday, false);
             });
             btnYesterday.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().minusDays(1).toString());
-                btnYesterday.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                btnToday.setBackground(ThemeConfig.BG_CARD);
+                ThemeConfig.styleQuickPill(btnYesterday, true);
+                ThemeConfig.styleQuickPill(btnToday, false);
             });
             txtDate.setPreferredSize(new Dimension(130, 32));
             dateControls.add(btnYesterday);
@@ -1026,9 +1026,9 @@ public class WaterSleepPanel extends JPanel {
 
             // Section 4: Live Calculated Duration & Recovery Indicator Box
             JPanel durationCard = new JPanel(new BorderLayout(8, 0));
-            durationCard.setBackground(new Color(22, 22, 22));
+            durationCard.setBackground(ThemeConfig.BG_CARD_HOVER);
             durationCard.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(42, 42, 42), 1, true),
+                    BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
                     BorderFactory.createEmptyBorder(8, 12, 8, 12)
             ));
             lblDurationPreview.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -1081,7 +1081,7 @@ public class WaterSleepPanel extends JPanel {
             actions.setOpaque(true);
             actions.setBackground(ThemeConfig.BG_CARD);
             actions.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0x35, 0x35, 0x35, 140)),
+                    BorderFactory.createMatteBorder(1, 0, 0, 0, ThemeConfig.BORDER_COLOR),
                     BorderFactory.createEmptyBorder(12, 24, 14, 24)
             ));
 
@@ -1143,10 +1143,10 @@ public class WaterSleepPanel extends JPanel {
         private <T> JComboBox<T> createStyledComboBox(T[] items) {
             JComboBox<T> box = new JComboBox<>(items);
             box.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            box.setForeground(Color.WHITE);
-            box.setBackground(new Color(24, 24, 24));
+            box.setForeground(ThemeConfig.TEXT_PRIMARY);
+            box.setBackground(ThemeConfig.BG_CARD);
             box.setFocusable(false);
-            box.setBorder(BorderFactory.createLineBorder(new Color(44, 44, 44), 1, true));
+            box.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true));
             box.setRenderer(new DefaultListCellRenderer() {
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -1155,10 +1155,10 @@ public class WaterSleepPanel extends JPanel {
                     lbl.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
                     if (isSelected) {
                         lbl.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                        lbl.setForeground(Color.WHITE);
+                        lbl.setForeground(ThemeConfig.TEXT_ON_ACCENT);
                     } else {
-                        lbl.setBackground(new Color(24, 24, 24));
-                        lbl.setForeground(Color.WHITE);
+                        lbl.setBackground(ThemeConfig.BG_CARD);
+                        lbl.setForeground(ThemeConfig.TEXT_PRIMARY);
                     }
                     return lbl;
                 }
@@ -1170,12 +1170,12 @@ public class WaterSleepPanel extends JPanel {
             JButton btn = new JButton(label);
             btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             boolean isDefault = (score == selectedQuality);
-            btn.setForeground(Color.WHITE);
-            btn.setBackground(isDefault ? ThemeConfig.PRIMARY_ACCENT : new Color(24, 24, 24));
+            btn.setForeground(isDefault ? ThemeConfig.TEXT_ON_ACCENT : ThemeConfig.TEXT_PRIMARY);
+            btn.setBackground(isDefault ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             btn.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(isDefault ? ThemeConfig.PRIMARY_ACCENT : new Color(44, 44, 44), 1, true),
+                    BorderFactory.createLineBorder(isDefault ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
                     BorderFactory.createEmptyBorder(5, 10, 5, 10)
             ));
             qualityButtons.add(btn);
@@ -1183,13 +1183,15 @@ public class WaterSleepPanel extends JPanel {
             btn.addActionListener(e -> {
                 selectedQuality = score;
                 for (JButton b : qualityButtons) {
-                    b.setBackground(new Color(24, 24, 24));
+                    b.setBackground(ThemeConfig.BG_CARD);
+                    b.setForeground(ThemeConfig.TEXT_PRIMARY);
                     b.setBorder(BorderFactory.createCompoundBorder(
-                            BorderFactory.createLineBorder(new Color(44, 44, 44), 1, true),
+                            BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
                             BorderFactory.createEmptyBorder(5, 10, 5, 10)
                     ));
                 }
                 btn.setBackground(ThemeConfig.PRIMARY_ACCENT);
+                btn.setForeground(ThemeConfig.TEXT_ON_ACCENT);
                 btn.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
                         BorderFactory.createEmptyBorder(5, 10, 5, 10)
@@ -1272,15 +1274,7 @@ public class WaterSleepPanel extends JPanel {
 
         private JButton createQuickPill(String text, boolean active) {
             JButton btn = new JButton(text);
-            btn.setFont(ThemeConfig.FONT_SMALL);
-            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
-            btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
-            btn.setFocusPainted(false);
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
-                    BorderFactory.createEmptyBorder(6, 12, 6, 12)
-            ));
+            ThemeConfig.styleQuickPill(btn, active);
             return btn;
         }
 

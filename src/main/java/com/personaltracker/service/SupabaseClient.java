@@ -91,8 +91,32 @@ public class SupabaseClient {
         return token.split("\\.").length == 3 || token.startsWith("sb_secret_") || token.startsWith("sb_publishable_");
     }
 
+    public boolean isStandardJwt(String token) {
+        if (token == null || token.isBlank()) return false;
+        return token.split("\\.").length == 3;
+    }
+
+    public String getEffectiveApiKey() {
+        boolean hasSecretKey = config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank();
+        // If the active session has a standard user JWT (e.g. from user login), use the anon key for PostgREST RLS
+        if (currentSession != null && isStandardJwt(currentSession.getAccessToken())) {
+            return config.getSupabaseAnonKey();
+        }
+        // If we have a secret key configured, use it for full service access
+        if (hasSecretKey) {
+            return config.getSupabaseSecretKey();
+        }
+        // If session token itself is a secret key (sb_secret_...)
+        if (currentSession != null && currentSession.getAccessToken() != null && currentSession.getAccessToken().startsWith("sb_secret_")) {
+            return currentSession.getAccessToken();
+        }
+        return config.getSupabaseAnonKey();
+    }
+
     private void applyAuthHeader(HttpRequest.Builder builder) {
-        if (currentSession != null && isValidJwt(currentSession.getAccessToken())) {
+        if (currentSession != null && isStandardJwt(currentSession.getAccessToken())) {
+            builder.header("Authorization", "Bearer " + currentSession.getAccessToken());
+        } else if (currentSession != null && currentSession.getAccessToken() != null && currentSession.getAccessToken().startsWith("sb_secret_")) {
             builder.header("Authorization", "Bearer " + currentSession.getAccessToken());
         } else if (config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank()) {
             builder.header("Authorization", "Bearer " + config.getSupabaseSecretKey());
@@ -140,6 +164,10 @@ public class SupabaseClient {
         if (sFilter != null && !isValidUuid(sFilter)) {
             return getMockList(table, queryParams, clazz);
         }
+        String wFilter = extractParamValue(queryParams, "workout_id");
+        if (wFilter != null && (!isValidUuid(wFilter) || isMockWorkout(wFilter))) {
+            return getMockList(table, queryParams, clazz);
+        }
 
         String url = config.getSupabaseUrl() + "/rest/v1/" + table;
         if (queryParams != null && !queryParams.isEmpty()) {
@@ -149,7 +177,7 @@ public class SupabaseClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", (hasSecretKey && (currentSession == null || !isValidJwt(currentSession.getAccessToken()))) ? config.getSupabaseSecretKey() : config.getSupabaseAnonKey())
+                .header("apikey", getEffectiveApiKey())
                 .header("Accept", "application/json")
                 .GET();
 
@@ -180,7 +208,7 @@ public class SupabaseClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", (hasSecretKey && (currentSession == null || !isValidJwt(currentSession.getAccessToken()))) ? config.getSupabaseSecretKey() : config.getSupabaseAnonKey())
+                .header("apikey", getEffectiveApiKey())
                 .header("Content-Type", "application/json")
                 .header("Prefer", "return=representation")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
@@ -227,7 +255,7 @@ public class SupabaseClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", (hasSecretKey && (currentSession == null || !isValidJwt(currentSession.getAccessToken()))) ? config.getSupabaseSecretKey() : config.getSupabaseAnonKey())
+                .header("apikey", getEffectiveApiKey())
                 .header("Content-Type", "application/json")
                 .header("Prefer", "return=representation")
                 .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
@@ -246,6 +274,12 @@ public class SupabaseClient {
         boolean hasSecretKey = config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank();
         boolean hasValidAuth = (currentSession != null && isValidJwt(currentSession.getAccessToken())) || hasSecretKey;
 
+        String wFilter = extractParamValue(filterQuery, "workout_id");
+        if (wFilter != null && (!isValidUuid(wFilter) || isMockWorkout(wFilter))) {
+            deleteMock(table, filterQuery);
+            return;
+        }
+
         if (config.isMockMode() || !hasValidAuth
                 || (uFilter != null && !isValidUuid(uFilter)) || (sFilter != null && !isValidUuid(sFilter))) {
             deleteMock(table, filterQuery);
@@ -257,7 +291,7 @@ public class SupabaseClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", (hasSecretKey && (currentSession == null || !isValidJwt(currentSession.getAccessToken()))) ? config.getSupabaseSecretKey() : config.getSupabaseAnonKey())
+                .header("apikey", getEffectiveApiKey())
                 .DELETE();
 
         applyAuthHeader(builder);
@@ -1035,15 +1069,16 @@ public class SupabaseClient {
             }
             case "workout_exercises": {
                 String wId = extractParamValue(queryParams, "workout_id");
-                List<Workout> userWks = mockWorkouts.get(uid);
                 List<WorkoutExercise> exList = new ArrayList<>();
-                if (userWks != null) {
-                    for (Workout w : userWks) {
-                        if (wId == null || Objects.equals(w.getId(), wId)) {
-                            if (w.getExercises() != null) {
-                                for (WorkoutExercise ex : w.getExercises()) {
-                                    if (ex.getWorkoutId() == null) ex.setWorkoutId(w.getId());
-                                    exList.add(ex);
+                for (List<Workout> userWks : mockWorkouts.values()) {
+                    if (userWks != null) {
+                        for (Workout w : userWks) {
+                            if (wId == null || Objects.equals(w.getId(), wId)) {
+                                if (w.getExercises() != null) {
+                                    for (WorkoutExercise ex : w.getExercises()) {
+                                        if (ex.getWorkoutId() == null) ex.setWorkoutId(w.getId());
+                                        exList.add(ex);
+                                    }
                                 }
                             }
                         }
@@ -1101,6 +1136,24 @@ public class SupabaseClient {
         if (body instanceof TrainerAssignment) {
             String sid = ((TrainerAssignment) body).getStudentId();
             return !isValidUuid(sid);
+        }
+        if (body instanceof WorkoutExercise) {
+            String wid = ((WorkoutExercise) body).getWorkoutId();
+            return !isValidUuid(wid) || isMockWorkout(wid);
+        }
+        return false;
+    }
+
+    public boolean isMockWorkout(String workoutId) {
+        if (workoutId == null) return false;
+        for (List<Workout> list : mockWorkouts.values()) {
+            if (list != null) {
+                for (Workout w : list) {
+                    if (Objects.equals(w.getId(), workoutId)) {
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
@@ -1180,6 +1233,37 @@ public class SupabaseClient {
             String targetUid = (ta.getStudentId() != null && !ta.getStudentId().isBlank()) ? ta.getStudentId() : uid;
             mockTrainerAssignments.computeIfAbsent(targetUid, k -> new ArrayList<>()).add(0, ta);
             return (T) ta;
+        } else if (body instanceof WorkoutExercise) {
+            WorkoutExercise ex = (WorkoutExercise) body;
+            if (ex.getId() == null || ex.getId().isEmpty()) ex.setId(newId);
+            String wId = ex.getWorkoutId();
+            if (wId != null) {
+                for (List<Workout> userWks : mockWorkouts.values()) {
+                    if (userWks != null) {
+                        for (Workout w : userWks) {
+                            if (Objects.equals(w.getId(), wId)) {
+                                if (w.getExercises() == null) {
+                                    w.setExercises(new ArrayList<>());
+                                }
+                                boolean found = false;
+                                for (int i = 0; i < w.getExercises().size(); i++) {
+                                    WorkoutExercise cur = w.getExercises().get(i);
+                                    if (cur == ex || (cur.getId() != null && Objects.equals(cur.getId(), ex.getId()))) {
+                                        w.getExercises().set(i, ex);
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) {
+                                    w.getExercises().add(ex);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return (T) ex;
         }
         return (T) body;
     }
@@ -1315,6 +1399,18 @@ public class SupabaseClient {
                 if (tsList != null) {
                     if (id != null) {
                         tsList.removeIf(ts -> Objects.equals(ts.getId(), id));
+                    }
+                }
+                break;
+            case "workout_exercises":
+                String targetWId = extractParamValue(filterQuery, "workout_id");
+                for (List<Workout> userWks : mockWorkouts.values()) {
+                    if (userWks != null) {
+                        for (Workout w : userWks) {
+                            if (targetWId == null || Objects.equals(w.getId(), targetWId)) {
+                                if (w.getExercises() != null) w.getExercises().clear();
+                            }
+                        }
                     }
                 }
                 break;

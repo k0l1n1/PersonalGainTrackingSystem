@@ -65,10 +65,10 @@ public class DashboardPanel extends JPanel {
     private final JLabel lblFocusQuote = new JLabel();
 
     // Top Stat Cards
-    private final StatCard cardWorkouts = new StatCard("TOTAL WORKOUTS", "0", "0 mins this week", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_ACCENT);
-    private final StatCard cardWeight = new StatCard("CURRENT WEIGHT", "-- kg", "BMI: --", IconFactory.IconType.MEASUREMENT, ThemeConfig.SUCCESS);
-    private final StatCard cardCalories = new StatCard("TODAY'S CALORIES", "0 kcal", "Target: 2,000 kcal", IconFactory.IconType.NUTRITION, ThemeConfig.WARNING);
-    private final StatCard cardStreak = new StatCard("WORKOUT STREAK", "0 Days", "Consistency is key", IconFactory.IconType.FIRE, ThemeConfig.PRIMARY_ACCENT);
+    private final StatCard cardWorkouts = new StatCard("TOTAL WORKOUTS", "0", "0 mins this week", IconFactory.IconType.WORKOUT, ThemeConfig.CHART_WORKOUT);
+    private final StatCard cardWeight = new StatCard("CURRENT WEIGHT", "-- kg", "BMI: --", IconFactory.IconType.MEASUREMENT, ThemeConfig.CHART_WEIGHT);
+    private final StatCard cardCalories = new StatCard("TODAY'S CALORIES", "0 kcal", "Target: 2,000 kcal", IconFactory.IconType.NUTRITION, ThemeConfig.CHART_CALORIES);
+    private final StatCard cardStreak = new StatCard("WORKOUT STREAK", "0 Days", "Consistency is key", IconFactory.IconType.FIRE, new Color(0xEA, 0x58, 0x0C));
 
     // Dynamic Chart Panels
     private final JPanel pnlWorkoutChart = new JPanel(new BorderLayout());
@@ -97,10 +97,10 @@ public class DashboardPanel extends JPanel {
 
     // Analytics & Trends components
     private final JComboBox<String> cmbAnalyticsDateRange = new JComboBox<>(new String[]{"Last 7 Days", "Last 30 Days", "Last 90 Days", "All Time"});
-    private final StatCard cardAnalyticsWorkouts = new StatCard("WORKOUT SESSIONS", "0", "0 mins total", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_ACCENT);
-    private final StatCard cardAnalyticsCalories = new StatCard("CALORIES BURNED", "0 kcal", "Estimated total", IconFactory.IconType.FIRE, ThemeConfig.WARNING);
-    private final StatCard cardAnalyticsSleep = new StatCard("AVG SLEEP DURATION", "-- hrs", "Recovery index", IconFactory.IconType.SLEEP, ThemeConfig.PRIMARY_ACCENT);
-    private final StatCard cardAnalyticsWater = new StatCard("AVG DAILY WATER", "-- ml", "Hydration level", IconFactory.IconType.WATER, ThemeConfig.PRIMARY_ACCENT);
+    private final StatCard cardAnalyticsWorkouts = new StatCard("WORKOUT SESSIONS", "0", "0 mins total", IconFactory.IconType.WORKOUT, ThemeConfig.CHART_WORKOUT);
+    private final StatCard cardAnalyticsCalories = new StatCard("CALORIES BURNED", "0 kcal", "Estimated total", IconFactory.IconType.FIRE, ThemeConfig.CHART_CALORIES);
+    private final StatCard cardAnalyticsSleep = new StatCard("AVG SLEEP DURATION", "-- hrs", "Recovery index", IconFactory.IconType.SLEEP, ThemeConfig.CHART_SLEEP);
+    private final StatCard cardAnalyticsWater = new StatCard("AVG DAILY WATER", "-- ml", "Hydration level", IconFactory.IconType.WATER, ThemeConfig.CHART_WATER);
 
     private final JPanel pnlWorkoutVolumeChart = new JPanel(new BorderLayout());
     private final JPanel pnlCalorieTrendChart = new JPanel(new BorderLayout());
@@ -245,7 +245,7 @@ public class DashboardPanel extends JPanel {
         textPanel.add(Box.createVerticalStrut(4));
 
         lblFocusQuote.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-        lblFocusQuote.setForeground(new Color(0xA8, 0xA8, 0xA8));
+        lblFocusQuote.setForeground(ThemeConfig.TEXT_MUTED);
         textPanel.add(lblFocusQuote);
 
         header.add(textPanel, BorderLayout.CENTER);
@@ -767,7 +767,7 @@ public class DashboardPanel extends JPanel {
             left.add(Box.createVerticalStrut(2));
             JLabel lblDesc = new JLabel("<html><body style='width: 480px;'>" + a.getDescription() + "</body></html>");
             lblDesc.setFont(ThemeConfig.FONT_SMALL);
-            lblDesc.setForeground(new Color(0xD0, 0xD0, 0xD0));
+            lblDesc.setForeground(ThemeConfig.TEXT_SECONDARY);
             left.add(lblDesc);
         }
 
@@ -855,17 +855,21 @@ public class DashboardPanel extends JPanel {
                 SleepDAO sleepDAO = new SleepDAO();
                 ReminderDAO reminderDAO = new ReminderDAO();
 
-                workouts = workoutDAO.getAllWorkouts();
-                goals = goalDAO.getAllGoals();
-                measurements = measurementDAO.getAllMeasurements();
-                allNutrition = nutritionDAO.getAllEntries();
-                allWater = waterDAO.getAllEntries();
-                sleepRecords = sleepDAO.getAllRecords();
-                reminders = reminderDAO.getAllReminders();
+                try { workouts = workoutDAO.getAllWorkouts(); } catch (Exception e) { workouts = java.util.Collections.emptyList(); System.err.println("Load workouts notice: " + e.getMessage()); }
+                try { goals = goalDAO.getAllGoals(); } catch (Exception e) { goals = java.util.Collections.emptyList(); System.err.println("Load goals notice: " + e.getMessage()); }
+                try { measurements = measurementDAO.getAllMeasurements(); } catch (Exception e) { measurements = java.util.Collections.emptyList(); System.err.println("Load measurements notice: " + e.getMessage()); }
+                try { allNutrition = nutritionDAO.getAllEntries(); } catch (Exception e) { allNutrition = java.util.Collections.emptyList(); System.err.println("Load nutrition notice: " + e.getMessage()); }
+                try { allWater = waterDAO.getAllEntries(); } catch (Exception e) { allWater = java.util.Collections.emptyList(); System.err.println("Load water notice: " + e.getMessage()); }
+                try { sleepRecords = sleepDAO.getAllRecords(); } catch (Exception e) { sleepRecords = java.util.Collections.emptyList(); System.err.println("Load sleep notice: " + e.getMessage()); }
+                try { reminders = reminderDAO.getAllReminders(); } catch (Exception e) { reminders = java.util.Collections.emptyList(); System.err.println("Load reminders notice: " + e.getMessage()); }
 
                 String uid = SupabaseClient.getInstance().getCurrentUserId();
                 if (uid != null) {
-                    assignments = assignmentDAO.getAssignmentsForStudent(uid);
+                    try {
+                        assignments = assignmentDAO.getAssignmentsForStudent(uid);
+                    } catch (Exception e) {
+                        assignments = java.util.Collections.emptyList();
+                    }
                 }
 
                 return null;
@@ -1137,7 +1141,7 @@ public class DashboardPanel extends JPanel {
 
         CategoryPlot plot = chart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        renderer.setSeriesPaint(0, ThemeConfig.CHART_WORKOUT);
         renderer.setBarPainter(new ModernRoundedBarPainter());
         renderer.setMaximumBarWidth(0.13);
         renderer.setShadowVisible(false);
@@ -1173,14 +1177,14 @@ public class DashboardPanel extends JPanel {
 
         XYPlot plot = chart.getXYPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
-        renderer.setSeriesPaint(0, ThemeConfig.SUCCESS);
+        renderer.setSeriesPaint(0, ThemeConfig.CHART_WEIGHT);
         renderer.setSeriesStroke(0, new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         renderer.setSeriesShape(0, new Ellipse2D.Double(-3.5, -3.5, 7, 7));
         renderer.setSeriesShapesFilled(0, true);
         renderer.setDrawOutlines(true);
         renderer.setUseFillPaint(true);
         renderer.setSeriesFillPaint(0, ThemeConfig.BG_CARD);
-        renderer.setSeriesOutlinePaint(0, ThemeConfig.SUCCESS);
+        renderer.setSeriesOutlinePaint(0, ThemeConfig.CHART_WEIGHT);
         renderer.setSeriesOutlineStroke(0, new BasicStroke(2.0f));
         plot.setRenderer(renderer);
 
@@ -1285,15 +1289,15 @@ public class DashboardPanel extends JPanel {
             CategoryPlot plot = chart.getCategoryPlot();
             plot.setBackgroundPaint(new Color(0, 0, 0, 0));
             plot.setOutlinePaint(null);
-            plot.setRangeGridlinePaint(new Color(0x66, 0x66, 0x66, 230));
-            plot.setRangeGridlineStroke(new BasicStroke(1.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
+            plot.setRangeGridlinePaint(ThemeConfig.BORDER_COLOR);
+            plot.setRangeGridlineStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
             plot.setRangeGridlinesVisible(true);
 
             CategoryAxis domain = plot.getDomainAxis();
             if (domain != null) {
                 domain.setAxisLineVisible(false);
                 domain.setTickMarksVisible(false);
-                domain.setTickLabelPaint(new Color(0xDD, 0xDD, 0xDD));
+                domain.setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
                 domain.setTickLabelFont(new Font("Segoe UI", Font.BOLD, 11));
             }
 
@@ -1301,7 +1305,7 @@ public class DashboardPanel extends JPanel {
             if (range != null) {
                 range.setAxisLineVisible(false);
                 range.setTickMarksVisible(false);
-                range.setTickLabelPaint(new Color(0xCC, 0xCC, 0xCC));
+                range.setTickLabelPaint(ThemeConfig.TEXT_MUTED);
                 range.setTickLabelFont(new Font("Segoe UI", Font.BOLD, 10));
                 range.setNumberFormatOverride(new DecimalFormat("#,##0.#"));
                 range.setAutoRangeMinimumSize(2.0);
@@ -1318,20 +1322,20 @@ public class DashboardPanel extends JPanel {
             XYPlot plot = chart.getXYPlot();
             plot.setBackgroundPaint(new Color(0, 0, 0, 0));
             plot.setOutlinePaint(null);
-            plot.setRangeGridlinePaint(new Color(0x66, 0x66, 0x66, 230));
-            plot.setRangeGridlineStroke(new BasicStroke(1.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
+            plot.setRangeGridlinePaint(ThemeConfig.BORDER_COLOR);
+            plot.setRangeGridlineStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]{4.0f, 4.0f}, 0.0f));
             plot.setRangeGridlinesVisible(true);
 
             if (plot.getDomainAxis() != null) {
                 plot.getDomainAxis().setAxisLineVisible(false);
                 plot.getDomainAxis().setTickMarksVisible(false);
-                plot.getDomainAxis().setTickLabelPaint(new Color(0xDD, 0xDD, 0xDD));
+                plot.getDomainAxis().setTickLabelPaint(ThemeConfig.TEXT_SECONDARY);
                 plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.BOLD, 11));
             }
             if (plot.getRangeAxis() != null) {
                 plot.getRangeAxis().setAxisLineVisible(false);
                 plot.getRangeAxis().setTickMarksVisible(false);
-                plot.getRangeAxis().setTickLabelPaint(new Color(0xCC, 0xCC, 0xCC));
+                plot.getRangeAxis().setTickLabelPaint(ThemeConfig.TEXT_MUTED);
                 plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.BOLD, 10));
                 if (plot.getRangeAxis() instanceof NumberAxis) {
                     NumberAxis numAxis = (NumberAxis) plot.getRangeAxis();
@@ -1538,7 +1542,7 @@ public class DashboardPanel extends JPanel {
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         applyDarkChartTheme(chart);
         BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
-        r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        r.setSeriesPaint(0, ThemeConfig.CHART_WORKOUT);
         r.setMaximumBarWidth(0.12);
 
         ChartPanel cp = new ChartPanel(chart);
@@ -1572,7 +1576,7 @@ public class DashboardPanel extends JPanel {
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         applyDarkChartTheme(chart);
         BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
-        r.setSeriesPaint(0, ThemeConfig.WARNING);
+        r.setSeriesPaint(0, ThemeConfig.CHART_CALORIES);
         r.setMaximumBarWidth(0.12);
 
         ChartPanel cp = new ChartPanel(chart);
@@ -1608,7 +1612,7 @@ public class DashboardPanel extends JPanel {
         applyDarkChartTheme(chart);
         CategoryPlot plot = chart.getCategoryPlot();
         BarRenderer r = (BarRenderer) plot.getRenderer();
-        r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        r.setSeriesPaint(0, ThemeConfig.CHART_SLEEP);
         r.setBarPainter(new ModernRoundedBarPainter());
         r.setMaximumBarWidth(0.13);
         r.setShadowVisible(false);
@@ -1660,7 +1664,7 @@ public class DashboardPanel extends JPanel {
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         applyDarkChartTheme(chart);
         BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
-        r.setSeriesPaint(0, new Color(0x06, 0xB6, 0xD4));
+        r.setSeriesPaint(0, ThemeConfig.CHART_WATER);
         r.setMaximumBarWidth(0.12);
 
         ChartPanel cp = new ChartPanel(chart);

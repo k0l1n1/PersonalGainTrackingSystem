@@ -411,7 +411,7 @@ public class NutritionPanel extends JPanel {
         JPanel row = new JPanel(new BorderLayout(8, 0));
         row.setOpaque(false);
         row.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x35, 0x35, 0x35, 120)),
+                BorderFactory.createMatteBorder(0, 0, 1, 0, ThemeConfig.BORDER_COLOR),
                 BorderFactory.createEmptyBorder(4, 0, 4, 0)
         ));
 
@@ -511,7 +511,7 @@ public class NutritionPanel extends JPanel {
 
             // Background subtle track
             g2.setStroke(new BasicStroke(strokeWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g2.setColor(new Color(0x28, 0x28, 0x28));
+            g2.setColor(ThemeConfig.BORDER_COLOR);
             g2.drawOval(x + strokeWidth / 2, y + strokeWidth / 2, diameter - strokeWidth, diameter - strokeWidth);
 
             double totalKcal = proteinKcal + carbsKcal + fatKcal;

@@ -248,14 +248,14 @@ public class MeasurementPanel extends JPanel {
 
         XYPlot plot = chart.getXYPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
-        renderer.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        renderer.setSeriesPaint(0, ThemeConfig.CHART_WEIGHT);
         renderer.setSeriesStroke(0, new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         renderer.setSeriesShape(0, new java.awt.geom.Ellipse2D.Double(-3.5, -3.5, 7, 7));
         renderer.setSeriesShapesFilled(0, true);
         renderer.setDrawOutlines(true);
         renderer.setUseFillPaint(true);
         renderer.setSeriesFillPaint(0, ThemeConfig.BG_CARD);
-        renderer.setSeriesOutlinePaint(0, ThemeConfig.PRIMARY_ACCENT);
+        renderer.setSeriesOutlinePaint(0, ThemeConfig.CHART_WEIGHT);
         renderer.setSeriesOutlineStroke(0, new BasicStroke(2.0f));
         plot.setRenderer(renderer);
 
@@ -420,13 +420,13 @@ public class MeasurementPanel extends JPanel {
 
             btnToday.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().toString());
-                btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                btnYesterday.setBackground(ThemeConfig.BG_CARD);
+                ThemeConfig.styleQuickPill(btnToday, true);
+                ThemeConfig.styleQuickPill(btnYesterday, false);
             });
             btnYesterday.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().minusDays(1).toString());
-                btnYesterday.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                btnToday.setBackground(ThemeConfig.BG_CARD);
+                ThemeConfig.styleQuickPill(btnYesterday, true);
+                ThemeConfig.styleQuickPill(btnToday, false);
             });
 
             txtDate.setPreferredSize(new Dimension(130, 32));
@@ -602,12 +602,7 @@ public class MeasurementPanel extends JPanel {
 
         private JButton createQuickPill(String text, boolean active) {
             JButton btn = new JButton(text);
-            btn.setFont(ThemeConfig.FONT_SMALL);
-            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
-            btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
-            btn.setFocusPainted(false);
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+            ThemeConfig.styleQuickPill(btn, active);
             return btn;
         }
 

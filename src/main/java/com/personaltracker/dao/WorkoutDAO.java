@@ -4,6 +4,7 @@ import com.personaltracker.model.Workout;
 import com.personaltracker.model.WorkoutExercise;
 import com.personaltracker.service.SupabaseClient;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,6 +22,21 @@ public class WorkoutDAO {
                 "user_id=eq." + uid + "&order=workout_date.desc,created_at.desc",
                 Workout.class);
 
+        if (workouts != null && !workouts.isEmpty()) {
+            for (Workout w : workouts) {
+                if (w.getId() != null && !w.getId().isBlank()) {
+                    if (w.getExercises() == null || w.getExercises().isEmpty()) {
+                        try {
+                            List<WorkoutExercise> exs = getExercisesForWorkout(w.getId());
+                            if (exs != null && !exs.isEmpty()) {
+                                w.setExercises(exs);
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }
+
         return workouts != null ? workouts : Collections.emptyList();
     }
 
@@ -33,7 +49,7 @@ public class WorkoutDAO {
         String finalWorkoutId = (saved != null && saved.getId() != null) ? saved.getId() : workout.getId();
         if (workout.getExercises() != null && !workout.getExercises().isEmpty()) {
             int order = 0;
-            for (WorkoutExercise ex : workout.getExercises()) {
+            for (WorkoutExercise ex : new ArrayList<>(workout.getExercises())) {
                 ex.setWorkoutId(finalWorkoutId);
                 if (ex.getId() == null || ex.getId().isBlank()) {
                     ex.setId(java.util.UUID.randomUUID().toString());
@@ -54,10 +70,12 @@ public class WorkoutDAO {
             return;
         }
         client.executePatch("workouts", "id=eq." + workout.getId(), workout);
-        if (workout.getExercises() != null && !com.personaltracker.config.AppConfig.getInstance().isMockMode()) {
-            client.executeDelete("workout_exercises", "workout_id=eq." + workout.getId());
+        if (workout.getExercises() != null) {
+            try {
+                client.executeDelete("workout_exercises", "workout_id=eq." + workout.getId());
+            } catch (Exception ignored) {}
             int order = 0;
-            for (WorkoutExercise ex : workout.getExercises()) {
+            for (WorkoutExercise ex : new ArrayList<>(workout.getExercises())) {
                 ex.setWorkoutId(workout.getId());
                 if (ex.getId() == null || ex.getId().isBlank()) {
                     ex.setId(java.util.UUID.randomUUID().toString());

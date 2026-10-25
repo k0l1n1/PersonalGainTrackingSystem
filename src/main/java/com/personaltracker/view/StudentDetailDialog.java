@@ -227,7 +227,7 @@ public class StudentDetailDialog extends JDialog {
 
         JButton btnAll = new JButton("All Workouts (" + detail.getWorkouts().size() + ")");
         btnAll.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnAll.setForeground(Color.WHITE);
+        btnAll.setForeground(ThemeConfig.TEXT_ON_ACCENT);
         btnAll.setBackground(ThemeConfig.PRIMARY_ACCENT);
         btnAll.setFocusPainted(false);
         btnAll.setBorder(BorderFactory.createCompoundBorder(
@@ -250,7 +250,7 @@ public class StudentDetailDialog extends JDialog {
         btnAll.addActionListener(e -> {
             sorter.setRowFilter(null);
             btnAll.setBackground(ThemeConfig.PRIMARY_ACCENT);
-            btnAll.setForeground(Color.WHITE);
+            btnAll.setForeground(ThemeConfig.TEXT_ON_ACCENT);
             btnCoachOnly.setBackground(ThemeConfig.BG_CARD);
             btnCoachOnly.setForeground(ThemeConfig.TEXT_SECONDARY);
         });
@@ -258,7 +258,7 @@ public class StudentDetailDialog extends JDialog {
         btnCoachOnly.addActionListener(e -> {
             sorter.setRowFilter(RowFilter.regexFilter("Coach Assigned", 6));
             btnCoachOnly.setBackground(ThemeConfig.PRIMARY_ACCENT);
-            btnCoachOnly.setForeground(Color.WHITE);
+            btnCoachOnly.setForeground(ThemeConfig.TEXT_ON_ACCENT);
             btnAll.setBackground(ThemeConfig.BG_CARD);
             btnAll.setForeground(ThemeConfig.TEXT_SECONDARY);
         });

@@ -837,7 +837,7 @@ public class OnboardingDialog extends JDialog {
                 lbl.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
                 if (isSelected) {
                     lbl.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                    lbl.setForeground(Color.WHITE);
+                    lbl.setForeground(ThemeConfig.TEXT_ON_ACCENT);
                 } else {
                     lbl.setBackground(ThemeConfig.BG_CARD);
                     lbl.setForeground(ThemeConfig.TEXT_PRIMARY);

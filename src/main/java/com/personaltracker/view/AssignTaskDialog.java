@@ -246,9 +246,9 @@ public class AssignTaskDialog extends JDialog {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         if (active) {
-            btn.setForeground(Color.WHITE);
+            btn.setForeground(ThemeConfig.TEXT_ON_ACCENT);
             btn.setBackground(ThemeConfig.PRIMARY_ACCENT);
-            btn.setIcon(IconFactory.createIcon(iconType, 15, Color.WHITE));
+            btn.setIcon(IconFactory.createIcon(iconType, 15, ThemeConfig.TEXT_ON_ACCENT));
             btn.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
                     BorderFactory.createEmptyBorder(8, 14, 8, 14)

@@ -17,14 +17,14 @@ public class MainFrame extends JFrame {
     private final JPanel contentCards = new JPanel(cardLayout);
 
     // Feature Views
-    private final DashboardPanel dashboardPanel = new DashboardPanel();
-    private final TrainerPanel trainerPanel = new TrainerPanel();
-    private final WorkoutPanel workoutPanel = new WorkoutPanel();
-    private final GoalPanel goalPanel = new GoalPanel();
-    private final MeasurementPanel measurementPanel = new MeasurementPanel();
-    private final NutritionPanel nutritionPanel = new NutritionPanel();
-    private final WaterSleepPanel waterSleepPanel = new WaterSleepPanel();
-    private final SettingsPanel settingsPanel = new SettingsPanel();
+    private DashboardPanel dashboardPanel = new DashboardPanel();
+    private TrainerPanel trainerPanel = new TrainerPanel();
+    private WorkoutPanel workoutPanel = new WorkoutPanel();
+    private GoalPanel goalPanel = new GoalPanel();
+    private MeasurementPanel measurementPanel = new MeasurementPanel();
+    private NutritionPanel nutritionPanel = new NutritionPanel();
+    private WaterSleepPanel waterSleepPanel = new WaterSleepPanel();
+    private SettingsPanel settingsPanel = new SettingsPanel();
 
     public MainFrame() {
         super("Personal Gain Tracking System - Desktop Dashboard");
@@ -51,6 +51,22 @@ public class MainFrame extends JFrame {
 
         // Content Area with CardLayout
         contentCards.setOpaque(false);
+        initViews();
+        add(contentCards, BorderLayout.CENTER);
+
+        // Hook navigation
+        sidebar.setOnNavigationListener(this::navigateTo);
+        sidebar.setOnLogoutListener(this::handleLogout);
+
+        // Dynamic Theme Switch Listener
+        ThemeConfig.addThemeChangeListener(this::handleThemeChanged);
+
+        // Initial view
+        navigateTo(SidebarPanel.NavItem.DASHBOARD);
+    }
+
+    private void initViews() {
+        contentCards.removeAll();
         contentCards.add(dashboardPanel, SidebarPanel.NavItem.DASHBOARD.name());
         contentCards.add(trainerPanel, SidebarPanel.NavItem.STUDENTS.name());
         contentCards.add(workoutPanel, SidebarPanel.NavItem.WORKOUTS.name());
@@ -59,12 +75,6 @@ public class MainFrame extends JFrame {
         contentCards.add(nutritionPanel, SidebarPanel.NavItem.NUTRITION.name());
         contentCards.add(waterSleepPanel, SidebarPanel.NavItem.WATER_SLEEP.name());
         contentCards.add(settingsPanel, SidebarPanel.NavItem.SETTINGS.name());
-
-        add(contentCards, BorderLayout.CENTER);
-
-        // Hook navigation
-        sidebar.setOnNavigationListener(this::navigateTo);
-        sidebar.setOnLogoutListener(this::handleLogout);
 
         dashboardPanel.setNavigationConsumer(this::navigateTo);
         settingsPanel.setNavigationConsumer(this::navigateTo);
@@ -77,9 +87,30 @@ public class MainFrame extends JFrame {
             sidebar.refreshNavItems();
             dashboardPanel.refreshDashboardData();
         });
+    }
 
-        // Initial view
-        navigateTo(SidebarPanel.NavItem.DASHBOARD);
+    private void handleThemeChanged() {
+        getContentPane().setBackground(ThemeConfig.BG_DARK);
+        sidebar.updateTheme();
+        reloadViews();
+        revalidate();
+        repaint();
+    }
+
+    public void reloadViews() {
+        SidebarPanel.NavItem active = sidebar.getActiveItem();
+
+        dashboardPanel = new DashboardPanel();
+        trainerPanel = new TrainerPanel();
+        workoutPanel = new WorkoutPanel();
+        goalPanel = new GoalPanel();
+        measurementPanel = new MeasurementPanel();
+        nutritionPanel = new NutritionPanel();
+        waterSleepPanel = new WaterSleepPanel();
+        settingsPanel = new SettingsPanel();
+
+        initViews();
+        navigateTo(active != null ? active : SidebarPanel.NavItem.DASHBOARD);
     }
 
     public void navigateTo(SidebarPanel.NavItem item) {

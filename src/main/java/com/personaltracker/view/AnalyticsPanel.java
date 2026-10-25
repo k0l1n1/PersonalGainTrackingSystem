@@ -38,10 +38,10 @@ public class AnalyticsPanel extends JPanel {
     private final JComboBox<String> cmbDateRange = new JComboBox<>(new String[]{"Last 7 Days", "Last 30 Days", "Last 90 Days", "All Time"});
 
     // Stat cards
-    private final StatCard cardWorkouts = new StatCard("WORKOUT SESSIONS", "0", "0 mins total", IconFactory.IconType.WORKOUT, ThemeConfig.PRIMARY_ACCENT);
-    private final StatCard cardCalories = new StatCard("CALORIES BURNED", "0 kcal", "Estimated total", IconFactory.IconType.FIRE, ThemeConfig.WARNING);
-    private final StatCard cardAvgSleep = new StatCard("AVG SLEEP DURATION", "-- hrs", "Recovery index", IconFactory.IconType.SLEEP, ThemeConfig.PRIMARY_ACCENT);
-    private final StatCard cardAvgWater = new StatCard("AVG DAILY WATER", "-- ml", "Hydration level", IconFactory.IconType.WATER, ThemeConfig.PRIMARY_ACCENT);
+    private final StatCard cardWorkouts = new StatCard("WORKOUT SESSIONS", "0", "0 mins total", IconFactory.IconType.WORKOUT, ThemeConfig.CHART_WORKOUT);
+    private final StatCard cardCalories = new StatCard("CALORIES BURNED", "0 kcal", "Estimated total", IconFactory.IconType.FIRE, ThemeConfig.CHART_CALORIES);
+    private final StatCard cardAvgSleep = new StatCard("AVG SLEEP DURATION", "-- hrs", "Recovery index", IconFactory.IconType.SLEEP, ThemeConfig.CHART_SLEEP);
+    private final StatCard cardAvgWater = new StatCard("AVG DAILY WATER", "-- ml", "Hydration level", IconFactory.IconType.WATER, ThemeConfig.CHART_WATER);
 
     // Chart panels
     private final JPanel pnlWorkoutVolumeChart = new JPanel(new BorderLayout());
@@ -154,11 +154,11 @@ public class AnalyticsPanel extends JPanel {
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() throws Exception {
-                allWorkouts = workoutDAO.getAllWorkouts();
-                allMeasurements = measurementDAO.getAllMeasurements();
-                allNutrition = nutritionDAO.getAllEntries();
-                allWater = waterDAO.getAllEntries();
-                allSleep = sleepDAO.getAllRecords();
+                try { allWorkouts = workoutDAO.getAllWorkouts(); } catch (Exception e) { allWorkouts = java.util.Collections.emptyList(); }
+                try { allMeasurements = measurementDAO.getAllMeasurements(); } catch (Exception e) { allMeasurements = java.util.Collections.emptyList(); }
+                try { allNutrition = nutritionDAO.getAllEntries(); } catch (Exception e) { allNutrition = java.util.Collections.emptyList(); }
+                try { allWater = waterDAO.getAllEntries(); } catch (Exception e) { allWater = java.util.Collections.emptyList(); }
+                try { allSleep = sleepDAO.getAllRecords(); } catch (Exception e) { allSleep = java.util.Collections.emptyList(); }
                 return null;
             }
 
@@ -255,7 +255,7 @@ public class AnalyticsPanel extends JPanel {
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         DashboardPanel.applyDarkChartTheme(chart);
         BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
-        r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        r.setSeriesPaint(0, ThemeConfig.CHART_WORKOUT);
         r.setMaximumBarWidth(0.12);
 
         ChartPanel cp = new ChartPanel(chart);
@@ -289,7 +289,7 @@ public class AnalyticsPanel extends JPanel {
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         DashboardPanel.applyDarkChartTheme(chart);
         BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
-        r.setSeriesPaint(0, ThemeConfig.WARNING);
+        r.setSeriesPaint(0, ThemeConfig.CHART_CALORIES);
         r.setMaximumBarWidth(0.12);
 
         ChartPanel cp = new ChartPanel(chart);
@@ -325,7 +325,7 @@ public class AnalyticsPanel extends JPanel {
         DashboardPanel.applyDarkChartTheme(chart);
         org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
         BarRenderer r = (BarRenderer) plot.getRenderer();
-        r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        r.setSeriesPaint(0, ThemeConfig.CHART_SLEEP);
         r.setBarPainter(new DashboardPanel.ModernRoundedBarPainter());
         r.setMaximumBarWidth(0.13);
         r.setShadowVisible(false);
@@ -366,7 +366,7 @@ public class AnalyticsPanel extends JPanel {
         JFreeChart chart = ChartFactory.createBarChart(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
         DashboardPanel.applyDarkChartTheme(chart);
         BarRenderer r = (BarRenderer) chart.getCategoryPlot().getRenderer();
-        r.setSeriesPaint(0, ThemeConfig.PRIMARY_ACCENT);
+        r.setSeriesPaint(0, ThemeConfig.CHART_WATER);
         r.setMaximumBarWidth(0.12);
 
         ChartPanel cp = new ChartPanel(chart);

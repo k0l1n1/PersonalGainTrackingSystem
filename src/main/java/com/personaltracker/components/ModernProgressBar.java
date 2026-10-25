@@ -44,7 +44,7 @@ public class ModernProgressBar extends JProgressBar {
         int h = getHeight();
 
         // Track background
-        g2.setColor(ThemeConfig.BG_INPUT);
+        g2.setColor(ThemeConfig.BORDER_COLOR);
         g2.fill(new RoundRectangle2D.Float(0, 0, w, h, cornerRadius, cornerRadius));
 
         // Progress fill

@@ -164,7 +164,7 @@ public class TrainerAssignmentDAO {
         // Save associated exercises
         if (workout.getExercises() != null && !workout.getExercises().isEmpty()) {
             int order = 0;
-            for (WorkoutExercise ex : workout.getExercises()) {
+            for (WorkoutExercise ex : new ArrayList<>(workout.getExercises())) {
                 ex.setWorkoutId(finalWorkoutId);
                 if (ex.getId() == null || ex.getId().isBlank()) {
                     ex.setId(UUID.randomUUID().toString());

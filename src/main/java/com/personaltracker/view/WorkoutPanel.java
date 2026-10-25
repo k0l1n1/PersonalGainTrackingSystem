@@ -533,7 +533,7 @@ public class WorkoutPanel extends JPanel {
                 lbl.setIconTextGap(5);
                 lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
                 if (!isSelected) {
-                    lbl.setBackground(row % 2 == 0 ? ThemeConfig.BG_CARD : new Color(0x1F, 0x1F, 0x1F));
+                    lbl.setBackground(row % 2 == 0 ? ThemeConfig.BG_CARD : ThemeConfig.BG_CARD_HOVER);
                 }
                 return lbl;
             }
@@ -692,12 +692,14 @@ public class WorkoutPanel extends JPanel {
         btnToday.setIconTextGap(6);
         btnToday.setFont(new Font("Segoe UI", Font.BOLD, 11));
         btnToday.setForeground(Color.WHITE);
-        btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
+        Color todayBg = ThemeConfig.isDarkMode() ? new Color(0x3B, 0x42, 0x52) : ThemeConfig.PRIMARY_ACCENT;
+        Color todayBorder = ThemeConfig.isDarkMode() ? new Color(0x60, 0x6C, 0x80) : ThemeConfig.PRIMARY_ACCENT;
+        btnToday.setBackground(todayBg);
         btnToday.setFocusPainted(false);
         btnToday.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnToday.setToolTipText("Today's recommended routine. Click to review & log, or Shift+Click to instantly log.");
         btnToday.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
+                BorderFactory.createLineBorder(todayBorder, 1, true),
                 BorderFactory.createEmptyBorder(4, 10, 4, 10)
         ));
         btnToday.addActionListener(e -> {
@@ -722,13 +724,39 @@ public class WorkoutPanel extends JPanel {
         boolean isToday = LocalDate.now().getDayOfWeek() == r.dayOfWeek;
         JButton btn = new JButton(r.shortDay + ": " + r.title.split(" ")[0]);
         btn.setFont(new Font("Segoe UI", isToday ? Font.BOLD : Font.PLAIN, 11));
-        btn.setForeground(isToday ? ThemeConfig.TEXT_PRIMARY : ThemeConfig.TEXT_SECONDARY);
-        btn.setBackground(isToday ? new Color(0x2D, 0x37, 0x48) : ThemeConfig.BG_CARD);
+
+        Color bg;
+        Color fg;
+        Color border;
+        if (ThemeConfig.isDarkMode()) {
+            if (isToday) {
+                bg = new Color(0x3B, 0x42, 0x52);
+                fg = Color.WHITE;
+                border = new Color(0x60, 0x6C, 0x80);
+            } else {
+                bg = ThemeConfig.BG_CARD;
+                fg = ThemeConfig.TEXT_SECONDARY;
+                border = ThemeConfig.BORDER_COLOR;
+            }
+        } else {
+            if (isToday) {
+                bg = ThemeConfig.PRIMARY_ACCENT;
+                fg = Color.WHITE;
+                border = ThemeConfig.PRIMARY_ACCENT;
+            } else {
+                bg = ThemeConfig.BG_CARD;
+                fg = ThemeConfig.TEXT_SECONDARY;
+                border = ThemeConfig.BORDER_COLOR;
+            }
+        }
+
+        btn.setForeground(fg);
+        btn.setBackground(bg);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setToolTipText(r.dayOfWeek.name() + ": " + r.title + " (" + r.durationMinutes + "m, " + r.type + ") - Click to review, Shift+Click to instantly log");
         btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(isToday ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createLineBorder(border, 1, true),
                 BorderFactory.createEmptyBorder(4, 7, 4, 7)
         ));
         btn.addActionListener(e -> {
@@ -915,16 +943,39 @@ public class WorkoutPanel extends JPanel {
 
     private void setupTabButton(JButton btn, String text, boolean active, IconFactory.IconType iconType) {
         btn.setText(text);
-        Color fg = active ? Color.WHITE : ThemeConfig.TEXT_SECONDARY;
+        Color bg;
+        Color fg;
+        Color border;
+        if (ThemeConfig.isDarkMode()) {
+            if (active) {
+                bg = new Color(0x3B, 0x42, 0x52);
+                fg = Color.WHITE;
+                border = new Color(0x60, 0x6C, 0x80);
+            } else {
+                bg = ThemeConfig.BG_CARD;
+                fg = ThemeConfig.TEXT_SECONDARY;
+                border = ThemeConfig.BORDER_COLOR;
+            }
+        } else {
+            if (active) {
+                bg = ThemeConfig.PRIMARY_ACCENT;
+                fg = Color.WHITE;
+                border = ThemeConfig.PRIMARY_ACCENT;
+            } else {
+                bg = ThemeConfig.BG_CARD;
+                fg = ThemeConfig.TEXT_SECONDARY;
+                border = ThemeConfig.BORDER_COLOR;
+            }
+        }
         btn.setIcon(IconFactory.createIcon(iconType, 15, fg));
         btn.setIconTextGap(7);
         btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 12));
         btn.setForeground(fg);
-        btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
+        btn.setBackground(bg);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createLineBorder(border, 1, true),
                 BorderFactory.createEmptyBorder(6, 14, 6, 14)
         ));
     }
@@ -1082,7 +1133,7 @@ public class WorkoutPanel extends JPanel {
                 List<Workout> workouts = workoutDAO.getAllWorkouts();
                 if (workouts != null) {
                     for (Workout w : workouts) {
-                        if (w.getNotes() != null && (w.getNotes().contains("[Coach") || w.getNotes().contains("[Trainer"))) {
+                        if (w.getId() != null && !w.getId().isBlank()) {
                             if (w.getExercises() == null || w.getExercises().isEmpty()) {
                                 try {
                                     List<WorkoutExercise> exs = workoutDAO.getExercisesForWorkout(w.getId());
@@ -1265,9 +1316,12 @@ public class WorkoutPanel extends JPanel {
         }
 
         Workout w = item.workout;
-        if (w.getExercises() == null && w.getId() != null) {
+        if (w != null && (w.getExercises() == null || w.getExercises().isEmpty()) && w.getId() != null && !w.getId().isBlank()) {
             try {
-                w.setExercises(workoutDAO.getExercisesForWorkout(w.getId()));
+                List<WorkoutExercise> exs = workoutDAO.getExercisesForWorkout(w.getId());
+                if (exs != null && !exs.isEmpty()) {
+                    w.setExercises(exs);
+                }
             } catch (Exception ignored) {}
         }
 
@@ -1493,13 +1547,13 @@ public class WorkoutPanel extends JPanel {
             JButton btnYesterday = createQuickPill("Yesterday", isInitYesterday);
             btnToday.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().toString());
-                btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                btnYesterday.setBackground(ThemeConfig.BG_CARD);
+                ThemeConfig.styleQuickPill(btnToday, true);
+                ThemeConfig.styleQuickPill(btnYesterday, false);
             });
             btnYesterday.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().minusDays(1).toString());
-                btnYesterday.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                btnToday.setBackground(ThemeConfig.BG_CARD);
+                ThemeConfig.styleQuickPill(btnYesterday, true);
+                ThemeConfig.styleQuickPill(btnToday, false);
             });
             txtDate.setPreferredSize(new Dimension(105, 30));
             dateControls.add(btnToday);
@@ -1698,6 +1752,14 @@ public class WorkoutPanel extends JPanel {
                 cmbStatus.setSelectedItem(workout.getStatus());
                 txtNotes.setText(workout.getNotes() != null ? workout.getNotes() : "");
 
+                if ((workout.getExercises() == null || workout.getExercises().isEmpty()) && workout.getId() != null && !workout.getId().isBlank()) {
+                    try {
+                        List<WorkoutExercise> fetched = workoutDAO.getExercisesForWorkout(workout.getId());
+                        if (fetched != null && !fetched.isEmpty()) {
+                            workout.setExercises(fetched);
+                        }
+                    } catch (Exception ignored) {}
+                }
                 if (workout.getExercises() != null) {
                     for (WorkoutExercise ex : workout.getExercises()) {
                         exercisesModel.addRow(new Object[]{ex.getExerciseName(), ex.getSets(), ex.getReps(), ex.getWeightKg()});
@@ -1910,12 +1972,7 @@ public class WorkoutPanel extends JPanel {
 
         private JButton createQuickPill(String text, boolean active) {
             JButton btn = new JButton(text);
-            btn.setFont(ThemeConfig.FONT_SMALL);
-            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
-            btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
-            btn.setFocusPainted(false);
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBorder(BorderFactory.createEmptyBorder(5, 9, 5, 9));
+            ThemeConfig.styleQuickPill(btn, active);
             return btn;
         }
 
@@ -2178,7 +2235,7 @@ public class WorkoutPanel extends JPanel {
     private JPanel createMiniKpiBadge(String label, JLabel valLbl, Color accentColor) {
         JPanel p = new JPanel(new GridLayout(2, 1, 0, 1));
         p.setOpaque(true);
-        p.setBackground(new Color(0x1A, 0x20, 0x2C));
+        p.setBackground(ThemeConfig.BG_CARD_HOVER);
         p.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(accentColor, 1, true),
                 BorderFactory.createEmptyBorder(4, 10, 4, 10)
@@ -2200,7 +2257,7 @@ public class WorkoutPanel extends JPanel {
         boolean active = filterKey.equalsIgnoreCase(coachFilter);
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 11));
-        btn.setForeground(active ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
+        btn.setForeground(active ? ThemeConfig.TEXT_ON_ACCENT : ThemeConfig.TEXT_SECONDARY);
         btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -2397,13 +2454,13 @@ public class WorkoutPanel extends JPanel {
         if (!notes.isBlank()) {
             JPanel notesCallout = new JPanel(new BorderLayout(8, 0));
             notesCallout.setOpaque(true);
-            notesCallout.setBackground(new Color(0x1B, 0x22, 0x2D));
+            notesCallout.setBackground(new Color(0xEE, 0xF2, 0xFF));
             notesCallout.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 3, 0, 0, ThemeConfig.PRIMARY_ACCENT),
                     BorderFactory.createEmptyBorder(6, 10, 6, 10)
             ));
 
-            JLabel lblNotes = new JLabel("<html><b style='color:#60A5FA;'>Coach Instructions:</b> " + notes.replaceAll("<", "&lt;").replaceAll(">", "&gt;") + "</html>");
+            JLabel lblNotes = new JLabel("<html><b style='color:#1D4ED8;'>Coach Instructions:</b> " + notes.replaceAll("<", "&lt;").replaceAll(">", "&gt;") + "</html>");
             lblNotes.setFont(ThemeConfig.FONT_SMALL);
             lblNotes.setForeground(ThemeConfig.TEXT_PRIMARY);
             notesCallout.add(lblNotes, BorderLayout.CENTER);
@@ -2417,9 +2474,9 @@ public class WorkoutPanel extends JPanel {
             JPanel exContainer = new JPanel();
             exContainer.setLayout(new BoxLayout(exContainer, BoxLayout.Y_AXIS));
             exContainer.setOpaque(true);
-            exContainer.setBackground(new Color(0x18, 0x18, 0x1B));
+            exContainer.setBackground(ThemeConfig.BG_CARD_HOVER);
             exContainer.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0x27, 0x27, 0x2A), 1, true),
+                    BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
                     BorderFactory.createEmptyBorder(6, 10, 6, 10)
             ));
 
@@ -2503,6 +2560,14 @@ public class WorkoutPanel extends JPanel {
         ModernButton btnDetails = new ModernButton("Routine Details", ModernButton.ButtonStyle.SECONDARY);
         btnDetails.setPreferredSize(new Dimension(115, 28));
         btnDetails.addActionListener(e -> {
+            if ((w.getExercises() == null || w.getExercises().isEmpty()) && w.getId() != null && !w.getId().isBlank()) {
+                try {
+                    List<WorkoutExercise> exs = workoutDAO.getExercisesForWorkout(w.getId());
+                    if (exs != null && !exs.isEmpty()) {
+                        w.setExercises(exs);
+                    }
+                } catch (Exception ignored) {}
+            }
             WorkoutDialog dialog = new WorkoutDialog(SwingUtilities.getWindowAncestor(this), w, w.getDurationMinutes());
             dialog.setVisible(true);
             if (dialog.isSaved()) {
@@ -2836,7 +2901,7 @@ public class WorkoutPanel extends JPanel {
             JPanel row = new JPanel(new BorderLayout(14, 0));
             row.setOpaque(false);
             row.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x35, 0x35, 0x35, 120)),
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, ThemeConfig.BORDER_COLOR),
                     BorderFactory.createEmptyBorder(10, 4, 10, 4)
             ));
 
@@ -2879,9 +2944,9 @@ public class WorkoutPanel extends JPanel {
             if (r.getDescription() != null && r.getDescription().contains("Coach")) {
                 JLabel coachTag = new JLabel("🛡️ COACH ASSIGNED");
                 coachTag.setFont(new Font("Segoe UI", Font.BOLD, 9));
-                coachTag.setForeground(new Color(0x60, 0xA5, 0xFA));
+                coachTag.setForeground(new Color(0x1D, 0x4E, 0xD8));
                 coachTag.setOpaque(true);
-                coachTag.setBackground(new Color(0x3B, 0x82, 0xF6, 40));
+                coachTag.setBackground(new Color(0xDB, 0xEA, 0xFE));
                 coachTag.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
                 titleRow.add(coachTag);
             }
@@ -2971,11 +3036,14 @@ public class WorkoutPanel extends JPanel {
         boolean active = reminderFilter.equals(filterKey);
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 11));
-        btn.setForeground(ThemeConfig.TEXT_PRIMARY);
+        btn.setForeground(active ? ThemeConfig.TEXT_ON_ACCENT : ThemeConfig.TEXT_PRIMARY);
         btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
         btn.addActionListener(e -> {
             reminderFilter = filterKey;
             updateRemindersView();
@@ -3164,13 +3232,13 @@ public class WorkoutPanel extends JPanel {
             JButton btnTomorrow = createQuickPill("Tomorrow", false);
             btnToday.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().toString());
-                btnToday.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                btnTomorrow.setBackground(ThemeConfig.BG_CARD);
+                ThemeConfig.styleQuickPill(btnToday, true);
+                ThemeConfig.styleQuickPill(btnTomorrow, false);
             });
             btnTomorrow.addActionListener(e -> {
                 txtDate.setText(LocalDate.now().plusDays(1).toString());
-                btnTomorrow.setBackground(ThemeConfig.PRIMARY_ACCENT);
-                btnToday.setBackground(ThemeConfig.BG_CARD);
+                ThemeConfig.styleQuickPill(btnTomorrow, true);
+                ThemeConfig.styleQuickPill(btnToday, false);
             });
             txtDate.setPreferredSize(new Dimension(130, 32));
             dateControls.add(btnToday);
@@ -3278,12 +3346,7 @@ public class WorkoutPanel extends JPanel {
 
         private JButton createQuickPill(String text, boolean active) {
             JButton btn = new JButton(text);
-            btn.setFont(ThemeConfig.FONT_SMALL);
-            btn.setForeground(ThemeConfig.TEXT_PRIMARY);
-            btn.setBackground(active ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
-            btn.setFocusPainted(false);
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            ThemeConfig.styleQuickPill(btn, active);
             return btn;
         }
 

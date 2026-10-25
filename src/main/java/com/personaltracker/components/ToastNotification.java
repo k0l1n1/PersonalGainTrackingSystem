@@ -56,7 +56,7 @@ public class ToastNotification extends JPanel {
 
         lblMessage = new JLabel(message);
         lblMessage.setFont(ThemeConfig.FONT_BODY_BOLD);
-        lblMessage.setForeground(ThemeConfig.TEXT_PRIMARY);
+        lblMessage.setForeground(Color.WHITE);
         add(lblMessage, BorderLayout.CENTER);
     }
 

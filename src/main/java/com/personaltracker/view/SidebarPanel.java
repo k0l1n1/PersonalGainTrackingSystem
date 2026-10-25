@@ -48,6 +48,12 @@ public class SidebarPanel extends JPanel {
 
     private final JLabel lblUserName;
     private final JLabel lblUserEmail;
+    private final JLabel brandIcon;
+    private final JLabel title;
+    private final JLabel subtitle;
+    private final JSeparator sep;
+    private final JLabel avatarLbl;
+    private final JButton btnThemeToggle;
 
     public SidebarPanel() {
         setPreferredSize(new Dimension(240, 0));
@@ -60,17 +66,17 @@ public class SidebarPanel extends JPanel {
         brandPanel.setOpaque(false);
         brandPanel.setBorder(BorderFactory.createEmptyBorder(22, 20, 20, 20));
 
-        JLabel brandIcon = new JLabel(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 28, ThemeConfig.PRIMARY_ACCENT));
+        brandIcon = new JLabel(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 28, ThemeConfig.PRIMARY_ACCENT));
         brandPanel.add(brandIcon, BorderLayout.WEST);
 
         JPanel brandTextPanel = new JPanel(new GridLayout(2, 1, 0, 2));
         brandTextPanel.setOpaque(false);
-        JLabel title = new JLabel("PERSONAL GAIN");
+        title = new JLabel("PERSONAL GAIN");
         title.setFont(new Font("Segoe UI", Font.BOLD, 14));
         title.setForeground(ThemeConfig.TEXT_PRIMARY);
         brandTextPanel.add(title);
 
-        JLabel subtitle = new JLabel("Fitness & Health Tracker");
+        subtitle = new JLabel("Fitness & Health Tracker");
         subtitle.setFont(ThemeConfig.FONT_SMALL);
         subtitle.setForeground(ThemeConfig.TEXT_MUTED);
         brandTextPanel.add(subtitle);
@@ -92,22 +98,22 @@ public class SidebarPanel extends JPanel {
         scrollMenu.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         add(scrollMenu, BorderLayout.CENTER);
 
-        // Bottom: User profile & Logout
+        // Bottom: User profile, Theme Toggle & Logout
         JPanel bottomPanel = new JPanel();
         bottomPanel.setOpaque(false);
         bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(12, 16, 18, 16));
 
-        JSeparator sep = new JSeparator();
+        sep = new JSeparator();
         sep.setForeground(ThemeConfig.BORDER_COLOR);
         sep.setBackground(ThemeConfig.BORDER_COLOR);
         bottomPanel.add(sep);
-        bottomPanel.add(Box.createVerticalStrut(12));
+        bottomPanel.add(Box.createVerticalStrut(10));
 
         JPanel userRow = new JPanel(new BorderLayout(10, 0));
         userRow.setOpaque(false);
 
-        JLabel avatarLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.USER, 22, ThemeConfig.PRIMARY_ACCENT));
+        avatarLbl = new JLabel(IconFactory.createIcon(IconFactory.IconType.USER, 22, ThemeConfig.PRIMARY_ACCENT));
         userRow.add(avatarLbl, BorderLayout.WEST);
 
         JPanel userInfoPanel = new JPanel(new GridLayout(2, 1, 0, 2));
@@ -126,6 +132,20 @@ public class SidebarPanel extends JPanel {
         bottomPanel.add(userRow);
 
         bottomPanel.add(Box.createVerticalStrut(10));
+
+        // Light Mode <-> Dark Mode Toggle Button
+        btnThemeToggle = new JButton();
+        btnThemeToggle.setFont(ThemeConfig.FONT_SMALL);
+        btnThemeToggle.setFocusPainted(false);
+        btnThemeToggle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnThemeToggle.setHorizontalAlignment(SwingConstants.LEFT);
+        btnThemeToggle.setContentAreaFilled(false);
+        btnThemeToggle.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        btnThemeToggle.addActionListener(e -> ThemeConfig.toggleTheme());
+        updateThemeToggleButton();
+        bottomPanel.add(btnThemeToggle);
+
+        bottomPanel.add(Box.createVerticalStrut(8));
 
         JButton btnLogout = new JButton("Sign Out", IconFactory.createIcon(IconFactory.IconType.LOGOUT, 16, ThemeConfig.ERROR));
         btnLogout.setFont(ThemeConfig.FONT_SMALL);
@@ -157,6 +177,10 @@ public class SidebarPanel extends JPanel {
     public void setActiveItem(NavItem item) {
         this.activeItem = item;
         updateActiveButton();
+    }
+
+    public NavItem getActiveItem() {
+        return activeItem;
     }
 
     public void refreshNavItems() {
@@ -192,6 +216,35 @@ public class SidebarPanel extends JPanel {
             lblUserEmail.setText("Not signed in");
         }
         refreshNavItems();
+    }
+
+    public void updateTheme() {
+        setBackground(ThemeConfig.BG_SIDEBAR);
+        setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, ThemeConfig.BORDER_COLOR));
+        brandIcon.setIcon(IconFactory.createIcon(IconFactory.IconType.WORKOUT, 28, ThemeConfig.PRIMARY_ACCENT));
+        title.setForeground(ThemeConfig.TEXT_PRIMARY);
+        subtitle.setForeground(ThemeConfig.TEXT_MUTED);
+        sep.setForeground(ThemeConfig.BORDER_COLOR);
+        sep.setBackground(ThemeConfig.BORDER_COLOR);
+        avatarLbl.setIcon(IconFactory.createIcon(IconFactory.IconType.USER, 22, ThemeConfig.PRIMARY_ACCENT));
+        lblUserName.setForeground(ThemeConfig.TEXT_PRIMARY);
+        lblUserEmail.setForeground(ThemeConfig.TEXT_MUTED);
+
+        updateThemeToggleButton();
+        updateActiveButton();
+        revalidate();
+        repaint();
+    }
+
+    private void updateThemeToggleButton() {
+        boolean dark = ThemeConfig.isDarkMode();
+        btnThemeToggle.setText(dark ? "Light Mode" : "Dark Mode");
+        btnThemeToggle.setIcon(IconFactory.createIcon(dark ? IconFactory.IconType.SUN : IconFactory.IconType.MOON, 15, ThemeConfig.TEXT_PRIMARY));
+        btnThemeToggle.setForeground(ThemeConfig.TEXT_PRIMARY);
+        btnThemeToggle.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
     }
 
     private void updateActiveButton() {
@@ -270,14 +323,14 @@ public class SidebarPanel extends JPanel {
             int h = getHeight();
 
             if (isActive) {
-                g2.setColor(new Color(0xF0, 0x44, 0x44, 38));
+                g2.setColor(new Color(ThemeConfig.PRIMARY_ACCENT.getRed(), ThemeConfig.PRIMARY_ACCENT.getGreen(), ThemeConfig.PRIMARY_ACCENT.getBlue(), 22));
                 g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, 8, 8));
 
                 // Left accent bar
                 g2.setColor(ThemeConfig.PRIMARY_ACCENT);
                 g2.fill(new RoundRectangle2D.Float(0, 8, 4, h - 16, 2, 2));
             } else if (isHovered) {
-                g2.setColor(new Color(255, 255, 255, 12));
+                g2.setColor(ThemeConfig.isDarkMode() ? new Color(255, 255, 255, 18) : new Color(0, 0, 0, 14));
                 g2.fill(new RoundRectangle2D.Float(0, 0, w - 1, h - 1, 8, 8));
             }
 

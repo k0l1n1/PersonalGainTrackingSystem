@@ -46,9 +46,9 @@ public class WorkoutTimerPanel extends ModernCard {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(0xF0, 0x44, 0x44, 28));
+                g2.setColor(ThemeConfig.BG_CARD_HOVER);
                 g2.fillOval(0, 0, getWidth(), getHeight());
-                g2.setColor(new Color(0xF0, 0x44, 0x44, 85));
+                g2.setColor(ThemeConfig.BORDER_COLOR);
                 g2.drawOval(0, 0, getWidth() - 1, getHeight() - 1);
                 g2.dispose();
             }
@@ -91,11 +91,11 @@ public class WorkoutTimerPanel extends ModernCard {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(0x14, 0x14, 0x18));
+                g2.setColor(ThemeConfig.BG_CARD_HOVER);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
 
-                Color borderColor = isRunning ? new Color(0x10, 0xB9, 0x81, 180) :
-                        (elapsedSeconds > 0 ? new Color(0xF5, 0x9E, 0x0B, 180) : new Color(0x35, 0x35, 0x38));
+                Color borderColor = isRunning ? new Color(0x10, 0xB9, 0x81) :
+                        (elapsedSeconds > 0 ? new Color(0xF5, 0x9E, 0x0B) : ThemeConfig.BORDER_COLOR);
                 g2.setColor(borderColor);
                 g2.setStroke(new BasicStroke(1.2f));
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
@@ -194,7 +194,7 @@ public class WorkoutTimerPanel extends ModernCard {
                     BorderFactory.createLineBorder(new Color(0x10, 0xB9, 0x81, 140), 1, true),
                     BorderFactory.createEmptyBorder(1, 6, 1, 6)
             ));
-            lblTime.setForeground(new Color(0x34, 0xD3, 0x99)); // Vivid Emerald green when live
+            lblTime.setForeground(new Color(0x05, 0x96, 0x69)); // Vivid emerald green
         } else {
             swingTimer.stop();
             isRunning = false;
@@ -207,7 +207,7 @@ public class WorkoutTimerPanel extends ModernCard {
                     BorderFactory.createLineBorder(new Color(0xF5, 0x9E, 0x0B, 140), 1, true),
                     BorderFactory.createEmptyBorder(1, 6, 1, 6)
             ));
-            lblTime.setForeground(new Color(0xFB, 0xBF, 0x24)); // Warm amber
+            lblTime.setForeground(new Color(0xD9, 0x77, 0x06)); // Rich warm amber
         }
         timerBadge.repaint();
         repaint();

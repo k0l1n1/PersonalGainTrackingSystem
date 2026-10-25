@@ -177,8 +177,8 @@ public class GoalPanel extends JPanel {
             JLabel coachTag = new JLabel("🛡️ COACH ASSIGNED");
             coachTag.setFont(new Font("Segoe UI", Font.BOLD, 9));
             coachTag.setOpaque(true);
-            coachTag.setBackground(new Color(0x3B, 0x82, 0xF6, 40));
-            coachTag.setForeground(new Color(0x60, 0xA5, 0xFA));
+            coachTag.setBackground(new Color(0xDB, 0xEA, 0xFE));
+            coachTag.setForeground(new Color(0x1D, 0x4E, 0xD8));
             coachTag.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
             leftTop.add(coachTag);
         }
