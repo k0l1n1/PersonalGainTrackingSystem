@@ -8,6 +8,7 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.TrainerAssignmentDAO;
 import com.personaltracker.model.*;
 import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.IconFactory;
 
 import javax.swing.*;
@@ -714,6 +715,11 @@ public class AssignTaskDialog extends JDialog {
                         if (onSuccessCallback != null) {
                             onSuccessCallback.run();
                         }
+                        DataSyncManager.fireDataChanged(
+                                DataSyncManager.DataType.WORKOUTS,
+                                DataSyncManager.DataType.GOALS,
+                                DataSyncManager.DataType.REMINDERS
+                        );
                         dispose();
                     }
                 } catch (Exception ex) {

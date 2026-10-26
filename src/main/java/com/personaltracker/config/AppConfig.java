@@ -61,12 +61,21 @@ public class AppConfig {
             LOGGER.log(Level.INFO, "No local .env file found, falling back to system environment variables.");
         }
 
+        // 1. Read Supabase Project URL from environment or .env
         this.supabaseUrl = getEnvValue("SUPABASE_URL", dotenv, "");
-        this.supabaseAnonKey = getEnvValue("SUPABASE_ANON_KEY", dotenv, "");
+
+        // 2. Read Supabase Client Key from environment (SUPABASE_KEY / SUPABASE_ANON_KEY / SUPABASE_PUBLISHABLE_KEY) or .env
+        this.supabaseAnonKey = getEnvValue("SUPABASE_KEY", dotenv, "");
+        if (this.supabaseAnonKey.isEmpty()) {
+            this.supabaseAnonKey = getEnvValue("SUPABASE_ANON_KEY", dotenv, "");
+        }
         if (this.supabaseAnonKey.isEmpty()) {
             this.supabaseAnonKey = getEnvValue("SUPABASE_PUBLISHABLE_KEY", dotenv, "");
         }
+
+        // 3. Optional: Read service-role secret key (administrative only - never bundled in distributed desktop client)
         this.supabaseSecretKey = getEnvValue("SUPABASE_SECRET_KEY", dotenv, "");
+
         this.dbHost = getEnvValue("DB_HOST", dotenv, "");
         String portStr = getEnvValue("DB_PORT", dotenv, "5432");
         try {
@@ -83,29 +92,48 @@ public class AppConfig {
             Properties props = new Properties();
             try (FileInputStream in = new FileInputStream(propFile)) {
                 props.load(in);
-                if (props.getProperty("SUPABASE_URL") != null) {
-                    this.supabaseUrl = props.getProperty("SUPABASE_URL");
+                if (props.getProperty("SUPABASE_URL") != null && !props.getProperty("SUPABASE_URL").isBlank()) {
+                    this.supabaseUrl = props.getProperty("SUPABASE_URL").trim();
                 }
-                if (props.getProperty("SUPABASE_ANON_KEY") != null) {
-                    this.supabaseAnonKey = props.getProperty("SUPABASE_ANON_KEY");
-                } else if (props.getProperty("SUPABASE_PUBLISHABLE_KEY") != null) {
-                    this.supabaseAnonKey = props.getProperty("SUPABASE_PUBLISHABLE_KEY");
+                if (props.getProperty("SUPABASE_KEY") != null && !props.getProperty("SUPABASE_KEY").isBlank()) {
+                    this.supabaseAnonKey = props.getProperty("SUPABASE_KEY").trim();
+                } else if (props.getProperty("SUPABASE_ANON_KEY") != null && !props.getProperty("SUPABASE_ANON_KEY").isBlank()) {
+                    this.supabaseAnonKey = props.getProperty("SUPABASE_ANON_KEY").trim();
+                } else if (props.getProperty("SUPABASE_PUBLISHABLE_KEY") != null && !props.getProperty("SUPABASE_PUBLISHABLE_KEY").isBlank()) {
+                    this.supabaseAnonKey = props.getProperty("SUPABASE_PUBLISHABLE_KEY").trim();
                 }
-                if (props.getProperty("SUPABASE_SECRET_KEY") != null) {
-                    this.supabaseSecretKey = props.getProperty("SUPABASE_SECRET_KEY");
+                if (props.getProperty("SUPABASE_SECRET_KEY") != null && !props.getProperty("SUPABASE_SECRET_KEY").isBlank()) {
+                    this.supabaseSecretKey = props.getProperty("SUPABASE_SECRET_KEY").trim();
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.WARNING, "Failed to read property file: " + e.getMessage());
             }
         }
 
-        // If credentials are empty or default placeholder, enable mock/offline mode
-        if (isPlaceholderOrEmpty(this.supabaseUrl) || isPlaceholderOrEmpty(this.supabaseAnonKey)) {
-            LOGGER.info("Supabase credentials not configured. Running in local in-memory demo mode.");
+        // Check if explicit offline demo mode was requested
+        boolean isMockRequested = "true".equalsIgnoreCase(getEnvValue("MOCK_MODE", dotenv, "false"));
+        if (isMockRequested) {
             this.mockMode = true;
-        } else {
-            this.mockMode = false;
+            LOGGER.info("MOCK_MODE enabled. Running in offline demo mode.");
+            return;
         }
+
+        // Validate required Supabase credentials
+        if (this.supabaseAnonKey == null || this.supabaseAnonKey.isBlank()) {
+            throw new IllegalStateException(
+                "SUPABASE_KEY environment variable is not configured. " +
+                "Please configure SUPABASE_KEY (or SUPABASE_ANON_KEY) in your environment or .env file."
+            );
+        }
+
+        if (this.supabaseUrl == null || this.supabaseUrl.isBlank()) {
+            throw new IllegalStateException(
+                "SUPABASE_URL environment variable is not configured. " +
+                "Please configure SUPABASE_URL in your environment or .env file."
+            );
+        }
+
+        this.mockMode = false;
     }
 
     private Properties loadExistingProps() {

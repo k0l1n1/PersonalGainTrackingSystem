@@ -116,6 +116,14 @@ public class TrainerAssignment {
         return "PENDING".equalsIgnoreCase(status);
     }
 
+    public boolean isCompleted() {
+        return "COMPLETED".equalsIgnoreCase(status);
+    }
+
+    public boolean isAcknowledged() {
+        return "ACKNOWLEDGED".equalsIgnoreCase(status);
+    }
+
     public boolean isWorkout() {
         return "WORKOUT".equalsIgnoreCase(assignmentType);
     }

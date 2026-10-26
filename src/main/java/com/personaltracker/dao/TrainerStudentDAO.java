@@ -260,6 +260,9 @@ public class TrainerStudentDAO {
         detail.setGoals(goals != null ? goals : Collections.emptyList());
         detail.setMeasurements(measurements != null ? measurements : Collections.emptyList());
         detail.setNutritionEntries(nutrition != null ? nutrition : Collections.emptyList());
+        try {
+            detail.setAssignments(new TrainerAssignmentDAO().getAssignmentsForStudent(studentId));
+        } catch (Exception ignored) {}
         return detail;
     }
 

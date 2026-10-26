@@ -8,7 +8,13 @@ import com.personaltracker.components.ToastNotification;
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.AchievementDAO;
 import com.personaltracker.dao.GoalDAO;
+import com.personaltracker.dao.ProfileDAO;
+import com.personaltracker.dao.TrainerAssignmentDAO;
 import com.personaltracker.model.Goal;
+import com.personaltracker.model.UserProfile;
+import com.personaltracker.model.UserSession;
+import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.IconFactory;
 
@@ -37,6 +43,15 @@ public class GoalPanel extends JPanel {
     public GoalPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
+
+        DataSyncManager.registerListener(type -> {
+            if (type == DataSyncManager.DataType.GOALS ||
+                type == DataSyncManager.DataType.WEIGHT_MEASUREMENT ||
+                type == DataSyncManager.DataType.PROFILE ||
+                type == DataSyncManager.DataType.WORKOUTS) {
+                loadGoals();
+            }
+        });
 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
@@ -310,6 +325,20 @@ public class GoalPanel extends JPanel {
                         goalDAO.updateGoal(goal);
                         if (goal.isCompleted()) {
                             achievementDAO.unlockAchievement("FIRST_GOAL");
+                            try {
+                                String uid = SupabaseClient.getInstance().getCurrentUserId();
+                                new TrainerAssignmentDAO().markAssignmentCompletedByAssociatedId(uid, goal.getId());
+                            } catch (Exception ignored) {}
+                        }
+                        if (GoalDAO.isWeightGoal(goal)) {
+                            try {
+                                UserSession session = SupabaseClient.getInstance().getCurrentSession();
+                                if (session != null && session.getProfile() != null) {
+                                    UserProfile prof = session.getProfile();
+                                    prof.setTargetWeightKg(goal.getTargetValue());
+                                    new ProfileDAO().updateProfile(prof);
+                                }
+                            } catch (Exception ignored) {}
                         }
                         return null;
                     }
@@ -322,6 +351,11 @@ public class GoalPanel extends JPanel {
                             ToastNotification.showToast(GoalPanel.this, "Goal progress updated!", ToastNotification.ToastType.SUCCESS);
                         }
                         loadGoals();
+                        DataSyncManager.fireDataChanged(
+                                DataSyncManager.DataType.GOALS,
+                                DataSyncManager.DataType.WEIGHT_MEASUREMENT,
+                                DataSyncManager.DataType.PROFILE
+                        );
                     }
                 };
                 worker.execute();
@@ -358,6 +392,11 @@ public class GoalPanel extends JPanel {
                     try {
                         get();
                         loadGoals();
+                        DataSyncManager.fireDataChanged(
+                                DataSyncManager.DataType.GOALS,
+                                DataSyncManager.DataType.PROFILE,
+                                DataSyncManager.DataType.WEIGHT_MEASUREMENT
+                        );
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(GoalPanel.this, "Failed to delete goal: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -650,6 +689,20 @@ public class GoalPanel extends JPanel {
                     }
                     if (g.isCompleted()) {
                         achievementDAO.unlockAchievement("FIRST_GOAL");
+                        try {
+                            String uid = SupabaseClient.getInstance().getCurrentUserId();
+                            new TrainerAssignmentDAO().markAssignmentCompletedByAssociatedId(uid, g.getId());
+                        } catch (Exception ignored) {}
+                    }
+                    if (GoalDAO.isWeightGoal(g)) {
+                        try {
+                            UserSession session = SupabaseClient.getInstance().getCurrentSession();
+                            if (session != null && session.getProfile() != null) {
+                                UserProfile prof = session.getProfile();
+                                prof.setTargetWeightKg(g.getTargetValue());
+                                new ProfileDAO().updateProfile(prof);
+                            }
+                        } catch (Exception ignored) {}
                     }
                     return null;
                 }
@@ -661,6 +714,11 @@ public class GoalPanel extends JPanel {
                         saved = true;
                         ToastNotification.showToast(GoalPanel.this, editing == null ? "Goal created!" : "Goal updated!", ToastNotification.ToastType.SUCCESS);
                         dispose();
+                        DataSyncManager.fireDataChanged(
+                                DataSyncManager.DataType.GOALS,
+                                DataSyncManager.DataType.PROFILE,
+                                DataSyncManager.DataType.WEIGHT_MEASUREMENT
+                        );
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(GoalDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }

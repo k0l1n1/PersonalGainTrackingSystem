@@ -12,6 +12,7 @@ public class StudentProgressDetail {
     private List<Goal> goals = new ArrayList<>();
     private List<BodyMeasurement> measurements = new ArrayList<>();
     private List<NutritionEntry> nutritionEntries = new ArrayList<>();
+    private List<TrainerAssignment> assignments = new ArrayList<>();
 
     public StudentProgressDetail() {}
 
@@ -27,6 +28,9 @@ public class StudentProgressDetail {
 
     public List<Goal> getGoals() { return goals; }
     public void setGoals(List<Goal> goals) { this.goals = goals != null ? goals : new ArrayList<>(); }
+
+    public List<TrainerAssignment> getAssignments() { return assignments; }
+    public void setAssignments(List<TrainerAssignment> assignments) { this.assignments = assignments != null ? assignments : new ArrayList<>(); }
 
     public List<BodyMeasurement> getMeasurements() { return measurements; }
     public void setMeasurements(List<BodyMeasurement> measurements) { this.measurements = measurements != null ? measurements : new ArrayList<>(); }

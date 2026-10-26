@@ -9,6 +9,7 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.*;
 import com.personaltracker.model.*;
 import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
@@ -132,6 +133,10 @@ public class DashboardPanel extends JPanel {
     public DashboardPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
+
+        DataSyncManager.registerListener(type -> {
+            refreshDashboardData();
+        });
 
         ScrollableContentPanel contentPanel = new ScrollableContentPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
@@ -676,8 +681,9 @@ public class DashboardPanel extends JPanel {
         }
 
         long pendingCount = assignments.stream().filter(TrainerAssignment::isPending).count();
+        long completedCount = assignments.stream().filter(TrainerAssignment::isCompleted).count();
         if (pendingCount > 0) {
-            lblAssignmentsBadge.setText(pendingCount + " Pending Action");
+            lblAssignmentsBadge.setText(pendingCount + (pendingCount == 1 ? " Pending Action" : " Pending Actions"));
             lblAssignmentsBadge.setForeground(ThemeConfig.PRIMARY_ACCENT);
 
             // Pop toast alert once per session
@@ -686,11 +692,14 @@ public class DashboardPanel extends JPanel {
                 TrainerAssignment first = assignments.stream().filter(TrainerAssignment::isPending).findFirst().orElse(assignments.get(0));
                 String coach = first.getTrainerName() != null ? first.getTrainerName() : "Coach";
                 ToastNotification.showToast(this,
-                        "🔔 New Assignment from " + coach + ": " + first.getTitle(),
+                        "New Assignment from " + coach + ": " + first.getTitle(),
                         ToastNotification.ToastType.INFO);
             }
+        } else if (completedCount > 0) {
+            lblAssignmentsBadge.setText(completedCount + " Completed");
+            lblAssignmentsBadge.setForeground(ThemeConfig.SUCCESS);
         } else {
-            lblAssignmentsBadge.setText("✓ " + assignments.size() + " Acknowledged");
+            lblAssignmentsBadge.setText("All Acknowledged");
             lblAssignmentsBadge.setForeground(ThemeConfig.SUCCESS);
         }
 
@@ -721,20 +730,26 @@ public class DashboardPanel extends JPanel {
 
         Color badgeColor;
         String typeLabel;
+        IconFactory.IconType iconType;
         if (a.isWorkout()) {
             badgeColor = ThemeConfig.PRIMARY_ACCENT;
-            typeLabel = "🏋️ WORKOUT ROUTINE";
+            typeLabel = "WORKOUT ROUTINE";
+            iconType = IconFactory.IconType.WORKOUT;
         } else if (a.isGoal()) {
             badgeColor = ThemeConfig.SUCCESS;
-            typeLabel = "🎯 FITNESS GOAL";
+            typeLabel = "FITNESS GOAL";
+            iconType = IconFactory.IconType.GOAL;
         } else {
             badgeColor = new Color(0xA8, 0x55, 0xF7);
-            typeLabel = "⏰ SCHEDULED TASK";
+            typeLabel = "SCHEDULED TASK";
+            iconType = IconFactory.IconType.TIMER;
         }
 
         JLabel lblType = new JLabel(typeLabel);
         lblType.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblType.setForeground(badgeColor);
+        lblType.setIcon(IconFactory.createIcon(iconType, 12, badgeColor));
+        lblType.setIconTextGap(4);
         lblType.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(badgeColor, 1, true),
                 BorderFactory.createEmptyBorder(2, 6, 2, 6)
@@ -777,7 +792,18 @@ public class DashboardPanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
         actions.setOpaque(false);
 
-        if (a.isPending()) {
+        if (a.isCompleted()) {
+            JLabel lblDone = new JLabel("COMPLETED");
+            lblDone.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 12, ThemeConfig.SUCCESS));
+            lblDone.setIconTextGap(4);
+            lblDone.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            lblDone.setForeground(ThemeConfig.SUCCESS);
+            lblDone.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(ThemeConfig.SUCCESS, 1, true),
+                    BorderFactory.createEmptyBorder(2, 6, 2, 6)
+            ));
+            actions.add(lblDone);
+        } else if (a.isPending()) {
             JLabel lblPending = new JLabel("PENDING");
             lblPending.setFont(new Font("Segoe UI", Font.BOLD, 10));
             lblPending.setForeground(ThemeConfig.WARNING);
@@ -787,8 +813,9 @@ public class DashboardPanel extends JPanel {
             ));
             actions.add(lblPending);
 
-            ModernButton btnAck = new ModernButton("✓ Acknowledge", ModernButton.ButtonStyle.SECONDARY);
-            btnAck.setPreferredSize(new Dimension(125, 30));
+            ModernButton btnAck = new ModernButton("Acknowledge", ModernButton.ButtonStyle.SECONDARY);
+            btnAck.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 11, ThemeConfig.TEXT_PRIMARY));
+            btnAck.setPreferredSize(new Dimension(115, 30));
             btnAck.addActionListener(e -> {
                 String uid = SupabaseClient.getInstance().getCurrentUserId();
                 assignmentDAO.acknowledgeAssignment(uid, a.getId());
@@ -797,33 +824,51 @@ public class DashboardPanel extends JPanel {
             });
             actions.add(btnAck);
         } else {
-            JLabel lblAck = new JLabel("✓ ACKNOWLEDGED");
+            JLabel lblAck = new JLabel("ACKNOWLEDGED");
             lblAck.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            lblAck.setForeground(ThemeConfig.SUCCESS);
+            lblAck.setForeground(ThemeConfig.PRIMARY_ACCENT);
             lblAck.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(ThemeConfig.SUCCESS, 1, true),
+                    BorderFactory.createLineBorder(ThemeConfig.PRIMARY_ACCENT, 1, true),
                     BorderFactory.createEmptyBorder(2, 6, 2, 6)
             ));
             actions.add(lblAck);
         }
 
+        if (!a.isCompleted()) {
+            ModernButton btnMarkDone = new ModernButton("Mark Completed", ModernButton.ButtonStyle.SUCCESS);
+            btnMarkDone.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 12, ThemeConfig.TEXT_ON_ACCENT));
+            btnMarkDone.setPreferredSize(new Dimension(140, 30));
+            btnMarkDone.addActionListener(e -> {
+                String uid = SupabaseClient.getInstance().getCurrentUserId();
+                assignmentDAO.markAssignmentCompleted(uid, a.getId());
+                ToastNotification.showToast(DashboardPanel.this, "Great job! Task marked as completed for your coach!", ToastNotification.ToastType.SUCCESS);
+                refreshDashboardData();
+                DataSyncManager.fireDataChanged(
+                        DataSyncManager.DataType.WORKOUTS,
+                        DataSyncManager.DataType.GOALS,
+                        DataSyncManager.DataType.REMINDERS
+                );
+            });
+            actions.add(btnMarkDone);
+        }
+
         if (a.isWorkout()) {
-            ModernButton btnGo = new ModernButton("View Workout →", ModernButton.ButtonStyle.PRIMARY);
-            btnGo.setPreferredSize(new Dimension(135, 30));
+            ModernButton btnGo = new ModernButton("View Workout", ModernButton.ButtonStyle.PRIMARY);
+            btnGo.setPreferredSize(new Dimension(125, 30));
             btnGo.addActionListener(e -> {
                 if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.WORKOUTS);
             });
             actions.add(btnGo);
         } else if (a.isGoal()) {
-            ModernButton btnGo = new ModernButton("View Goals →", ModernButton.ButtonStyle.PRIMARY);
-            btnGo.setPreferredSize(new Dimension(120, 30));
+            ModernButton btnGo = new ModernButton("View Goals", ModernButton.ButtonStyle.PRIMARY);
+            btnGo.setPreferredSize(new Dimension(115, 30));
             btnGo.addActionListener(e -> {
                 if (navigationConsumer != null) navigationConsumer.accept(SidebarPanel.NavItem.GOALS);
             });
             actions.add(btnGo);
         } else {
-            ModernButton btnGo = new ModernButton("View Tasks →", ModernButton.ButtonStyle.PRIMARY);
-            btnGo.setPreferredSize(new Dimension(115, 30));
+            ModernButton btnGo = new ModernButton("View Tasks", ModernButton.ButtonStyle.PRIMARY);
+            btnGo.setPreferredSize(new Dimension(110, 30));
             btnGo.addActionListener(e -> openRemindersView());
             actions.add(btnGo);
         }

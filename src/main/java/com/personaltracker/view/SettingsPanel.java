@@ -26,6 +26,7 @@ import com.personaltracker.model.Workout;
 import com.personaltracker.service.SupabaseAuthService;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.CsvExporter;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
@@ -103,6 +104,17 @@ public class SettingsPanel extends JPanel {
     public SettingsPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
+
+        DataSyncManager.registerListener(type -> {
+            if (type == DataSyncManager.DataType.PROFILE ||
+                type == DataSyncManager.DataType.WEIGHT_MEASUREMENT ||
+                type == DataSyncManager.DataType.GOALS ||
+                type == DataSyncManager.DataType.WORKOUTS ||
+                type == DataSyncManager.DataType.WATER ||
+                type == DataSyncManager.DataType.SLEEP) {
+                loadSettings();
+            }
+        });
 
         JPanel content = new JPanel(new BorderLayout(0, 14));
         content.setOpaque(false);
@@ -859,6 +871,11 @@ public class SettingsPanel extends JPanel {
                         ToastNotification.showToast(SettingsPanel.this, "Target goal updated to " + String.format(Locale.US, "%.1f kg", newTarget), ToastNotification.ToastType.SUCCESS);
                         loadSettings();
                         if (onProfileUpdatedCallback != null) onProfileUpdatedCallback.run();
+                        DataSyncManager.fireDataChanged(
+                                DataSyncManager.DataType.PROFILE,
+                                DataSyncManager.DataType.GOALS,
+                                DataSyncManager.DataType.WEIGHT_MEASUREMENT
+                        );
                     }
                 };
                 sw.execute();
@@ -988,6 +1005,20 @@ public class SettingsPanel extends JPanel {
                     @Override
                     protected Void doInBackground() throws Exception {
                         profileDAO.updateProfile(targetProfile);
+                        // Also synchronize active weight goal target value if target weight was edited
+                        if (targetProfile.getTargetWeightKg() != null && targetProfile.getTargetWeightKg() > 0) {
+                            try {
+                                List<Goal> goals = goalDAO.getAllGoals();
+                                for (Goal g : goals) {
+                                    if (GoalDAO.isWeightGoal(g)) {
+                                        g.setTargetValue(targetProfile.getTargetWeightKg());
+                                        g.checkStatus();
+                                        goalDAO.updateGoal(g);
+                                        break;
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                        }
                         return null;
                     }
 
@@ -998,6 +1029,11 @@ public class SettingsPanel extends JPanel {
                         ToastNotification.showToast(SettingsPanel.this, "Profile updated successfully!", ToastNotification.ToastType.SUCCESS);
                         loadSettings();
                         if (onProfileUpdatedCallback != null) onProfileUpdatedCallback.run();
+                        DataSyncManager.fireDataChanged(
+                                DataSyncManager.DataType.PROFILE,
+                                DataSyncManager.DataType.GOALS,
+                                DataSyncManager.DataType.WEIGHT_MEASUREMENT
+                        );
                     }
                 };
                 saveWorker.execute();

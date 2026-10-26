@@ -7,6 +7,7 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.*;
 import com.personaltracker.model.*;
 import com.personaltracker.util.CsvExporter;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.IconFactory;
 import org.jfree.chart.ChartFactory;
@@ -58,6 +59,10 @@ public class AnalyticsPanel extends JPanel {
     public AnalyticsPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
+
+        DataSyncManager.registerListener(type -> {
+            loadAnalytics();
+        });
 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));

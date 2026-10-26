@@ -9,6 +9,7 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.AchievementDAO;
 import com.personaltracker.dao.MeasurementDAO;
 import com.personaltracker.model.BodyMeasurement;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
@@ -34,7 +35,11 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import com.personaltracker.dao.GoalDAO;
+import com.personaltracker.dao.ProfileDAO;
+import com.personaltracker.model.Goal;
 import com.personaltracker.model.UserProfile;
+import com.personaltracker.model.UserSession;
 import com.personaltracker.service.SupabaseClient;
 
 /**
@@ -60,6 +65,12 @@ public class MeasurementPanel extends JPanel {
     public MeasurementPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
+
+        DataSyncManager.registerListener(type -> {
+            if (type == DataSyncManager.DataType.WEIGHT_MEASUREMENT || type == DataSyncManager.DataType.PROFILE) {
+                loadMeasurements();
+            }
+        });
 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
@@ -326,6 +337,23 @@ public class MeasurementPanel extends JPanel {
                 @Override
                 protected Void doInBackground() throws Exception {
                     measurementDAO.deleteMeasurement(m.getId());
+                    try {
+                        List<BodyMeasurement> remaining = measurementDAO.getAllMeasurements();
+                        GoalDAO goalDAO = new GoalDAO();
+                        List<Goal> goals = goalDAO.getAllGoals();
+                        Double latestWeight = !remaining.isEmpty() ? remaining.get(0).getWeightKg() : null;
+                        for (Goal g : goals) {
+                            if (GoalDAO.isWeightGoal(g)) {
+                                if (latestWeight != null) {
+                                    g.setCurrentValue(latestWeight);
+                                }
+                                g.checkStatus();
+                                goalDAO.updateGoal(g);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Notice: Failed to sync weight goal on delete: " + ex.getMessage());
+                    }
                     return null;
                 }
                 @Override
@@ -333,6 +361,11 @@ public class MeasurementPanel extends JPanel {
                     try {
                         get();
                         loadMeasurements();
+                        DataSyncManager.fireDataChanged(
+                                DataSyncManager.DataType.WEIGHT_MEASUREMENT,
+                                DataSyncManager.DataType.GOALS,
+                                DataSyncManager.DataType.PROFILE
+                        );
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(MeasurementPanel.this, "Failed to delete measurement: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -685,6 +718,38 @@ public class MeasurementPanel extends JPanel {
                 @Override
                 protected Void doInBackground() throws Exception {
                     measurementDAO.saveMeasurement(m);
+
+                    // 1. Instantly update active weight goals to the new logged weight
+                    try {
+                        GoalDAO goalDAO = new GoalDAO();
+                        List<Goal> goals = goalDAO.getAllGoals();
+                        for (Goal g : goals) {
+                            if (GoalDAO.isWeightGoal(g)) {
+                                g.setCurrentValue(m.getWeightKg());
+                                g.checkStatus();
+                                goalDAO.updateGoal(g);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Notice: Failed to sync weight goals: " + ex.getMessage());
+                    }
+
+                    // 2. Synchronize height with user profile if height was updated
+                    if (m.getHeightCm() != null && m.getHeightCm() > 0) {
+                        try {
+                            UserSession session = SupabaseClient.getInstance().getCurrentSession();
+                            if (session != null && session.getProfile() != null) {
+                                UserProfile prof = session.getProfile();
+                                if (prof.getHeightCm() == null || Math.abs(prof.getHeightCm() - m.getHeightCm()) > 0.01) {
+                                    prof.setHeightCm(m.getHeightCm());
+                                    new ProfileDAO().updateProfile(prof);
+                                }
+                            }
+                        } catch (Exception ex) {
+                            System.err.println("Notice: Failed to sync height to profile: " + ex.getMessage());
+                        }
+                    }
+
                     return null;
                 }
                 @Override
@@ -694,6 +759,11 @@ public class MeasurementPanel extends JPanel {
                         saved = true;
                         ToastNotification.showToast(MeasurementPanel.this, "Check-in logged successfully!", ToastNotification.ToastType.SUCCESS);
                         dispose();
+                        DataSyncManager.fireDataChanged(
+                                DataSyncManager.DataType.WEIGHT_MEASUREMENT,
+                                DataSyncManager.DataType.GOALS,
+                                DataSyncManager.DataType.PROFILE
+                        );
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(MeasurementDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }

@@ -43,6 +43,11 @@ public class TrainerAssignmentDAO {
             }
         }
 
+        // Cross-check completion status with underlying workouts, goals, or reminders
+        try {
+            syncAssignmentsStatusFromEntities(studentId, list);
+        } catch (Exception ignored) {}
+
         // Sort descending by created_at or target_date
         list.sort((a, b) -> {
             if (a.getCreatedAt() != null && b.getCreatedAt() != null) {
@@ -52,6 +57,119 @@ public class TrainerAssignmentDAO {
         });
 
         return list;
+    }
+
+    private void syncAssignmentsStatusFromEntities(String studentId, List<TrainerAssignment> list) {
+        if (list == null || list.isEmpty()) return;
+
+        List<Workout> userWorkouts = null;
+        List<Goal> userGoals = null;
+        List<Reminder> userReminders = null;
+
+        for (TrainerAssignment a : list) {
+            if (a.getAssociatedId() == null) continue;
+            String assocId = a.getAssociatedId();
+
+            if (a.isWorkout()) {
+                if (userWorkouts == null) {
+                    userWorkouts = new ArrayList<>();
+                    try {
+                        if (!config.isMockMode() && client.getCurrentSession() != null && client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+                            userWorkouts.addAll(client.executeGetList("workouts", "user_id=eq." + studentId, Workout.class));
+                        }
+                    } catch (Exception ignored) {}
+                    try {
+                        List<Workout> local = client.getWorkoutsForUser(studentId);
+                        for (Workout lw : local) {
+                            if (userWorkouts.stream().noneMatch(w -> Objects.equals(w.getId(), lw.getId()))) {
+                                userWorkouts.add(lw);
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+                for (Workout w : userWorkouts) {
+                    if (assocId.equals(w.getId())) {
+                        if ("COMPLETED".equalsIgnoreCase(w.getStatus())) {
+                            if (!a.isCompleted()) {
+                                a.setStatus("COMPLETED");
+                                client.updateMockTrainerAssignment(a);
+                                try {
+                                    if (!config.isMockMode() && client.getCurrentSession() != null && client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+                                        client.executePatch("trainer_assignments", "id=eq." + a.getId(), a);
+                                    }
+                                } catch (Exception ignored) {}
+                            }
+                        } else if (a.isCompleted() && "PLANNED".equalsIgnoreCase(w.getStatus())) {
+                            a.setStatus("PENDING");
+                            client.updateMockTrainerAssignment(a);
+                            try {
+                                if (!config.isMockMode() && client.getCurrentSession() != null && client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+                                    client.executePatch("trainer_assignments", "id=eq." + a.getId(), a);
+                                }
+                            } catch (Exception ignored) {}
+                        }
+                        break;
+                    }
+                }
+            } else if (a.isGoal()) {
+                if (userGoals == null) {
+                    userGoals = new ArrayList<>();
+                    try {
+                        if (!config.isMockMode() && client.getCurrentSession() != null && client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+                            userGoals.addAll(client.executeGetList("goals", "user_id=eq." + studentId, Goal.class));
+                        }
+                    } catch (Exception ignored) {}
+                    try {
+                        List<Goal> local = client.getGoalsForUser(studentId);
+                        for (Goal lg : local) {
+                            if (userGoals.stream().noneMatch(g -> Objects.equals(g.getId(), lg.getId()))) {
+                                userGoals.add(lg);
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+                for (Goal g : userGoals) {
+                    if (assocId.equals(g.getId())) {
+                        if (g.isCompleted() || "COMPLETED".equalsIgnoreCase(g.getStatus())) {
+                            if (!a.isCompleted()) {
+                                a.setStatus("COMPLETED");
+                                client.updateMockTrainerAssignment(a);
+                                try {
+                                    if (!config.isMockMode() && client.getCurrentSession() != null && client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+                                        client.executePatch("trainer_assignments", "id=eq." + a.getId(), a);
+                                    }
+                                } catch (Exception ignored) {}
+                            }
+                        }
+                        break;
+                    }
+                }
+            } else if (a.isSchedule()) {
+                if (userReminders == null) {
+                    try {
+                        userReminders = new ReminderDAO().getAllReminders();
+                    } catch (Exception ignored) {}
+                }
+                if (userReminders != null) {
+                    for (Reminder r : userReminders) {
+                        if (assocId.equals(r.getId())) {
+                            if (r.isCompleted()) {
+                                if (!a.isCompleted()) {
+                                    a.setStatus("COMPLETED");
+                                    client.updateMockTrainerAssignment(a);
+                                    try {
+                                        if (!config.isMockMode() && client.getCurrentSession() != null && client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+                                            client.executePatch("trainer_assignments", "id=eq." + a.getId(), a);
+                                        }
+                                    } catch (Exception ignored) {}
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -279,6 +397,89 @@ public class TrainerAssignmentDAO {
                 } catch (Exception ignored) {}
                 break;
             }
+        }
+    }
+
+    /**
+     * Marks an assignment as COMPLETED by the student and updates the associated workout, goal, or reminder.
+     */
+    public void markAssignmentCompleted(String studentId, String assignmentId) {
+        if (assignmentId == null || studentId == null) return;
+        List<TrainerAssignment> list = getAssignmentsForStudent(studentId);
+        for (TrainerAssignment a : list) {
+            if (assignmentId.equals(a.getId())) {
+                a.setStatus("COMPLETED");
+                a.setRead(true);
+                client.updateMockTrainerAssignment(a);
+                try {
+                    if (!config.isMockMode() && client.getCurrentSession() != null && client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+                        client.executePatch("trainer_assignments", "id=eq." + assignmentId, a);
+                    }
+                } catch (Exception ignored) {}
+
+                syncAssociatedEntityCompleted(a);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Marks any assignment matching the associated workout/goal/reminder ID as COMPLETED.
+     */
+    public void markAssignmentCompletedByAssociatedId(String studentId, String associatedId) {
+        if (associatedId == null || studentId == null) return;
+        List<TrainerAssignment> list = getAssignmentsForStudent(studentId);
+        for (TrainerAssignment a : list) {
+            if (associatedId.equals(a.getAssociatedId())) {
+                a.setStatus("COMPLETED");
+                a.setRead(true);
+                client.updateMockTrainerAssignment(a);
+                try {
+                    if (!config.isMockMode() && client.getCurrentSession() != null && client.isValidJwt(client.getCurrentSession().getAccessToken())) {
+                        client.executePatch("trainer_assignments", "id=eq." + a.getId(), a);
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    private void syncAssociatedEntityCompleted(TrainerAssignment a) {
+        if (a == null || a.getAssociatedId() == null) return;
+        String assocId = a.getAssociatedId();
+        try {
+            if (a.isWorkout()) {
+                WorkoutDAO wdao = new WorkoutDAO();
+                List<Workout> workouts = wdao.getAllWorkouts();
+                for (Workout w : workouts) {
+                    if (assocId.equals(w.getId())) {
+                        w.setStatus("COMPLETED");
+                        wdao.updateWorkout(w);
+                        break;
+                    }
+                }
+            } else if (a.isGoal()) {
+                GoalDAO gdao = new GoalDAO();
+                List<Goal> goals = gdao.getAllGoals();
+                for (Goal g : goals) {
+                    if (assocId.equals(g.getId())) {
+                        g.setStatus("COMPLETED");
+                        gdao.updateGoal(g);
+                        break;
+                    }
+                }
+            } else if (a.isSchedule()) {
+                ReminderDAO rdao = new ReminderDAO();
+                List<Reminder> reminders = rdao.getAllReminders();
+                for (Reminder r : reminders) {
+                    if (assocId.equals(r.getId())) {
+                        r.setCompleted(true);
+                        rdao.updateReminder(r);
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Notice: Failed to sync associated entity completion: " + ex.getMessage());
         }
     }
 

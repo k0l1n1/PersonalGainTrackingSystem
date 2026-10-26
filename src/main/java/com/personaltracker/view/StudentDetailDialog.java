@@ -48,6 +48,7 @@ public class StudentDetailDialog extends JDialog {
         tabbedPane.setBackground(ThemeConfig.BG_DARK);
         tabbedPane.setForeground(ThemeConfig.TEXT_PRIMARY);
 
+        tabbedPane.addTab("Coaching Tasks (" + detail.getAssignments().size() + ")", IconFactory.createIcon(IconFactory.IconType.CHECK, 14, ThemeConfig.SUCCESS), createAssignmentsTab());
         tabbedPane.addTab("Workouts (" + detail.getWorkouts().size() + ")", IconFactory.createIcon(IconFactory.IconType.WORKOUT, 14, ThemeConfig.PRIMARY_ACCENT), createWorkoutsTab());
         tabbedPane.addTab("Fitness Goals (" + detail.getGoals().size() + ")", IconFactory.createIcon(IconFactory.IconType.GOAL, 14, ThemeConfig.PRIMARY_ACCENT), createGoalsTab());
         tabbedPane.addTab("Weight & Measurements (" + detail.getMeasurements().size() + ")", IconFactory.createIcon(IconFactory.IconType.MEASUREMENT, 14, ThemeConfig.PRIMARY_ACCENT), createMeasurementsTab());
@@ -212,6 +213,29 @@ public class StudentDetailDialog extends JDialog {
         table.getColumnModel().getColumn(5).setPreferredWidth(85);
         table.getColumnModel().getColumn(6).setPreferredWidth(130);
         table.getColumnModel().getColumn(7).setPreferredWidth(280);
+
+        table.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean isSel, boolean hasFoc, int row, int col) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, isSel, hasFoc, row, col);
+                l.setHorizontalAlignment(SwingConstants.CENTER);
+                String st = val != null ? val.toString() : "";
+                if ("COMPLETED".equalsIgnoreCase(st)) {
+                    l.setForeground(ThemeConfig.SUCCESS);
+                    l.setText("COMPLETED");
+                    l.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 11, ThemeConfig.SUCCESS));
+                } else if ("PLANNED".equalsIgnoreCase(st)) {
+                    l.setForeground(ThemeConfig.WARNING);
+                    l.setText("PLANNED");
+                    l.setIcon(IconFactory.createIcon(IconFactory.IconType.TIMER, 11, ThemeConfig.WARNING));
+                } else {
+                    l.setIcon(null);
+                }
+                l.setIconTextGap(4);
+                l.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                return l;
+            }
+        });
 
         // Filter toolbar at the top of the workouts tab
         JPanel filterBar = new JPanel(new BorderLayout(8, 0));
@@ -402,6 +426,87 @@ public class StudentDetailDialog extends JDialog {
 
         JTable table = new JTable(model);
         styleTable(table);
+
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        scroll.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1, true));
+        panel.add(scroll, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel createAssignmentsTab() {
+        JPanel panel = new JPanel(new BorderLayout(0, 12));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
+
+        if (detail.getAssignments().isEmpty()) {
+            JPanel empty = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 40));
+            empty.setOpaque(false);
+            JLabel lblEmpty = new JLabel("No coaching assignments dispatched to this athlete yet. Click '+ Assign Goal or Schedule Routine' below!");
+            lblEmpty.setFont(ThemeConfig.FONT_BODY);
+            lblEmpty.setForeground(ThemeConfig.TEXT_MUTED);
+            empty.add(lblEmpty);
+            panel.add(empty, BorderLayout.CENTER);
+            return panel;
+        }
+
+        String[] cols = {"Type", "Assignment Title", "Coaching Notes / Details", "Target Date", "Time", "Status"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) { return false; }
+        };
+
+        for (TrainerAssignment a : detail.getAssignments()) {
+            String typeBadge = a.isWorkout() ? "🏋️ WORKOUT" : (a.isGoal() ? "🎯 GOAL" : "⏰ SCHEDULE");
+            String timeStr = a.getTargetTime() != null ? a.getTargetTime().toString() : "--";
+            String statusStr = a.isCompleted() ? "COMPLETED" : (a.isPending() ? "PENDING" : "ACKNOWLEDGED");
+
+            model.addRow(new Object[]{
+                    typeBadge,
+                    a.getTitle(),
+                    (a.getDescription() != null && !a.getDescription().isBlank()) ? a.getDescription() : "--",
+                    DateUtil.formatDate(a.getTargetDate()),
+                    timeStr,
+                    statusStr
+            });
+        }
+
+        JTable table = new JTable(model);
+        styleTable(table);
+
+        table.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean isSel, boolean hasFoc, int row, int col) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, isSel, hasFoc, row, col);
+                l.setHorizontalAlignment(SwingConstants.CENTER);
+                String st = val != null ? val.toString() : "";
+                if ("COMPLETED".equalsIgnoreCase(st)) {
+                    l.setForeground(ThemeConfig.SUCCESS);
+                    l.setText("COMPLETED");
+                    l.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 11, ThemeConfig.SUCCESS));
+                } else if ("PENDING".equalsIgnoreCase(st)) {
+                    l.setForeground(ThemeConfig.WARNING);
+                    l.setText("PENDING");
+                    l.setIcon(IconFactory.createIcon(IconFactory.IconType.TIMER, 11, ThemeConfig.WARNING));
+                } else {
+                    l.setForeground(ThemeConfig.PRIMARY_ACCENT);
+                    l.setText("ACKNOWLEDGED");
+                    l.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 11, ThemeConfig.PRIMARY_ACCENT));
+                }
+                l.setIconTextGap(4);
+                l.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                return l;
+            }
+        });
+
+        table.getColumnModel().getColumn(0).setPreferredWidth(110);
+        table.getColumnModel().getColumn(1).setPreferredWidth(180);
+        table.getColumnModel().getColumn(2).setPreferredWidth(300);
+        table.getColumnModel().getColumn(3).setPreferredWidth(95);
+        table.getColumnModel().getColumn(4).setPreferredWidth(75);
+        table.getColumnModel().getColumn(5).setPreferredWidth(125);
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setOpaque(false);

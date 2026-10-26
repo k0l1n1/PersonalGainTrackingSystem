@@ -9,6 +9,7 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.TrainerStudentDAO;
 import com.personaltracker.model.*;
 import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
@@ -41,6 +42,10 @@ public class TrainerPanel extends JPanel {
     public TrainerPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
+
+        DataSyncManager.registerListener(type -> {
+            loadData();
+        });
 
         JPanel root = new JPanel();
         root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));

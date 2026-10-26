@@ -14,6 +14,7 @@ import com.personaltracker.model.SleepRecord;
 import com.personaltracker.model.UserSession;
 import com.personaltracker.model.WaterIntake;
 import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.IconFactory;
 import com.personaltracker.util.ValidationUtil;
@@ -81,6 +82,14 @@ public class WaterSleepPanel extends JPanel {
     public WaterSleepPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
+
+        DataSyncManager.registerListener(type -> {
+            if (type == DataSyncManager.DataType.WATER ||
+                type == DataSyncManager.DataType.SLEEP ||
+                type == DataSyncManager.DataType.PROFILE) {
+                loadData();
+            }
+        });
 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
@@ -844,6 +853,7 @@ public class WaterSleepPanel extends JPanel {
             protected void done() {
                 ToastNotification.showToast(WaterSleepPanel.this, "Logged +" + ml + "ml water intake", ToastNotification.ToastType.SUCCESS);
                 loadData();
+                DataSyncManager.fireDataChanged(DataSyncManager.DataType.WATER);
             }
         };
         worker.execute();
@@ -876,6 +886,7 @@ public class WaterSleepPanel extends JPanel {
                     get();
                     ToastNotification.showToast(WaterSleepPanel.this, "Water entry removed", ToastNotification.ToastType.INFO);
                     loadData();
+                    DataSyncManager.fireDataChanged(DataSyncManager.DataType.WATER);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(WaterSleepPanel.this, "Failed to delete water intake: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -903,6 +914,7 @@ public class WaterSleepPanel extends JPanel {
                     get();
                     ToastNotification.showToast(WaterSleepPanel.this, "Sleep record deleted", ToastNotification.ToastType.INFO);
                     loadData();
+                    DataSyncManager.fireDataChanged(DataSyncManager.DataType.SLEEP);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(WaterSleepPanel.this, "Failed to delete sleep record: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -1336,6 +1348,7 @@ public class WaterSleepPanel extends JPanel {
                             saved = true;
                             ToastNotification.showToast(WaterSleepPanel.this, "Sleep record saved!", ToastNotification.ToastType.SUCCESS);
                             dispose();
+                            DataSyncManager.fireDataChanged(DataSyncManager.DataType.SLEEP);
                         } catch (Exception ex) {
                             JOptionPane.showMessageDialog(SleepDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                         }

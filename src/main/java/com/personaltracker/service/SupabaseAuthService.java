@@ -118,6 +118,8 @@ public class SupabaseAuthService {
     }
 
     /**
+     * Registers a new user with default ROLE_MEMBER.
+     */
     public UserSession register(String email, String password, String fullName) throws Exception {
         return register(email, password, fullName, UserProfile.ROLE_MEMBER);
     }
@@ -226,6 +228,58 @@ public class SupabaseAuthService {
                 } catch (Exception ex) {
                     throw new IOException("An account with this email already exists, but the password was incorrect. Please check your password.");
                 }
+            }
+
+            // Fallback: If signup failed due to email send rate limit and secret key is available, auto-create and confirm
+            if (config.getSupabaseSecretKey() != null && !config.getSupabaseSecretKey().isBlank()
+                    && (response.statusCode() == 429 || errorCode.contains("rate_limit") || msg.toLowerCase().contains("rate limit"))) {
+                LOGGER.info("Supabase email rate limit reached. Creating user via admin service role with auto-confirm...");
+                UserSession session = registerViaAdmin(email, password, fullName, userRole);
+                if (session != null) {
+                    return session;
+                }
+            }
+
+            throw new IOException(msg);
+        }
+    }
+
+    private UserSession registerViaAdmin(String email, String password, String fullName, String userRole) throws Exception {
+        String url = config.getSupabaseUrl() + "/auth/v1/admin/users";
+        Map<String, Object> body = new HashMap<>();
+        body.put("email", email.trim().toLowerCase());
+        body.put("password", password);
+        body.put("email_confirm", true);
+
+        Map<String, String> userMetadata = new HashMap<>();
+        userMetadata.put("full_name", fullName != null ? fullName.trim() : "");
+        userMetadata.put("role", userRole != null ? userRole : UserProfile.ROLE_MEMBER);
+        body.put("user_metadata", userMetadata);
+
+        String jsonBody = objectMapper.writeValueAsString(body);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(12))
+                .header("apikey", config.getSupabaseSecretKey())
+                .header("Authorization", "Bearer " + config.getSupabaseSecretKey())
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 200 || response.statusCode() == 201) {
+            // User created with email auto-confirmed! Now login to obtain standard user session
+            UserSession session = login(email, password);
+            session.setNewRegistration(true);
+            return session;
+        } else {
+            JsonNode err = objectMapper.readTree(response.body());
+            String msg = err.path("msg").asText(err.path("message").asText("Admin registration failed."));
+            if (isUserAlreadyExistsError(msg, err.path("error_code").asText(""))) {
+                UserSession session = login(email, password);
+                session.setNewRegistration(false);
+                return session;
             }
             throw new IOException(msg);
         }

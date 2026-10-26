@@ -13,6 +13,7 @@ import com.personaltracker.model.UserProfile;
 import com.personaltracker.model.UserSession;
 import com.personaltracker.service.SupabaseAuthService;
 import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
@@ -89,23 +90,8 @@ public class OnboardingDialog extends JDialog {
         UserSession session = SupabaseClient.getInstance().getCurrentSession();
         if (session == null) return;
 
-        // If user already created an account (not a brand new registration),
-        // directly bypass onboarding form filling and ensure their existing profile is loaded.
-        if (!session.isNewRegistration()) {
-            if (session.getProfile() == null || session.getProfile().getHeightCm() == null) {
-                try {
-                    ProfileDAO dao = new ProfileDAO();
-                    UserProfile p = dao.getProfile(session.getUserId());
-                    if (p != null) {
-                        session.setProfile(p);
-                    }
-                } catch (Exception ignored) {}
-            }
-            return;
-        }
-
         UserProfile profile = session.getProfile();
-        if (profile == null || profile.getHeightCm() == null) {
+        if (profile == null || isNewUser(profile)) {
             try {
                 ProfileDAO dao = new ProfileDAO();
                 UserProfile remote = dao.getProfile(session.getUserId());
@@ -116,7 +102,7 @@ public class OnboardingDialog extends JDialog {
             } catch (Exception ignored) {}
         }
 
-        // Double check: if profile already has height and target weight filled,
+        // If the profile already has height and target weight filled,
         // it is an existing account with completed data - do not force onboarding!
         if (profile != null && !isNewUser(profile)) {
             session.setNewRegistration(false);
@@ -132,7 +118,7 @@ public class OnboardingDialog extends JDialog {
             return;
         }
 
-        // A new person created an account: make them do the data filling process!
+        // A person entered with incomplete data: make them do the data filling process!
         OnboardingDialog dialog = new OnboardingDialog(owner, profile, true);
         dialog.setVisible(true);
     }
@@ -190,7 +176,10 @@ public class OnboardingDialog extends JDialog {
                 initialName = Character.toUpperCase(initialName.charAt(0)) + initialName.substring(1);
             }
         }
-        txtFullName = new ModernTextField(initialName != null ? initialName : "", "e.g. Alex Hunter");
+        if (initialName == null || initialName.isBlank()) {
+            initialName = "Athlete";
+        }
+        txtFullName = new ModernTextField(initialName, "e.g. Alex Hunter");
 
         if (profile.getRole() != null && !profile.getRole().isBlank()) {
             selectedRole = profile.getRole();
@@ -235,34 +224,34 @@ public class OnboardingDialog extends JDialog {
             cmbDobYear.setSelectedItem(String.valueOf(existingDob.getYear()));
             updateDobAgeDisplay();
         } else {
-            updateDobAgeDisplay();
+            setDobByAge(25);
         }
 
-        // Height: leave empty with translucent placeholder unless already saved in profile
+        // Height: prefill existing or recommended default
         String initialHeight = (profile.getHeightCm() != null && profile.getHeightCm() > 0)
                 ? String.format(Locale.US, "%.1f", profile.getHeightCm())
-                : "";
+                : "175.0";
         txtHeight = new ModernTextField(initialHeight, "e.g. 175.0");
 
-        // Starting Weight: leave empty with translucent placeholder
-        txtWeight = new ModernTextField("", "e.g. 75.0");
+        // Starting Weight: prefill standard starting baseline
+        txtWeight = new ModernTextField("75.0", "e.g. 75.0");
 
-        // Goal Weight: leave empty with translucent placeholder unless already saved in profile
+        // Goal Weight: prefill existing target or standard goal
         String initialTargetWeight = (profile.getTargetWeightKg() != null && profile.getTargetWeightKg() > 0)
                 ? String.format(Locale.US, "%.1f", profile.getTargetWeightKg())
-                : "";
+                : "70.0";
         txtTargetWeight = new ModernTextField(initialTargetWeight, "e.g. 70.0");
 
-        // Daily Calorie Target: leave empty with translucent placeholder unless already saved
+        // Daily Calorie Target: prefill existing or recommended target
         String initialCalories = profile.getDailyCalorieTarget() > 0
                 ? String.valueOf(profile.getDailyCalorieTarget())
-                : "";
+                : "2200";
         txtCalorieTarget = new ModernTextField(initialCalories, "e.g. 2200");
 
-        // Daily Water Target: leave empty with translucent placeholder unless already saved
+        // Daily Water Target: prefill existing or recommended target
         String initialWater = profile.getDailyWaterTargetMl() > 0
                 ? String.valueOf(profile.getDailyWaterTargetMl())
-                : "";
+                : "2500";
         txtWaterTarget = new ModernTextField(initialWater, "e.g. 2500");
 
         // Build UI
@@ -1091,6 +1080,15 @@ public class OnboardingDialog extends JDialog {
                         session.setNewRegistration(false);
                     }
                     dispose();
+                    DataSyncManager.fireDataChanged(
+                            DataSyncManager.DataType.PROFILE,
+                            DataSyncManager.DataType.WEIGHT_MEASUREMENT,
+                            DataSyncManager.DataType.GOALS,
+                            DataSyncManager.DataType.WORKOUTS,
+                            DataSyncManager.DataType.NUTRITION,
+                            DataSyncManager.DataType.WATER,
+                            DataSyncManager.DataType.SLEEP
+                    );
                 } catch (Exception e) {
                     showError(e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
                 }

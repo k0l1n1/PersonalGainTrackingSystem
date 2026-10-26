@@ -11,6 +11,7 @@ import com.personaltracker.dao.NutritionDAO;
 import com.personaltracker.model.NutritionEntry;
 import com.personaltracker.model.UserSession;
 import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import java.awt.geom.Arc2D;
 
@@ -64,6 +65,12 @@ public class NutritionPanel extends JPanel {
     public NutritionPanel() {
         setOpaque(false);
         setLayout(new BorderLayout());
+
+        DataSyncManager.registerListener(type -> {
+            if (type == DataSyncManager.DataType.NUTRITION || type == DataSyncManager.DataType.PROFILE) {
+                loadNutrition();
+            }
+        });
 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
@@ -597,6 +604,7 @@ public class NutritionPanel extends JPanel {
             protected void done() {
                 ToastNotification.showToast(NutritionPanel.this, "Meal removed.", ToastNotification.ToastType.INFO);
                 loadNutrition();
+                DataSyncManager.fireDataChanged(DataSyncManager.DataType.NUTRITION);
             }
         };
         worker.execute();
@@ -859,6 +867,7 @@ public class NutritionPanel extends JPanel {
                         saved = true;
                         ToastNotification.showToast(NutritionPanel.this, editing != null ? "Food updated!" : "Food logged!", ToastNotification.ToastType.SUCCESS);
                         dispose();
+                        DataSyncManager.fireDataChanged(DataSyncManager.DataType.NUTRITION);
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(FoodDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }

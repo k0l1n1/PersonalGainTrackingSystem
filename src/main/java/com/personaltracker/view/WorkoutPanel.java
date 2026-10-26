@@ -10,6 +10,7 @@ import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.dao.AchievementDAO;
 import com.personaltracker.dao.MeasurementDAO;
 import com.personaltracker.dao.ReminderDAO;
+import com.personaltracker.dao.TrainerAssignmentDAO;
 import com.personaltracker.dao.WorkoutDAO;
 import com.personaltracker.model.BodyMeasurement;
 import com.personaltracker.model.Reminder;
@@ -17,6 +18,7 @@ import com.personaltracker.model.UserSession;
 import com.personaltracker.model.Workout;
 import com.personaltracker.model.WorkoutExercise;
 import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.DataSyncManager;
 import com.personaltracker.util.DateUtil;
 import com.personaltracker.util.HealthCalculator;
 import com.personaltracker.util.IconFactory;
@@ -473,6 +475,14 @@ public class WorkoutPanel extends JPanel {
         setLayout(new BorderLayout(0, 10));
         setBorder(BorderFactory.createEmptyBorder(14, 20, 14, 20));
 
+        DataSyncManager.registerListener(type -> {
+            if (type == DataSyncManager.DataType.WORKOUTS || type == DataSyncManager.DataType.PROFILE) {
+                loadWorkouts();
+            } else if (type == DataSyncManager.DataType.REMINDERS) {
+                loadReminders();
+            }
+        });
+
         // Setup Workouts Table Model
         String[] columnNames = {"Date", "Title", "Type", "Duration", "Calories", "Status", "Notes"};
         tableModel = new DefaultTableModel(columnNames, 0) {
@@ -838,6 +848,7 @@ public class WorkoutPanel extends JPanel {
                     ToastNotification.showToast(WorkoutPanel.this, "Quick logged: " + title + " (" + durationMinutes + "m)", ToastNotification.ToastType.SUCCESS);
                     loadWorkouts();
                     checkWorkoutAchievements();
+                    DataSyncManager.fireDataChanged(DataSyncManager.DataType.WORKOUTS, DataSyncManager.DataType.GOALS);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(WorkoutPanel.this, "Quick log failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -1370,6 +1381,7 @@ public class WorkoutPanel extends JPanel {
                         get();
                         ToastNotification.showToast(WorkoutPanel.this, "Workout deleted successfully.", ToastNotification.ToastType.INFO);
                         loadWorkouts();
+                        DataSyncManager.fireDataChanged(DataSyncManager.DataType.WORKOUTS, DataSyncManager.DataType.GOALS);
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(WorkoutPanel.this, "Delete failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -2119,6 +2131,12 @@ public class WorkoutPanel extends JPanel {
                     } else {
                         workoutDAO.updateWorkout(target);
                     }
+                    if ("COMPLETED".equalsIgnoreCase(target.getStatus())) {
+                        try {
+                            String uid = SupabaseClient.getInstance().getCurrentUserId();
+                            new TrainerAssignmentDAO().markAssignmentCompletedByAssociatedId(uid, target.getId());
+                        } catch (Exception ignored) {}
+                    }
                     return null;
                 }
 
@@ -2128,6 +2146,7 @@ public class WorkoutPanel extends JPanel {
                         get();
                         saved = true;
                         dispose();
+                        DataSyncManager.fireDataChanged(DataSyncManager.DataType.WORKOUTS, DataSyncManager.DataType.GOALS);
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(WorkoutDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -2581,7 +2600,8 @@ public class WorkoutPanel extends JPanel {
         rightActions.setOpaque(false);
 
         if (!isCompleted) {
-            ModernButton btnComplete = new ModernButton("✓ Mark as Completed", ModernButton.ButtonStyle.SUCCESS);
+            ModernButton btnComplete = new ModernButton("Mark as Completed", ModernButton.ButtonStyle.SUCCESS);
+            btnComplete.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 12, ThemeConfig.TEXT_ON_ACCENT));
             btnComplete.setPreferredSize(new Dimension(160, 28));
             btnComplete.addActionListener(e -> {
                 w.setStatus("COMPLETED");
@@ -2589,6 +2609,10 @@ public class WorkoutPanel extends JPanel {
                     @Override
                     protected Void doInBackground() throws Exception {
                         workoutDAO.updateWorkout(w);
+                        try {
+                            String uid = SupabaseClient.getInstance().getCurrentUserId();
+                            new TrainerAssignmentDAO().markAssignmentCompletedByAssociatedId(uid, w.getId());
+                        } catch (Exception ignored) {}
                         return null;
                     }
                     @Override
@@ -2598,6 +2622,7 @@ public class WorkoutPanel extends JPanel {
                             ToastNotification.showToast(WorkoutPanel.this, "Completed: " + w.getTitle() + "! Great effort!", ToastNotification.ToastType.SUCCESS);
                             loadWorkouts();
                             checkWorkoutAchievements();
+                            DataSyncManager.fireDataChanged(DataSyncManager.DataType.WORKOUTS, DataSyncManager.DataType.GOALS);
                         } catch (Exception ex) {
                             JOptionPane.showMessageDialog(WorkoutPanel.this, "Update failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                         }
@@ -3122,12 +3147,19 @@ public class WorkoutPanel extends JPanel {
             @Override
             protected Void doInBackground() throws Exception {
                 reminderDAO.updateReminder(r);
+                if (completed) {
+                    try {
+                        String uid = SupabaseClient.getInstance().getCurrentUserId();
+                        new TrainerAssignmentDAO().markAssignmentCompletedByAssociatedId(uid, r.getId());
+                    } catch (Exception ignored) {}
+                }
                 return null;
             }
             @Override
             protected void done() {
                 ToastNotification.showToast(WorkoutPanel.this, completed ? "Reminder marked as completed!" : "Reminder marked active.", ToastNotification.ToastType.SUCCESS);
                 loadReminders();
+                DataSyncManager.fireDataChanged(DataSyncManager.DataType.REMINDERS);
             }
         };
         worker.execute();
@@ -3152,6 +3184,7 @@ public class WorkoutPanel extends JPanel {
             protected void done() {
                 ToastNotification.showToast(WorkoutPanel.this, "Reminder deleted.", ToastNotification.ToastType.INFO);
                 loadReminders();
+                DataSyncManager.fireDataChanged(DataSyncManager.DataType.REMINDERS);
             }
         };
         worker.execute();
@@ -3402,6 +3435,7 @@ public class WorkoutPanel extends JPanel {
                             get();
                             saved = true;
                             dispose();
+                            DataSyncManager.fireDataChanged(DataSyncManager.DataType.REMINDERS);
                         } catch (Exception ex) {
                             JOptionPane.showMessageDialog(ReminderDialog.this, "Save failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                         }

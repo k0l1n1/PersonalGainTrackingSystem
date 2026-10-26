@@ -31,6 +31,7 @@ public class Main {
                 // forcing them through the login or onboarding filling process again.
                 UserSession savedSession = SupabaseAuthService.getInstance().restoreSession();
                 if (savedSession != null && savedSession.isAuthenticated()) {
+                    OnboardingDialog.showIfNewUser(null);
                     MainFrame mainFrame = new MainFrame();
                     mainFrame.setVisible(true);
                     return;
