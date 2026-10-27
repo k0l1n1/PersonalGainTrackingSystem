@@ -1,5 +1,26 @@
 package com.personaltracker.view;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.GridLayout;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingWorker;
+
 import com.personaltracker.components.ModernButton;
 import com.personaltracker.components.ModernPasswordField;
 import com.personaltracker.components.ModernTextField;
@@ -10,9 +31,6 @@ import com.personaltracker.service.SupabaseAuthService;
 import com.personaltracker.service.SupabaseClient;
 import com.personaltracker.util.IconFactory;
 import com.personaltracker.util.ValidationUtil;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * Authentication Dialog supporting Login, Registration, and Password Reset.

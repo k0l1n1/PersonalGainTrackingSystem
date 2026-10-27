@@ -1,16 +1,35 @@
 package com.personaltracker.view;
 
-import com.personaltracker.config.ThemeConfig;
-import com.personaltracker.model.UserSession;
-import com.personaltracker.service.SupabaseClient;
-import com.personaltracker.util.IconFactory;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridLayout;
+import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+
+import com.personaltracker.config.ThemeConfig;
+import com.personaltracker.model.UserSession;
+import com.personaltracker.service.SupabaseClient;
+import com.personaltracker.util.IconFactory;
 
 /**
  * Modern fixed sidebar navigation panel.

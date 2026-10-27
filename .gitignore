@@ -48,3 +48,8 @@ personal_tracker.properties
 ### JDK / local tools ###
 jdk-*/
 
+### Backup and build temp files ###
+*.bak
+*.backup
+/META-INF/
+

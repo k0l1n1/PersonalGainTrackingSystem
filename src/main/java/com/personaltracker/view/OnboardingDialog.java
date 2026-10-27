@@ -102,8 +102,13 @@ public class OnboardingDialog extends JDialog {
             } catch (Exception ignored) {}
         }
 
+        // If the user is an existing account (not a brand new registration), do not force onboarding dialog
+        if (!session.isNewRegistration()) {
+            return;
+        }
+
         // If the profile already has height and target weight filled,
-        // it is an existing account with completed data - do not force onboarding!
+        // it is an account with completed data - do not force onboarding!
         if (profile != null && !isNewUser(profile)) {
             session.setNewRegistration(false);
             return;

@@ -1,10 +1,17 @@
 package com.personaltracker.view;
 
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
 import com.personaltracker.config.ThemeConfig;
 import com.personaltracker.service.SupabaseAuthService;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * Root desktop frame with fixed sidebar and dynamic CardLayout view switcher.
