@@ -227,6 +227,25 @@ CREATE TABLE IF NOT EXISTS public.trainer_students (
 );
 
 -- ============================================================================
+-- 14. TRAINER ASSIGNMENTS TABLE (Goals, Workouts & Scheduled Tasks)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.trainer_assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trainer_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    trainer_name TEXT NOT NULL DEFAULT 'Coach',
+    student_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    assignment_type TEXT NOT NULL CHECK (assignment_type IN ('GOAL', 'WORKOUT', 'SCHEDULE')),
+    title TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    target_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    target_time TIME,
+    associated_id TEXT,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACKNOWLEDGED', 'COMPLETED')),
+    is_read BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ============================================================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================================================
 CREATE INDEX IF NOT EXISTS idx_workouts_user_date ON public.workouts(user_id, workout_date DESC);
@@ -241,6 +260,8 @@ CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON public.user_achievement
 CREATE INDEX IF NOT EXISTS idx_photos_user_date ON public.progress_photos(user_id, photo_date DESC);
 CREATE INDEX IF NOT EXISTS idx_trainer_students_trainer ON public.trainer_students(trainer_id);
 CREATE INDEX IF NOT EXISTS idx_trainer_students_student ON public.trainer_students(student_id);
+CREATE INDEX IF NOT EXISTS idx_trainer_assignments_student ON public.trainer_assignments(student_id, target_date DESC);
+CREATE INDEX IF NOT EXISTS idx_trainer_assignments_trainer ON public.trainer_assignments(trainer_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_user_code ON public.profiles(user_code);
 
 -- ============================================================================
@@ -250,6 +271,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_user_code ON public.profiles(user_code);
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.trainer_students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trainer_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workout_exercises ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.goals ENABLE ROW LEVEL SECURITY;
@@ -362,6 +384,20 @@ CREATE POLICY "Trainers can manage own student relationships" ON public.trainer_
 DROP POLICY IF EXISTS "Students can view trainer relationships" ON public.trainer_students;
 CREATE POLICY "Students can view trainer relationships" ON public.trainer_students
     FOR SELECT USING (auth.uid() = student_id);
+
+-- 14. Trainer Assignments Policies
+DROP POLICY IF EXISTS "Trainers can manage assignments they created" ON public.trainer_assignments;
+CREATE POLICY "Trainers can manage assignments they created" ON public.trainer_assignments
+    FOR ALL USING (auth.uid() = trainer_id)
+    WITH CHECK (auth.uid() = trainer_id);
+
+DROP POLICY IF EXISTS "Students can view their assignments" ON public.trainer_assignments;
+CREATE POLICY "Students can view their assignments" ON public.trainer_assignments
+    FOR SELECT USING (auth.uid() = student_id);
+
+DROP POLICY IF EXISTS "Students can update their assignments" ON public.trainer_assignments;
+CREATE POLICY "Students can update their assignments" ON public.trainer_assignments
+    FOR UPDATE USING (auth.uid() = student_id);
 
 -- ============================================================================
 -- AUTOMATIC PROFILE CREATION TRIGGER

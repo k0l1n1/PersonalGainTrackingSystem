@@ -90,6 +90,15 @@ The **Personal Gain Tracking System** was developed for university and professio
   - 4 JFreeChart visual trend graphs.
   - **Export to CSV**: Download workout and health reports directly to CSV files.
 
+- **Coach & Trainer Hub**:
+  - Trainer dashboard with student enrollment, roster management, and progress review.
+  - Assign personalized goals, workouts, and schedules to students.
+  - Direct student notification badges and real-time status syncing.
+
+- **Windows Desktop Distribution**:
+  - One-click build script (`build-dist.bat`) creating a self-contained, portable Windows app image and ZIP using `jpackage`.
+  - Runs out-of-the-box without requiring any pre-installed Java on client machines.
+
 - **Gamification & Badges**:
   - 10 unlockable achievement badges (e.g., *First Step*, *3-Day Streak*, *Hydration Hero*, *Goal Getter*).
   - Visual status (Golden Unlocked vs. Locked).
@@ -201,7 +210,7 @@ If `JAVA_HOME` is not set on your machine:
 4. Copy and paste the entire contents into the SQL Editor and click **Run**.
 
 The script automatically sets up:
-- The 11 tables (`profiles`, `workouts`, `workout_exercises`, `goals`, `body_measurements`, `nutrition_entries`, `water_intake`, `sleep_records`, `reminders`, `achievements`, `user_achievements`).
+- The 14 tables (`profiles`, `workouts`, `workout_exercises`, `goals`, `body_measurements`, `nutrition_entries`, `water_intake`, `sleep_records`, `reminders`, `achievements`, `user_achievements`, `progress_photos`, `trainer_students`, `trainer_assignments`).
 - Check constraints and foreign keys with cascading deletes.
 - Performance indexes on `(user_id, date)`.
 - **Row Level Security (RLS)** on every table, strictly limiting row access to `auth.uid() = user_id`.

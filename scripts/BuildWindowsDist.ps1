@@ -1,10 +1,31 @@
 param(
-    [string]$JdkHome = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot",
-    [string]$OutputZipPath = "C:\Users\BIJU\Desktop\PersonalGainTrackingSystem-Windows.zip"
+    [string]$JdkHome = "",
+    [string]$OutputZipPath = ""
 )
 
 $ErrorActionPreference = "Stop"
 $root = (Get-Item .).FullName
+
+if ([string]::IsNullOrWhiteSpace($OutputZipPath)) {
+    $desktopPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
+    if ([string]::IsNullOrWhiteSpace($desktopPath)) { $desktopPath = Join-Path $env:USERPROFILE "Desktop" }
+    $OutputZipPath = Join-Path $desktopPath "PersonalGainTrackingSystem-Windows.zip"
+}
+
+if ([string]::IsNullOrWhiteSpace($JdkHome)) {
+    if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME "bin\jpackage.exe"))) {
+        $JdkHome = $env:JAVA_HOME
+    } elseif (Test-Path "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot\bin\jpackage.exe") {
+        $JdkHome = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot"
+    } else {
+        $found = Get-ChildItem "C:\Program Files\Eclipse Adoptium", "C:\Program Files\Java" -Filter "jpackage.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($found) {
+            $JdkHome = $found.Directory.Parent.FullName
+        } else {
+            throw "Could not locate a JDK with jpackage.exe. Please specify -JdkHome."
+        }
+    }
+}
 Write-Host "=================================================================="
 Write-Host " BUILDING WINDOWS DISTRIBUTION FOR PERSONAL GAIN TRACKING SYSTEM "
 Write-Host "=================================================================="
@@ -83,6 +104,9 @@ if (Test-Path (Join-Path $root ".env")) {
 }
 if (Test-Path (Join-Path $root ".env.example")) {
     Copy-Item (Join-Path $root ".env.example") -Destination $appImageDir -Force
+}
+if (Test-Path (Join-Path $root "trainer_roster.json")) {
+    Copy-Item (Join-Path $root "trainer_roster.json") -Destination $appImageDir -Force
 }
 if (Test-Path (Join-Path $root "personal_tracker.properties")) {
     Copy-Item (Join-Path $root "personal_tracker.properties") -Destination $appImageDir -Force

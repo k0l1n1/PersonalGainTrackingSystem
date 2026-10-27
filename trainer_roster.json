@@ -41,5 +41,16 @@
     "trainer_id" : "68e74179-0901-4802-a1dd-36961bb8ae63",
     "student_id" : "student-marcus-102",
     "enrolled_date" : "2026-10-26"
+  } ],
+  "338c2cf7-06a9-4b4d-a1c9-0ae5f5a2e53d" : [ {
+    "id" : "enroll-sarah-101",
+    "trainer_id" : "338c2cf7-06a9-4b4d-a1c9-0ae5f5a2e53d",
+    "student_id" : "student-sarah-101",
+    "enrolled_date" : "2026-10-27"
+  }, {
+    "id" : "enroll-marcus-102",
+    "trainer_id" : "338c2cf7-06a9-4b4d-a1c9-0ae5f5a2e53d",
+    "student_id" : "student-marcus-102",
+    "enrolled_date" : "2026-10-27"
   } ]
 }

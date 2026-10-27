@@ -89,7 +89,8 @@ public class SupabaseCertifyTest {
                 "achievements",
                 "user_achievements",
                 "progress_photos",
-                "trainer_students"
+                "trainer_students",
+                "trainer_assignments"
         };
 
         Map<String, List<String>> expectedColumns = new LinkedHashMap<>();
@@ -106,6 +107,7 @@ public class SupabaseCertifyTest {
         expectedColumns.put("user_achievements", List.of("id", "user_id", "achievement_id", "unlocked_at"));
         expectedColumns.put("progress_photos", List.of("id", "user_id", "photo_url", "storage_path", "photo_date", "notes"));
         expectedColumns.put("trainer_students", List.of("id", "trainer_id", "student_id", "enrolled_date", "notes"));
+        expectedColumns.put("trainer_assignments", List.of("id", "trainer_id", "student_id", "assignment_type", "title", "target_date", "status"));
 
         Map<String, String> tableStatus = new LinkedHashMap<>();
         List<String> missingColumnsReport = new ArrayList<>();
