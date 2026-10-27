@@ -8,6 +8,8 @@ import com.personaltracker.service.SupabaseClient;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Data Access Object for Trainer-Student enrollments and student fitness inspection.
@@ -15,6 +17,7 @@ import java.util.*;
  * and are only deleted when the trainer explicitly removes them from the list.
  */
 public class TrainerStudentDAO {
+    private static final Logger LOGGER = Logger.getLogger(TrainerStudentDAO.class.getName());
     private static final String ROSTER_FILE = "trainer_roster.json";
     private static final Object FILE_LOCK = new Object();
 
@@ -41,7 +44,7 @@ public class TrainerStudentDAO {
             try {
                 client.getObjectMapper().writerWithDefaultPrettyPrinter().writeValue(f, map);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.WARNING, "Failed to save persistent roster map: " + e.getMessage(), e);
             }
         }
     }

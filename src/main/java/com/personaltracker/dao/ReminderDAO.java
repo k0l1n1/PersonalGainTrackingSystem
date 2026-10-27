@@ -3,6 +3,7 @@ package com.personaltracker.dao;
 import com.personaltracker.model.Reminder;
 import com.personaltracker.service.SupabaseClient;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,6 +19,18 @@ public class ReminderDAO {
 
         List<Reminder> list = client.executeGetList("reminders",
                 "user_id=eq." + uid + "&order=reminder_date.asc,reminder_time.asc",
+                Reminder.class);
+
+        return list != null ? list : Collections.emptyList();
+    }
+
+    public List<Reminder> getUpcomingReminders(String userId, LocalDate fromDate) throws Exception {
+        String uid = (userId != null && !userId.isBlank()) ? userId : client.getCurrentUserId();
+        if (uid == null) return Collections.emptyList();
+
+        String dateStr = (fromDate != null ? fromDate : LocalDate.now()).toString();
+        List<Reminder> list = client.executeGetList("reminders",
+                "user_id=eq." + uid + "&reminder_date=gte." + dateStr + "&is_completed=eq.false&order=reminder_date.asc,reminder_time.asc",
                 Reminder.class);
 
         return list != null ? list : Collections.emptyList();

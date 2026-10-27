@@ -9,6 +9,8 @@ import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Centralized theme configuration and visual design system.
@@ -16,6 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Crafted for maximum clarity, readability, and visual ergonomics in both themes.
  */
 public class ThemeConfig {
+    private static final Logger LOGGER = Logger.getLogger(ThemeConfig.class.getName());
 
     private static boolean isDarkMode = false;
     private static final List<Runnable> themeListeners = new CopyOnWriteArrayList<>();
@@ -198,7 +201,7 @@ public class ThemeConfig {
             try {
                 r.run();
             } catch (Exception ex) {
-                ex.printStackTrace();
+                LOGGER.log(Level.WARNING, "Error running theme change listener: " + ex.getMessage(), ex);
             }
         }
     }

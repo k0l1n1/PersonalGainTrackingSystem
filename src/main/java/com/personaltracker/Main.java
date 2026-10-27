@@ -9,11 +9,14 @@ import com.personaltracker.view.MainFrame;
 import com.personaltracker.view.OnboardingDialog;
 
 import javax.swing.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Personal Gain Tracking System - Desktop Application Entry Point.
  */
 public class Main {
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
         // Run application strictly on the Swing Event Dispatch Thread (EDT)
@@ -52,7 +55,7 @@ public class Main {
                     System.exit(0);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to start Personal Gain Tracker: " + e.getMessage(), e);
                 JOptionPane.showMessageDialog(null,
                         "Failed to start Personal Gain Tracker:\n" + (e.getMessage() != null ? e.getMessage() : e.toString()),
                         "Startup Error",
