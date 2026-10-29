@@ -118,7 +118,7 @@ public class WorkoutTimerPanel extends ModernCard {
         actionsPanel.setOpaque(false);
 
         btnStartPause = new ModernButton("Start Timer", ModernButton.ButtonStyle.PRIMARY);
-        btnStartPause.setIcon(IconFactory.createIcon(IconFactory.IconType.TIMER, 13, Color.WHITE));
+        btnStartPause.setIcon(IconFactory.createIcon(IconFactory.IconType.TIMER, 13, ThemeConfig.TEXT_ON_ACCENT));
         btnStartPause.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnStartPause.setPreferredSize(new Dimension(125, 34));
 
@@ -128,7 +128,7 @@ public class WorkoutTimerPanel extends ModernCard {
         btnReset.setPreferredSize(new Dimension(88, 34));
 
         btnLogWorkout = new ModernButton("Record Workout", ModernButton.ButtonStyle.SUCCESS);
-        btnLogWorkout.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 13, Color.WHITE));
+        btnLogWorkout.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 13, ThemeConfig.TEXT_ON_ACCENT));
         btnLogWorkout.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnLogWorkout.setPreferredSize(new Dimension(150, 34));
 

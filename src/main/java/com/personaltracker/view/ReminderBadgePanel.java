@@ -56,7 +56,7 @@ public class ReminderBadgePanel extends JPanel {
         lblIcon.setIcon(IconFactory.createIcon(IconFactory.IconType.REMINDERS, 14, ThemeConfig.PRIMARY_ACCENT));
 
         lblCount.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblCount.setForeground(Color.WHITE);
+        lblCount.setForeground(ThemeConfig.TEXT_ON_ACCENT);
         lblCount.setOpaque(true);
         lblCount.setBackground(ThemeConfig.PRIMARY_ACCENT);
         lblCount.setBorder(BorderFactory.createEmptyBorder(1, 6, 1, 6));
@@ -165,3 +165,4 @@ public class ReminderBadgePanel extends JPanel {
         return pendingCount;
     }
 }
+

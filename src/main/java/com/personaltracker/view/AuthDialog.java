@@ -286,15 +286,15 @@ public class AuthDialog extends JDialog {
 
     private void updateRoleButtonStyles() {
         boolean isMember = com.personaltracker.model.UserProfile.ROLE_MEMBER.equalsIgnoreCase(selectedRole);
-        btnRoleMember.setIcon(IconFactory.createIcon(IconFactory.IconType.USER, 14, isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY));
+        btnRoleMember.setIcon(IconFactory.createIcon(IconFactory.IconType.USER, 14, isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.TEXT_SECONDARY));
         btnRoleMember.setBackground(isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
-        btnRoleMember.setForeground(isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
+        btnRoleMember.setForeground(isMember ? ThemeConfig.TEXT_ON_ACCENT : ThemeConfig.TEXT_SECONDARY);
         btnRoleMember.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BORDER_COLOR, 1, true),
                 BorderFactory.createEmptyBorder(6, 8, 6, 8)
         ));
 
-        btnRoleTrainer.setIcon(IconFactory.createIcon(IconFactory.IconType.STUDENTS, 14, !isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY));
+        btnRoleTrainer.setIcon(IconFactory.createIcon(IconFactory.IconType.STUDENTS, 14, !isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.TEXT_SECONDARY));
         btnRoleTrainer.setBackground(!isMember ? ThemeConfig.PRIMARY_ACCENT : ThemeConfig.BG_CARD);
         btnRoleTrainer.setForeground(!isMember ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
         btnRoleTrainer.setBorder(BorderFactory.createCompoundBorder(

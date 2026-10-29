@@ -31,7 +31,7 @@ public class ModernTable extends JTable {
 
         JTableHeader header = getTableHeader();
         header.setBackground(ThemeConfig.isDarkMode() ? Color.decode("#252530") : Color.decode("#F1F3F5"));
-        header.setForeground(ThemeConfig.isDarkMode() ? Color.WHITE : ThemeConfig.TEXT_SECONDARY);
+        header.setForeground(ThemeConfig.isDarkMode() ? ThemeConfig.TEXT_ON_ACCENT : ThemeConfig.TEXT_SECONDARY);
         header.setFont(ThemeConfig.FONT_BODY_BOLD);
         header.setPreferredSize(new Dimension(header.getWidth(), 38));
         header.setReorderingAllowed(false);

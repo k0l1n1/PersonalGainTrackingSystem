@@ -146,7 +146,7 @@ public class AssignTaskDialog extends JDialog {
 
         String studentName = studentProfile != null ? studentProfile.getDisplayName() : "Student";
         btnDispatch = new ModernButton("Dispatch Assignment to " + studentName, ModernButton.ButtonStyle.PRIMARY);
-        btnDispatch.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 14, Color.WHITE));
+        btnDispatch.setIcon(IconFactory.createIcon(IconFactory.IconType.CHECK, 14, ThemeConfig.TEXT_ON_ACCENT));
         btnDispatch.setIconTextGap(8);
         btnDispatch.setPreferredSize(new Dimension(280, 38));
         btnDispatch.addActionListener(e -> executeDispatch());
@@ -188,7 +188,7 @@ public class AssignTaskDialog extends JDialog {
         avatar.setLayout(new BorderLayout());
         JLabel lblInitials = new JLabel(initials, SwingConstants.CENTER);
         lblInitials.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblInitials.setForeground(Color.WHITE);
+        lblInitials.setForeground(ThemeConfig.TEXT_ON_ACCENT);
         avatar.add(lblInitials, BorderLayout.CENTER);
         header.add(avatar, BorderLayout.WEST);
 

@@ -103,9 +103,9 @@ public class ModernButton extends JButton {
         Color bg = getBaseColor();
         Color fg;
         if (style == ButtonStyle.PRIMARY || style == ButtonStyle.SUCCESS || style == ButtonStyle.DANGER) {
-            fg = Color.WHITE;
+            fg = ThemeConfig.TEXT_ON_ACCENT;
         } else {
-            fg = ThemeConfig.isDarkMode() ? Color.WHITE : ThemeConfig.TEXT_PRIMARY;
+            fg = ThemeConfig.isDarkMode() ? ThemeConfig.TEXT_ON_ACCENT : ThemeConfig.TEXT_PRIMARY;
         }
 
         if (isPressed) {

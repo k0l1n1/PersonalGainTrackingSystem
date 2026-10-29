@@ -35,3 +35,4 @@ public class ReminderBadgePanelTest {
         assertNotNull(panel.getLayout());
     }
 }
+
